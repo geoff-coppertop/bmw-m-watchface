@@ -3,6 +3,18 @@
 An analog BMW M Motorsport watch face for Garmin Connect IQ. Target device:
 **Venu X1** (`venux1`).
 
+## Wireframe
+
+![Watch face wireframe](docs/wireframe.png)
+
+Tap zones: yellow opens weather, red opens heart rate, blue opens the
+activity rings page.
+
+![Tap zones](docs/tap-zones.png)
+
+These are mock-ups rendered from the same geometry the code uses, with example
+values and the time set to 10:08:35. They are not simulator screenshots.
+
 ## Features
 
 - Analog chronograph dial with a white-sword hand set, a red second hand
