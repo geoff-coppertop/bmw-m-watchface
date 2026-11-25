@@ -18,16 +18,7 @@ Tap pages (activity rings, a metric page, weather):
 
 These are mock-ups with example values and the time set to 10:08:35. They are not
 simulator screenshots. They are generated from `source/Theme.mc` by
-`docs/wireframes.py`, so they follow the theme. Layout that lives in the Monkey C
-files is mirrored in the script and has to be kept in sync by hand. Regenerate
-with:
-
-```sh
-python3 docs/wireframes.py /tmp/wf   # writes dial.svg, tap-zones.svg, pages.svg
-```
-
-then convert the SVGs to PNG with any renderer (these were done with headless
-Chromium).
+`tools/wireframes.py`, so they follow the theme. See [Wireframe tool](#wireframe-tool).
 
 ## Features
 
@@ -56,9 +47,36 @@ source/
   BmwMWatchDelegate.mc  forwards taps to the view
 resources/            strings and launcher icon
 build.sh              compile to bin/bmw-m-watchface.prg
+tools/wireframes.py   regenerates the README wireframes from Theme.mc
+docs/                 README images
 .devcontainer/        devcontainer + post-create (SDK from a shared feature)
 .vscode/tasks.json    build task
 ```
+
+## Wireframe tool
+
+`tools/wireframes.py` draws the dial, the tap zones and the detail pages from the
+same colours, spacing and logo geometry the watch face uses. It reads
+`source/Theme.mc`, so after changing the theme you can rerun it and see the result
+without a simulator. Python 3 only, no packages needed to write SVGs.
+
+```sh
+python3 tools/wireframes.py              # render PNGs into docs/
+python3 tools/wireframes.py --svg-only   # write SVGs instead
+python3 tools/wireframes.py --out /tmp/wf
+```
+
+PNG output needs one SVG renderer: `rsvg-convert` (`sudo apt install librsvg2-bin`),
+Inkscape, the `cairosvg` package (`pip install cairosvg`), or Google Chrome /
+Chromium (set `CHROME_PATH` if it isn't on your `PATH`). The tool tries them in that
+order and tells you what to install if it finds none. There is also a **Regenerate
+wireframes** task in VS Code.
+
+Only colours, font-size roles and the spacing tokens are read from `Theme.mc`. The
+layout in `BmwMWatchView.mc` and `BmwMDetail.mc` (positions as fractions of the dial
+radius, the logo geometry, hand lengths) is mirrored inside the script, so if you
+change that layout, update the matching function in `tools/wireframes.py` too.
+Different renderers use different fonts, so text widths vary slightly.
 
 ## Design tokens
 

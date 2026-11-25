@@ -5,11 +5,22 @@
             "label": "Build (venux1)",
             "type": "shell",
             "command": "./build.sh",
-            "args": ["venux1"],
+            "args": [
+                "venux1"
+            ],
             "group": {
                 "kind": "build",
                 "isDefault": true
             },
+            "problemMatcher": []
+        },
+        {
+            "label": "Regenerate wireframes",
+            "type": "shell",
+            "command": "python3",
+            "args": [
+                "tools/wireframes.py"
+            ],
             "problemMatcher": []
         }
     ]

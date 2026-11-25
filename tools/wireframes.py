@@ -1,28 +1,38 @@
 #!/usr/bin/env python3
-"""Generate the README wireframes (SVG) from source/Theme.mc.
+"""Generate the README wireframes from source/Theme.mc.
 
-Colours, fonts' roles and spacing tokens are read from Theme.mc, so the
-mock-ups follow the theme. Layout that lives in BmwMWatchView.mc and
-BmwMDetail.mc (positions as fractions of the dial radius, logo geometry, hand
-lengths) is mirrored below and must be kept in sync by hand.
+    python3 tools/wireframes.py              # render PNGs into docs/
+    python3 tools/wireframes.py --svg-only   # write SVGs instead (no renderer needed)
+    python3 tools/wireframes.py --out DIR    # write somewhere else
 
-    python3 docs/wireframes.py [output_dir]      # default: docs/
+Colours, spacing and font-size roles are read from Theme.mc, so the mock-ups follow
+the theme. Layout that lives in BmwMWatchView.mc and BmwMDetail.mc (positions as
+fractions of the dial radius, logo geometry, hand lengths) is mirrored in this
+script and must be kept in sync by hand.
 
-Writes dial.svg, tap-zones.svg and pages.svg. Convert them to PNG with any
-renderer (the committed PNGs were rendered with headless Chromium).
-The mock-ups use example values and the time 10:08:35; they are not simulator
+PNG output needs one SVG renderer, tried in this order: rsvg-convert,
+inkscape, the cairosvg Python package, Google Chrome / Chromium. Install any one
+(for example `sudo apt install librsvg2-bin` or `pip install cairosvg`). Set
+CHROME_PATH to point at a specific Chrome binary.
+
+The mock-ups use example values and the time 10:08:35. They are not simulator
 screenshots.
 """
+import argparse
 import math
+import os
 import re
+import shutil
+import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-OUT = Path(sys.argv[1]) if len(sys.argv) > 1 else HERE
+ROOT = HERE.parent
 
 # ---------------------------------------------------------------- theme
-_theme = (HERE.parent / "source" / "Theme.mc").read_text()
+_theme = (ROOT / "source" / "Theme.mc").read_text()
 _consts = dict(re.findall(r"const (\w+)\s*=\s*(0x[0-9A-Fa-f]+|[0-9.]+)\s*;", _theme))
 
 
@@ -302,9 +312,81 @@ def pages():
     return s.doc(total * 1, (H + 40), "-20 -20 %d %d" % (total + 40, H + 40))
 
 
+# ---------------------------------------------------------------- rendering
+OUTPUTS = {          # name -> (svg generator, png file name)
+    "dial": (lambda: dial(), "wireframe.png"),
+    "tap-zones": (lambda: dial(zones=True), "tap-zones.png"),
+    "pages": (lambda: pages(), "pages.png"),
+}
+
+
+def svg_size(path):
+    head = Path(path).read_text()[:400]
+    return (int(re.search(r'width="(\d+)"', head).group(1)),
+            int(re.search(r'height="(\d+)"', head).group(1)))
+
+
+def _chrome():
+    for cand in (os.environ.get("CHROME_PATH"), shutil.which("google-chrome"),
+                 shutil.which("google-chrome-stable"), shutil.which("chromium"),
+                 shutil.which("chromium-browser")):
+        if cand and Path(cand).exists():
+            return cand
+    return None
+
+
+def renderer():
+    """Return a function (svg_path, png_path) -> None, or None if nothing is installed."""
+    if shutil.which("rsvg-convert"):
+        return lambda a, b: subprocess.run(["rsvg-convert", "-w", str(svg_size(a)[0]), a, "-o", b], check=True)
+    if shutil.which("inkscape"):
+        return lambda a, b: subprocess.run(["inkscape", a, "-o", b, "-w", str(svg_size(a)[0])],
+                                           check=True, capture_output=True)
+    try:
+        import cairosvg
+        return lambda a, b: cairosvg.svg2png(url=a, write_to=b, output_width=svg_size(a)[0])
+    except ImportError:
+        pass
+    chrome = _chrome()
+    if chrome:
+        def via_chrome(a, b):
+            w, h = svg_size(a)
+            cmd = [chrome, "--headless", "--disable-gpu", "--hide-scrollbars",
+                   "--screenshot=" + b, "--window-size=%d,%d" % (w, h), Path(a).as_uri()]
+            if hasattr(os, "geteuid") and os.geteuid() == 0:
+                cmd.insert(1, "--no-sandbox")          # Chrome refuses to run as root otherwise
+            subprocess.run(cmd, check=True, capture_output=True)
+        return via_chrome
+    return None
+
+
+def main():
+    ap = argparse.ArgumentParser(description="Generate the README wireframes from Theme.mc.")
+    ap.add_argument("--out", default=str(ROOT / "docs"), help="output directory (default: docs/)")
+    ap.add_argument("--svg-only", action="store_true", help="write SVGs and skip PNG rendering")
+    args = ap.parse_args()
+    out = Path(args.out)
+    out.mkdir(parents=True, exist_ok=True)
+
+    if args.svg_only:
+        for name, (gen, _) in OUTPUTS.items():
+            (out / (name + ".svg")).write_text(gen())
+            print("wrote", out / (name + ".svg"))
+        return 0
+
+    render = renderer()
+    if render is None:
+        sys.exit("No SVG renderer found. Install one of: rsvg-convert (librsvg2-bin), inkscape, "
+                 "the cairosvg Python package, or Google Chrome / Chromium (or set CHROME_PATH).\n"
+                 "Or run with --svg-only to write the SVGs.")
+    with tempfile.TemporaryDirectory() as tmp:
+        for name, (gen, png) in OUTPUTS.items():
+            svg = Path(tmp) / (name + ".svg")
+            svg.write_text(gen())
+            render(str(svg), str(out / png))
+            print("wrote", out / png)
+    return 0
+
+
 if __name__ == "__main__":
-    OUT.mkdir(parents=True, exist_ok=True)
-    (OUT / "dial.svg").write_text(dial())
-    (OUT / "tap-zones.svg").write_text(dial(zones=True))
-    (OUT / "pages.svg").write_text(pages())
-    print("wrote", ", ".join(str(OUT / n) for n in ("dial.svg", "tap-zones.svg", "pages.svg")))
+    sys.exit(main())
