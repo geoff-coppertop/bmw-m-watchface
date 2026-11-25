@@ -7,9 +7,7 @@ An analog BMW M Motorsport watch face for Garmin Connect IQ. Target device:
 
 ![Watch face wireframe](docs/wireframe.png)
 
-Touch zones on the dial: yellow is the temperature (tap opens weather), red is the roundel (tap
-opens heart rate) and blue is the ring band (tap opens Activity). Purple is the date and the
-battery: they have no page, so a tap does nothing. A hold on any of the five shows its quick card.
+Touch targets on the dial, numbered, with what a tap and a hold do on each:
 
 ![Tap zones](docs/tap-zones.png)
 

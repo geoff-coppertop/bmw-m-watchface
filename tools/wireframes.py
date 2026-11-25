@@ -268,9 +268,40 @@ def dial_into(s, ox, oy, zones=False, card=None):
         band = [pt(r_hi, a_) for a_ in range(228, 313, 3)] + [pt(r_lo, a_) for a_ in range(312, 227, -3)]
         s.add('<polygon points="%s" fill="#00C0FF" fill-opacity=".22" stroke="#00C0FF" stroke-width="2"/>'
               % pts(band))
+    if zones:
+        badge = lambda x, y, n, c: (s.circle(x, y, 12, c), s.text(x, y, str(n), "label", BLACK))
+        badge(CX - 120, temp_y, 1, "#FFD400")                       # temperature
+        badge(CX + arc, CY - R * .2 - 14, 2, "#B060FF")             # date
+        badge(CX - arc, CY - R * .2 - 14, 3, "#B060FF")             # battery
+        badge(CX + R * .36 * .707, CY + R * .36 * .707, 4, "#FF5A4D")   # roundel: on its circle's lower right
+        badge(CX, CY + RING_OUT - 2 * PITCH - 20 - 14, 5, "#00C0FF")   # rings
     if card:
         draw_card(s, card)
     s.add("</g>")
+
+
+def tap_zones():
+    """The dial with its touch targets numbered, and a legend of what a tap and a hold do."""
+    s = Svg()
+    lw = 600
+    s.add('<rect x="-30" y="-30" width="%d" height="%d" fill="#1b1b1b"/>' % (W + 60 + lw, H + 60))
+    dial_into(s, 0, 0, True)
+    x0 = W + 40
+    s.text(x0, 40, "Touch targets", "title", WHITE, "start")
+    rows = [("1", "#FFD400", "Temperature (12 o'clock)", "tap: Weather page", "hold: weather card"),
+            ("2", "#B060FF", "Date (3 o'clock)", "tap: nothing", "hold: date card"),
+            ("3", "#B060FF", "Battery (9 o'clock)", "tap: nothing", "hold: battery card"),
+            ("4", "#FF5A4D", "Roundel (centre)", "tap: Heart rate page", "hold: heart rate card"),
+            ("5", "#00C0FF", "Rings (bottom)", "tap: Activity page", "hold: activity card")]
+    for i, (n, c, name, tap, hold) in enumerate(rows):
+        y = 90 + i * 70
+        s.circle(x0 + 12, y, 12, c)
+        s.text(x0 + 12, y, n, "label", BLACK)
+        s.text(x0 + 36, y, name, "value", WHITE, "start")
+        s.text(x0 + 36, y + 28, tap + "   &#183;   " + hold, "label", GREY, "start")
+    s.text(x0, 90 + 5 * 70 + 6, "A tap goes deeper: it opens a page, where there is one.", "label", GREY, "start")
+    s.text(x0, 90 + 5 * 70 + 32, "A hold peeks: a quick card, never a page.", "label", GREY, "start")
+    return s.doc((W + 60 + lw) * 1.6, (H + 60) * 1.6, "-30 -30 %d %d" % (W + 60 + lw, H + 60))
 
 
 def dial(zones=False):
@@ -631,7 +662,7 @@ def graphs():
 # ---------------------------------------------------------------- rendering
 OUTPUTS = {          # name -> (svg generator, png file name)
     "dial": (lambda: dial(), "wireframe.png"),
-    "tap-zones": (lambda: dial(zones=True), "tap-zones.png"),
+    "tap-zones": (lambda: tap_zones(), "tap-zones.png"),
     "pages": (lambda: pages(), "pages.png"),
     "graphs": (lambda: graphs(), "graphs.png"),
     "cards": (lambda: cards(), "cards.png"),
