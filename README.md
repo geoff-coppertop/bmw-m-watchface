@@ -40,7 +40,7 @@ simulator screenshots. They are generated from `source/Theme.mc` by
     humidity, next four hours)
 - Graph pages. Every metric page has a graph page behind it: steps and active
   minutes for the last 7 days (bars, with the goal line), body battery over 24 hours,
-  heart rate over the last 4 hours, and a 12 hour temperature forecast for weather.
+  heart rate over 24 hours, and a 12 hour temperature forecast for weather.
 - Navigation uses taps only, because a watch face does not receive swipes. Tap the
   right side of a page to go forward (detail, then graph) and the left side to go
   back. Chevrons at the edges and page dots at the bottom show what is possible.
@@ -157,12 +157,10 @@ Written without access to the Connect IQ SDK, so **it has not been compiled or
 run yet**. Expect a few compile fixes on the first build. In particular:
 
 - `WatchFaceDelegate.onPress` is used for taps; confirm it fires on the Venu X1.
-- Graph data: `ActivityMonitor.getHistory()` is assumed to be newest-first and to exclude
-  today (today is added from `getInfo()`). Daily active minutes in the history is
-  assumed to be `history.activeMinutes.total`. Body battery and heart rate history
-  length depends on the watch.
-- Weather `CONDITION_*` names in `BmwMDetail.mc` should be checked against the SDK.
-- Layout positions come from a wireframe, not the simulator.
+- Graph data: today's entry is skipped if `ActivityMonitor.getHistory()` includes it
+  (the docs say it is newest first, at most 7 entries) and taken from `getInfo()`. Body
+  battery and heart rate come from `SensorHistory`; heart rate history only goes back to
+  the last power cycle, so a restarted watch shows a gap at the left of the graph.
 
 ## Trademarks
 

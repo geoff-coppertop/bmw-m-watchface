@@ -416,15 +416,24 @@ class DetailPage {
             _gBars = true;
             var hist = ActivityMonitor.getHistory();
             var info = ActivityMonitor.getInfo();
-            var n = (hist == null) ? 0 : hist.size();
+            // getHistory() is newest first, at most 7 entries. Today is taken from
+            // getInfo(), so skip a history entry that starts today.
+            var days = [] as Array<ActivityMonitor.History>;
+            var todayStart = Time.today().value();
+            for (var i = 0; hist != null && i < hist.size(); i++) {
+                var sod = hist[i].startOfDay;
+                if (sod != null && sod.value() >= todayStart) { continue; }
+                days.add(hist[i]);
+            }
+            var n = days.size();
             if (n > 6) { n = 6; }
-            // history is newest first; the chart wants oldest first, with today last
+            // the chart wants oldest first, with today last
             for (var i = n - 1; i >= 0; i--) {
                 if (kind == :steps) {
-                    vals.add(hist[i].steps);
-                    if (_gGoal == null) { _gGoal = hist[i].stepGoal; }
+                    vals.add(days[i].steps);
+                    if (_gGoal == null) { _gGoal = days[i].stepGoal; }
                 } else {
-                    var am = (hist[i] has :activeMinutes) ? hist[i].activeMinutes : null;
+                    var am = days[i].activeMinutes;
                     vals.add(am == null ? null : am.total);
                 }
             }
@@ -451,10 +460,10 @@ class DetailPage {
             _gStats = "Low " + fmt(minOf(vals)) + "   High " + fmt(maxOf(vals));
 
         } else if (kind == :hr) {
-            _gTitle = "HEART RATE · 4 H";
+            _gTitle = "HEART RATE · 24 H";
             _gColor = Theme.RED;
-            vals = bucketSeries(14400, false);
-            _gXl = ["4h ago", "2h", "now"];
+            vals = bucketSeries(86400, false);
+            _gXl = ["24h ago", "12h", "now"];
             _gStats = "Min " + fmt(minOf(vals)) + "   Max " + fmt(maxOf(vals));
 
         } else {
@@ -475,29 +484,46 @@ class DetailPage {
         _gVals = vals;
     }
 
-    // Reads the last span seconds of body battery (or heart rate) into 48 time buckets.
+    // Reads the last span seconds of body battery (or heart rate) into 48 time
+    // buckets, averaging the samples in each. Both come from SensorHistory; the docs
+    // say heart rate history only goes back to the last power cycle, so a freshly
+    // restarted watch will show gaps at the left.
     private function bucketSeries(span as Number, bodyBattery as Boolean) as Array<Numeric or Null> {
         var buckets = 48;
         var out = new [buckets] as Array<Numeric or Null>;
-        var t0 = Time.now().value() - span;
-        var step = span / buckets;
+        if (!(Toybox has :SensorHistory)) { return out; }
+
         var it = null;
+        var opts = { :period => new Time.Duration(span), :order => SensorHistory.ORDER_OLDEST_FIRST };
         if (bodyBattery) {
-            if ((Toybox has :SensorHistory) && (SensorHistory has :getBodyBatteryHistory)) {
-                it = SensorHistory.getBodyBatteryHistory({ :period => new Time.Duration(span) });
-            }
+            if (SensorHistory has :getBodyBatteryHistory) { it = SensorHistory.getBodyBatteryHistory(opts); }
         } else {
-            it = ActivityMonitor.getHeartRateHistory(new Time.Duration(span), false);
+            if (SensorHistory has :getHeartRateHistory) { it = SensorHistory.getHeartRateHistory(opts); }
         }
         if (it == null) { return out; }
+
+        var sums = new [buckets] as Array<Number>;
+        var cnts = new [buckets] as Array<Number>;
+        for (var i = 0; i < buckets; i++) {
+            sums[i] = 0;
+            cnts[i] = 0;
+        }
+        var t0 = Time.now().value() - span;
+        var step = span / buckets;
         var smp = it.next();
         while (smp != null) {
-            var v = bodyBattery ? smp.data : smp.heartRate;
-            if (v != null && smp.when != null && (bodyBattery || v != ActivityMonitor.INVALID_HR_SAMPLE)) {
+            var v = smp.data;
+            if (v != null && smp.when != null && v != ActivityMonitor.INVALID_HR_SAMPLE) {
                 var idx = (smp.when.value() - t0) / step;
-                if (idx >= 0 && idx < buckets) { out[idx] = v.toNumber(); }
+                if (idx >= 0 && idx < buckets) {
+                    sums[idx] += v.toNumber();
+                    cnts[idx] += 1;
+                }
             }
             smp = it.next();
+        }
+        for (var i = 0; i < buckets; i++) {
+            if (cnts[i] > 0) { out[i] = sums[i] / cnts[i]; }
         }
         return out;
     }

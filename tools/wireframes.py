@@ -403,7 +403,9 @@ def graphs():
     active = [22, 35, 12, 0, 28, 41, 18]
     body = [max(5, int(35 + i / 13 * 50) if i < 14 else int(85 - (i - 14) * 1.2) if i < 22 else int(75 - (i - 22) * 1.6))
             for i in range(48)]
-    hr = [int(74 + 16 * math.sin(i / 6.0) + 8 * math.sin(i / 2.3) + (14 if 30 < i < 38 else 0)) for i in range(48)]
+    # 24 h of heart rate: low overnight, a morning bump and an afternoon walk
+    hr = [int((52 if i < 14 else 72) + (8 * math.sin(i / 2.3)) + (22 if 24 < i < 28 else 0)
+              + (14 if 36 < i < 40 else 0)) for i in range(48)]
     temp = [18, 19, 20, 20, 19, 18, 17, 15, 14, 13, 12, 11]
 
     graph_page(s, 0, 0, "STEPS · 7 DAYS", "Avg 6284   Best 9400   Goal 10000",
@@ -412,8 +414,8 @@ def graphs():
                lambda: bar_chart(s, active, 21, NAVY, days))
     graph_page(s, px * 2, 0, "BODY BATTERY · 24 H", "Low %d   High %d" % (min(body), max(body)),
                lambda: line_chart(s, body, RED, ["24h ago", "12h", "now"]))
-    graph_page(s, 0, py, "HEART RATE · 4 H", "Min %d   Max %d" % (min(hr), max(hr)),
-               lambda: line_chart(s, hr, RED, ["4h ago", "2h", "now"]))
+    graph_page(s, 0, py, "HEART RATE · 24 H", "Min %d   Max %d" % (min(hr), max(hr)),
+               lambda: line_chart(s, hr, RED, ["24h ago", "12h", "now"]))
     graph_page(s, px, py, "TEMPERATURE · 12 H", "Low 11&#176;   High 20&#176;",
                lambda: line_chart(s, temp, WHITE, ["14:00", "20:00", "01:00"]))
     return s.doc(tw + 40, th + 40, "-20 -20 %d %d" % (tw + 40, th + 40))
