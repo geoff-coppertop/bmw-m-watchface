@@ -1,0 +1,9 @@
+<settings>
+    <setting propertyKey="@Properties.Units" title="@Strings.UnitsTitle">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.UnitsAuto</listEntry>
+            <listEntry value="1">@Strings.UnitsMetric</listEntry>
+            <listEntry value="2">@Strings.UnitsImperial</listEntry>
+        </settingConfig>
+    </setting>
+</settings>

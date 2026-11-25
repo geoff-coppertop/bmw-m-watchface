@@ -1,0 +1,4 @@
+<properties>
+    <!-- 0 = follow the watch, 1 = metric, 2 = imperial -->
+    <property id="Units" type="number">0</property>
+</properties>

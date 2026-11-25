@@ -125,11 +125,7 @@ class DetailPage {
             }
             var dist = "--";
             if (info.distance != null) {
-                if (System.getDeviceSettings().distanceUnits == System.UNIT_METRIC) {
-                    dist = (info.distance / 100000.0).format("%.1f") + " km";
-                } else {
-                    dist = (info.distance / 160934.0).format("%.1f") + " mi";
-                }
+                dist = Units.distanceText(info.distance, Units.distImperial());
             }
             var floors = "--";
             if (info.floorsClimbed != null && info.floorsClimbedGoal != null) {
@@ -487,9 +483,8 @@ class DetailPage {
 
     private function windText(cond as Weather.CurrentConditions) as String {
         if (cond.windSpeed == null) { return "--"; }
-        var metric = System.getDeviceSettings().distanceUnits == System.UNIT_METRIC;
-        var spd = metric ? cond.windSpeed * 3.6 : cond.windSpeed * 2.23694;
-        var txt = spd.toNumber().toString() + (metric ? " km/h" : " mph");
+        var imperial = Units.distImperial();
+        var txt = Units.windSpeed(cond.windSpeed, imperial).toString() + " " + Units.windUnit(imperial);
         if (cond.windBearing != null) {
             var dirs = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
             txt = txt + " " + dirs[((cond.windBearing + 22.5) / 45).toNumber() % 8];
@@ -498,14 +493,11 @@ class DetailPage {
     }
 
     private function tempNum(c as Numeric) as Number {
-        if (System.getDeviceSettings().temperatureUnits == System.UNIT_STATUTE) {
-            return (c * 9.0 / 5.0 + 32.0).toNumber();
-        }
-        return c.toNumber();
+        return Units.temp(c, Units.tempImperial());
     }
 
     private function tempUnit() as String {
-        return (System.getDeviceSettings().temperatureUnits == System.UNIT_STATUTE) ? "°F" : "°C";
+        return Units.tempUnit(Units.tempImperial());
     }
 
     private function hourLabel(t as Time.Moment) as String {
@@ -717,12 +709,12 @@ class DetailPage {
     }
 
     // One sample as a whole number: tenths of a degree for temperature (converted to
-    // Fahrenheit if the watch is set to it), otherwise the value itself.
+    // Fahrenheit if the Units setting or the watch says so), otherwise the value itself.
     private function sampleValue(v as Numeric, which as Symbol) as Number {
         if (which != :temp) { return v.toNumber(); }
         var c = v.toFloat();
-        if (System.getDeviceSettings().temperatureUnits == System.UNIT_STATUTE) {
-            c = c * 9.0 / 5.0 + 32.0;
+        if (Units.tempImperial()) {
+            c = Units.toFahrenheit(c);
         }
         return Math.round(c * 10).toNumber();
     }

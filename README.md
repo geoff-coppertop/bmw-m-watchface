@@ -103,6 +103,18 @@ docs/                 README images
 .vscode/tasks.json    build task
 ```
 
+## Settings
+
+One setting, **Units**, in the Garmin Connect app (the watch face's settings):
+
+- **Follow watch** (default): each quantity follows the watch's own unit settings, as before.
+- **Metric** or **Imperial**: override them. Temperature (°C or °F), distance (km or mi) and wind
+  speed (km/h or mph) change together. The 12/24 hour clock always follows the watch.
+
+All the unit conversions live in `source/Units.mc` and are covered by tests (`UnitsTests.mc`),
+including rounding to the nearest degree. The setting is defined in `resources/properties/` and
+`resources/settings/`.
+
 ## Wireframe tool
 
 `tools/wireframes.py` draws the dial, the tap zones and the detail pages from the
@@ -132,7 +144,7 @@ Different renderers use different fonts, so text widths vary slightly.
 
 The logic that does not need the watch is split into small modules (`Geometry`,
 `PageNav`, `SleepInference`, `Stats`, `Theme`) and covered by Connect IQ unit tests in
-`source/tests/`: 51 tests for the sleep inference and schedule fallback, page
+`source/tests/`: 58 tests for the sleep inference and schedule fallback, page
 navigation, tap hit-testing, the statistics and bucketing helpers, and the theme
 mappings. Drawing code and anything that reads live watch data is not tested.
 
@@ -223,6 +235,9 @@ container. Use it on a desktop SDK install, or sideload the `.prg` to the watch.
 Written without access to the Connect IQ SDK, so **it has not been compiled or
 run yet**. Expect a few compile fixes on the first build. In particular:
 
+- The Units setting uses `Application.Properties` and the `resources/settings` and
+  `resources/properties` files; check it appears in Garmin Connect after sideloading, and that
+  changing it redraws the face (`onSettingsChanged`).
 - Touch input uses `WatchFaceDelegate`: `onTap` for taps (pages) and `onPress`, which the SDK docs
   describe as a touch and hold, for the quick cards. An earlier version used `onPress` for taps,
   which was wrong. Confirm both fire on the Venu X1.

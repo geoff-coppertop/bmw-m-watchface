@@ -485,13 +485,8 @@ class BmwMWatchView extends WatchUi.WatchFace {
         if (Toybox has :Weather) {
             var cond = Weather.getCurrentConditions();
             if (cond != null && cond.temperature != null) {
-                var temp = cond.temperature;   // Celsius
-                var unit = "C";
-                if (System.getDeviceSettings().temperatureUnits == System.UNIT_STATUTE) {
-                    temp = temp * 9.0 / 5.0 + 32.0;
-                    unit = "F";
-                }
-                return temp.toNumber().toString() + "°" + unit;
+                var imperial = Units.tempImperial();
+                return Units.temp(cond.temperature, imperial).toString() + Units.tempUnit(imperial);
             }
         }
         return "--°";
