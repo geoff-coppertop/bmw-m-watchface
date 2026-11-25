@@ -152,8 +152,11 @@ whole face.
 - **Fonts:** four roles mapped to Garmin system fonts: label, value, title and
   hero number.
 
-The weather page's headline and hourly strip use a few one-off vertical
-positions of their own. They are not in `Theme.mc`.
+Page furniture (the M stripe accent, edge chevrons, page dots, the moon and sun marks, the
+cloud strip) and the Activity and Weather page positions are tokens too. The Weather
+page's detail rows and hourly strip sit on the same row grid as the metric pages.
+The dial's own layout (badge, hands, roundel, tick lengths) is written as fractions of
+the dial radius in `BmwMWatchView.mc` rather than tokens.
 
 ## Build
 

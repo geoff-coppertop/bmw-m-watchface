@@ -33,7 +33,7 @@ ROOT = HERE.parent
 
 # ---------------------------------------------------------------- theme
 _theme = (ROOT / "source" / "Theme.mc").read_text()
-_consts = dict(re.findall(r"const (\w+)\s*=\s*(0x[0-9A-Fa-f]+|[0-9.]+)\s*;", _theme))
+_consts = dict(re.findall(r"const (\w+)\s*=\s*(0x[0-9A-Fa-f]+|-?[0-9.]+)\s*;", _theme))
 
 
 def num(name):
@@ -60,6 +60,19 @@ Y_ROWS, Y_WEATHER_ROWS = num("Y_ROWS"), num("Y_WEATHER_ROWS")
 CHART_X, CHART_TOP, CHART_BOTTOM = num("CHART_X"), num("CHART_TOP"), num("CHART_BOTTOM")
 Y_XLABELS, Y_STATS, Y_DOTS, DOT_R = num("Y_XLABELS"), num("Y_STATS"), num("Y_DOTS"), num("DOT_R")
 Y_CAPTION = num("Y_CAPTION")
+STRIPE_X0, STRIPE_PITCH, STRIPE_W = num("STRIPE_X0"), num("STRIPE_PITCH"), num("STRIPE_W")
+STRIPE_SLANT, STRIPE_HALF_H = num("STRIPE_SLANT"), num("STRIPE_HALF_H")
+NAV_CHEVRON_X, CHEVRON_HALF_W, CHEVRON_HALF_H, DOT_PITCH = (num("NAV_CHEVRON_X"), num("CHEVRON_HALF_W"),
+                                                              num("CHEVRON_HALF_H"), num("DOT_PITCH"))
+MARK_DY, MOON_R, MOON_CUT_R, MOON_CUT_DX, MOON_CUT_DY = (num("MARK_DY"), num("MOON_R"), num("MOON_CUT_R"),
+                                                          num("MOON_CUT_DX"), num("MOON_CUT_DY"))
+SUN_R, SUN_RAY_IN, SUN_RAY_OUT, LINE_END_R = num("SUN_R"), num("SUN_RAY_IN"), num("SUN_RAY_OUT"), num("LINE_END_R")
+CLOUD_STRIP_DY, CLOUD_STRIP_H = num("CLOUD_STRIP_DY"), num("CLOUD_STRIP_H")
+ACT_GLYPH, ACT_GLYPH_DX, ACT_TEXT_DX = num("ACT_GLYPH"), num("ACT_GLYPH_DX"), num("ACT_TEXT_DX")
+ACT_LABEL_DY, ACT_VALUE_DY, ACT_BAR_DY = num("ACT_LABEL_DY"), num("ACT_VALUE_DY"), num("ACT_BAR_DY")
+ACT_CHEVRON_X, ACT_CHEVRON_DY = num("ACT_CHEVRON_X"), num("ACT_CHEVRON_DY")
+WEATHER_Y_HERO, WEATHER_Y_UNIT, WEATHER_UNIT_DX = num("WEATHER_Y_HERO"), num("WEATHER_Y_UNIT"), num("WEATHER_UNIT_DX")
+WEATHER_Y_COND, WEATHER_Y_FEELS = num("WEATHER_Y_COND"), num("WEATHER_Y_FEELS")
 ACTIVITY_ROW_TOP, ACTIVITY_ROW_PITCH = num("ACTIVITY_ROW_TOP"), num("ACTIVITY_ROW_PITCH")
 BAR_COLS_W, BAR_COLS_GAP = num("BAR_COLS_W"), num("BAR_COLS_GAP")
 DIM = {BLUE: BLUE_DIM, NAVY: NAVY_DIM, RED: RED_DIM}
@@ -243,8 +256,9 @@ def g_body(s, x, y, sz, c, frac):
 # ---------------------------------------------------------------- detail pages
 def stripes(s, ox):
     for i, c in enumerate([BLUE, NAVY, RED]):
-        x = ox + CX - 40 + i * 28
-        s.poly([(x + 8, Y_STRIPES - 7), (x + 28, Y_STRIPES - 7), (x + 20, Y_STRIPES + 7), (x, Y_STRIPES + 7)], c)
+        x = ox + CX + STRIPE_X0 + i * STRIPE_PITCH
+        s.poly([(x + STRIPE_SLANT, Y_STRIPES - STRIPE_HALF_H), (x + STRIPE_SLANT + STRIPE_W, Y_STRIPES - STRIPE_HALF_H),
+                (x + STRIPE_W, Y_STRIPES + STRIPE_HALF_H), (x, Y_STRIPES + STRIPE_HALF_H)], c)
 
 
 def bar(s, ox, y, frac, c):
@@ -260,19 +274,19 @@ def row(s, ox, y, label, value):
 
 
 def chevron(s, x, y, right):
-    d = -6 if right else 6
+    d = -CHEVRON_HALF_W if right else CHEVRON_HALF_W
     s.add('<polyline points="%.1f,%.1f %.1f,%.1f %.1f,%.1f" fill="none" stroke="%s" stroke-width="3"/>'
-          % (x + d, y - 12, x - d, y, x + d, y + 12, GREY_MID))
+          % (x + d, y - CHEVRON_HALF_H, x - d, y, x + d, y + CHEVRON_HALF_H, GREY_MID))
 
 
 def nav(s, sub, from_activity, count=2):
     """Edge chevrons and page dots, as drawNav() in BmwMDetail.mc."""
     if sub < count - 1:
-        chevron(s, W - 24, H / 2, True)
+        chevron(s, W - NAV_CHEVRON_X, H / 2, True)
     if sub >= 1 or from_activity:
-        chevron(s, 24, H / 2, False)
+        chevron(s, NAV_CHEVRON_X, H / 2, False)
     for i in range(count):
-        s.circle(CX + (i - (count - 1) / 2.0) * 20, Y_DOTS, DOT_R, WHITE if i == sub else GREY_MID)
+        s.circle(CX + (i - (count - 1) / 2.0) * DOT_PITCH, Y_DOTS, DOT_R, WHITE if i == sub else GREY_MID)
 
 
 def pages():
@@ -289,17 +303,17 @@ def pages():
              ("Body battery", "78 / 100", .78, RED, "body")]
     for i, (name, val, frac, c, g) in enumerate(items):
         y = ACTIVITY_ROW_TOP + 50 + i * ACTIVITY_ROW_PITCH
-        gx = MARGIN + 14
+        gx = MARGIN + ACT_GLYPH_DX
         if g == "walker":
-            g_walker(s, gx, y, 24, BLUE)
+            g_walker(s, gx, y, ACT_GLYPH, BLUE)
         elif g == "bolt":
-            g_bolt(s, gx, y, 24, NAVY_LIGHT)
+            g_bolt(s, gx, y, ACT_GLYPH, NAVY_LIGHT)
         else:
-            g_body(s, gx, y, 24, RED, frac)
-        s.text(MARGIN + 46, y - 14, name, "label", GREY_LIGHT, "start")
-        s.text(MARGIN + 46, y + 10, val, "value", WHITE, "start")
-        bar(s, 0, y + 40, frac, c)
-        chevron(s, W - 36, y + 8, True)
+            g_body(s, gx, y, ACT_GLYPH, RED, frac)
+        s.text(MARGIN + ACT_TEXT_DX, y + ACT_LABEL_DY, name, "label", GREY_LIGHT, "start")
+        s.text(MARGIN + ACT_TEXT_DX, y + ACT_VALUE_DY, val, "value", WHITE, "start")
+        bar(s, 0, y + ACT_BAR_DY, frac, c)
+        chevron(s, W - ACT_CHEVRON_X, y + ACT_CHEVRON_DY, True)
     s.add("</g>")
 
     # 2: a metric page (steps), opened from Activity, so it has a back chevron
@@ -319,17 +333,17 @@ def pages():
     screen(s, (W + 40) * 2)
     stripes(s, 0)
     s.text(CX, Y_TITLE, "WEATHER", "title", GREY_LIGHT)
-    s.text(CX, 142, "18", "hero", WHITE)
-    s.text(CX + 61, 120, "&#176;C", "title", GREY_LIGHT, "start")
-    s.text(CX, 204, "Partly cloudy", "title", WHITE)
-    s.text(CX, 234, "Feels like 16&#176;", "label", GREY_LIGHT)
+    s.text(CX, WEATHER_Y_HERO, "18", "hero", WHITE)
+    s.text(CX + 61 + WEATHER_UNIT_DX - 8, WEATHER_Y_UNIT, "&#176;C", "title", GREY_LIGHT, "start")
+    s.text(CX, WEATHER_Y_COND, "Partly cloudy", "title", WHITE)
+    s.text(CX, WEATHER_Y_FEELS, "Feels like 16&#176;", "label", GREY_LIGHT)
     for i, (l, v) in enumerate([("High / low", "20&#176; / 9&#176;"), ("Rain chance", "30%"),
                                 ("Wind", "12 km/h NW"), ("Humidity", "65%")]):
         row(s, 0, Y_WEATHER_ROWS + i * ROW_PITCH, l, v)
     for i, (t, v) in enumerate([("14:00", "19&#176;"), ("15:00", "20&#176;"), ("16:00", "19&#176;"), ("17:00", "17&#176;")]):
         x = W * (.2 + .2 * i)
-        s.text(x, 410, t, "label", GREY_LIGHT)
-        s.text(x, 438, v, "value", WHITE)
+        s.text(x, Y_ROWS + ROW_PITCH, t, "label", GREY_LIGHT)
+        s.text(x, Y_ROWS + 2 * ROW_PITCH, v, "value", WHITE)
     nav(s, 0, False)
     s.add("</g>")
     # 4: Body Battery detail, opened from Activity, with four pages in all
@@ -405,15 +419,16 @@ def find_sleep(hr, bb):
 
 
 def moon(s, x, y):
-    s.circle(x, y, 7, NAVY_LIGHT)
-    s.circle(x + 4, y - 2, 6, BLACK)
+    s.circle(x, y, MOON_R, NAVY_LIGHT)
+    s.circle(x + MOON_CUT_DX, y + MOON_CUT_DY, MOON_CUT_R, BLACK)
 
 
 def sun(s, x, y):
-    s.circle(x, y, 4, WHITE)
+    s.circle(x, y, SUN_R, WHITE)
     for i in range(8):
         a = i * math.pi / 4
-        s.line((x + math.cos(a) * 6, y + math.sin(a) * 6), (x + math.cos(a) * 9, y + math.sin(a) * 9), WHITE, 2)
+        s.line((x + math.cos(a) * SUN_RAY_IN, y + math.sin(a) * SUN_RAY_IN),
+               (x + math.cos(a) * SUN_RAY_OUT, y + math.sin(a) * SUN_RAY_OUT), WHITE, 2)
 
 
 def grey_level(pct):
@@ -445,8 +460,8 @@ def line_chart(s, vals, color, xlabels, sleep=None, rain=None, cloud=None, froze
                 sx = x0
             if sx + sw > x1:
                 sw = x1 - sx
-            s.add('<rect x="%.1f" y="%d" width="%.1f" height="12" fill="%s"/>'
-                  % (sx, CHART_TOP - 22, sw, grey_level(cloud[i])))
+            s.add('<rect x="%.1f" y="%d" width="%.1f" height="%d" fill="%s"/>'
+                  % (sx, CHART_TOP + CLOUD_STRIP_DY, sw, CLOUD_STRIP_H, grey_level(cloud[i])))
     if sleep:
         a_, b_ = sleep
         n_ = len(vals)
@@ -454,9 +469,9 @@ def line_chart(s, vals, color, xlabels, sleep=None, rain=None, cloud=None, froze
         xb = x0 + (x1 - x0) * (b_ - 1) / (n_ - 1)
         s.add('<rect x="%.1f" y="%d" width="%.1f" height="%d" fill="%s"/>' % (xa, CHART_TOP, xb - xa, CHART_BOTTOM - CHART_TOP, BLUE_DIM))
         if a_ > 0:
-            moon(s, xa, CHART_TOP - 12)
+            moon(s, xa, CHART_TOP + MARK_DY)
         if b_ < n_:
-            sun(s, xb, CHART_TOP - 12)
+            sun(s, xb, CHART_TOP + MARK_DY)
     fmt = (lambda v: "%.1f" % (v / 10.0)) if tenths else str
     s.text(x1 + 6, CHART_TOP, fmt(max(good)), "label", GREY_LIGHT, "start")
     s.text(x1 + 6, CHART_BOTTOM, fmt(min(good)), "label", GREY_LIGHT, "start")
@@ -472,7 +487,7 @@ def line_chart(s, vals, color, xlabels, sleep=None, rain=None, cloud=None, froze
             s.line(prev, (x, y), color, 3)
         prev = (x, y)
     if prev:
-        s.circle(prev[0], prev[1], 4, color)
+        s.circle(prev[0], prev[1], LINE_END_R, color)
     for x, anchor, t in zip((x0, CX, x1), ("start", "middle", "end"), xlabels):
         s.text(x, Y_XLABELS, t, "label", GREY_LIGHT, anchor)
 

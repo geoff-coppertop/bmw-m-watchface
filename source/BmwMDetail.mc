@@ -278,15 +278,15 @@ class DetailPage {
 
         for (var i = 0; i < 3; i++) {
             var y = Theme.ACTIVITY_ROW_TOP + 50 + i * Theme.ACTIVITY_ROW_PITCH;
-            _face.drawGlyph(dc, kinds[i], Theme.MARGIN + 14, y, 24);
+            _face.drawGlyph(dc, kinds[i], Theme.MARGIN + Theme.ACT_GLYPH_DX, y, Theme.ACT_GLYPH);
             dc.setColor(Theme.GREY_LIGHT, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(Theme.MARGIN + 46, y - 14, Theme.FONT_LABEL, names[i],
+            dc.drawText(Theme.MARGIN + Theme.ACT_TEXT_DX, y + Theme.ACT_LABEL_DY, Theme.FONT_LABEL, names[i],
                 Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
             dc.setColor(Theme.WHITE, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(Theme.MARGIN + 46, y + 10, Theme.FONT_VALUE, vals[i],
+            dc.drawText(Theme.MARGIN + Theme.ACT_TEXT_DX, y + Theme.ACT_VALUE_DY, Theme.FONT_VALUE, vals[i],
                 Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
-            drawBar(dc, cx, y + 40, fracs[i], colors[i]);
-            chevron(dc, w - 36, y + 8, true);
+            drawBar(dc, cx, y + Theme.ACT_BAR_DY, fracs[i], colors[i]);
+            chevron(dc, w - Theme.ACT_CHEVRON_X, y + Theme.ACT_CHEVRON_DY, true);
         }
     }
 
@@ -308,7 +308,7 @@ class DetailPage {
             dc.drawText(cx, h / 2, Theme.FONT_TITLE, "No weather data",
                 Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
             dc.setColor(Theme.GREY_LIGHT, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(cx, h / 2 + 34, Theme.FONT_LABEL, "Sync with Garmin Connect",
+            dc.drawText(cx, h / 2 + Theme.WEATHER_NODATA_DY, Theme.FONT_LABEL, "Sync with Garmin Connect",
                 Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
             return;
         }
@@ -317,18 +317,18 @@ class DetailPage {
         var big = tempNum(cond.temperature).toString();
         var bw = dc.getTextWidthInPixels(big, Theme.FONT_HERO);
         dc.setColor(Theme.WHITE, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, 142, Theme.FONT_HERO, big,
+        dc.drawText(cx, Theme.WEATHER_Y_HERO, Theme.FONT_HERO, big,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
         dc.setColor(Theme.GREY_LIGHT, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx + bw / 2 + 8, 120, Theme.FONT_TITLE, tempUnit(),
+        dc.drawText(cx + bw / 2 + Theme.WEATHER_UNIT_DX, Theme.WEATHER_Y_UNIT, Theme.FONT_TITLE, tempUnit(),
             Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
 
         dc.setColor(Theme.WHITE, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, 204, Theme.FONT_TITLE, conditionText(cond.condition),
+        dc.drawText(cx, Theme.WEATHER_Y_COND, Theme.FONT_TITLE, conditionText(cond.condition),
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
         if (cond.feelsLikeTemperature != null) {
             dc.setColor(Theme.GREY_LIGHT, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(cx, 234, Theme.FONT_LABEL,
+            dc.drawText(cx, Theme.WEATHER_Y_FEELS, Theme.FONT_LABEL,
                 "Feels like " + tempNum(cond.feelsLikeTemperature).toString() + "°",
                 Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
         }
@@ -348,11 +348,11 @@ class DetailPage {
             for (var i = 0; i < 4 && i < fc.size(); i++) {
                 var x = w * (0.2 + 0.2 * i);
                 dc.setColor(Theme.GREY_LIGHT, Graphics.COLOR_TRANSPARENT);
-                dc.drawText(x, 410, Theme.FONT_LABEL, hourLabel(fc[i].forecastTime),
+                dc.drawText(x, Theme.Y_ROWS + Theme.ROW_PITCH, Theme.FONT_LABEL, hourLabel(fc[i].forecastTime),
                     Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
                 if (fc[i].temperature != null) {
                     dc.setColor(Theme.WHITE, Graphics.COLOR_TRANSPARENT);
-                    dc.drawText(x, 438, Theme.FONT_VALUE, tempNum(fc[i].temperature).toString() + "°",
+                    dc.drawText(x, Theme.Y_ROWS + 2 * Theme.ROW_PITCH, Theme.FONT_VALUE, tempNum(fc[i].temperature).toString() + "°",
                         Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
                 }
             }
@@ -713,7 +713,7 @@ class DetailPage {
                     if (sx < x0) { sw -= (x0 - sx); sx = x0; }
                     if (sx + sw > x1) { sw = x1 - sx; }
                     dc.setColor(Stats.greyLevel(cloud.toNumber()), Graphics.COLOR_TRANSPARENT);
-                    dc.fillRectangle(sx, top - 22, sw, 12);
+                    dc.fillRectangle(sx, top + Theme.CLOUD_STRIP_DY, sw, Theme.CLOUD_STRIP_H);
                 }
             }
         }
@@ -724,8 +724,8 @@ class DetailPage {
             var xb = x0 + (x1 - x0) * (_gSleepB - 1) / (n - 1);
             dc.setColor(Theme.BLUE_DIM, Graphics.COLOR_TRANSPARENT);
             dc.fillRectangle(xa, top, xb - xa, bot - top);
-            if (_gSleepA > 0) { drawMoon(dc, xa, top - 12); }
-            if (_gSleepB < n) { drawSun(dc, xb, top - 12); }
+            if (_gSleepA > 0) { drawMoon(dc, xa, top + Theme.MARK_DY); }
+            if (_gSleepB < n) { drawSun(dc, xb, top + Theme.MARK_DY); }
         }
 
         // axis values on the right
@@ -751,7 +751,7 @@ class DetailPage {
             px = x;
             py = y;
         }
-        if (px != null) { dc.fillCircle(px, py, 4); }      // marks the latest value
+        if (px != null) { dc.fillCircle(px, py, Theme.LINE_END_R); }      // marks the latest value
         dc.setPenWidth(1);
     }
 
@@ -806,18 +806,19 @@ class DetailPage {
 
     private function drawMoon(dc as Dc, x as Numeric, y as Numeric) as Void {
         dc.setColor(Theme.NAVY_LIGHT, Graphics.COLOR_TRANSPARENT);
-        dc.fillCircle(x, y, 7);
+        dc.fillCircle(x, y, Theme.MOON_R);
         dc.setColor(Theme.BLACK, Graphics.COLOR_TRANSPARENT);
-        dc.fillCircle(x + 4, y - 2, 6);
+        dc.fillCircle(x + Theme.MOON_CUT_DX, y + Theme.MOON_CUT_DY, Theme.MOON_CUT_R);
     }
 
     private function drawSun(dc as Dc, x as Numeric, y as Numeric) as Void {
         dc.setColor(Theme.WHITE, Graphics.COLOR_TRANSPARENT);
-        dc.fillCircle(x, y, 4);
+        dc.fillCircle(x, y, Theme.SUN_R);
         dc.setPenWidth(2);
         for (var i = 0; i < 8; i++) {
             var a = i * Math.PI / 4.0;
-            dc.drawLine(x + Math.cos(a) * 6, y + Math.sin(a) * 6, x + Math.cos(a) * 9, y + Math.sin(a) * 9);
+            dc.drawLine(x + Math.cos(a) * Theme.SUN_RAY_IN, y + Math.sin(a) * Theme.SUN_RAY_IN,
+                        x + Math.cos(a) * Theme.SUN_RAY_OUT, y + Math.sin(a) * Theme.SUN_RAY_OUT);
         }
         dc.setPenWidth(1);
     }
@@ -829,24 +830,24 @@ class DetailPage {
     private function drawNav(dc as Dc, w as Number, h as Number, sub as Number, fromActivity as Boolean,
                              count as Number) as Void {
         if (sub < count - 1) {
-            chevron(dc, w - 24, h / 2, true);
+            chevron(dc, w - Theme.NAV_CHEVRON_X, h / 2, true);
         }
         if (sub >= 1 || fromActivity) {
-            chevron(dc, 24, h / 2, false);
+            chevron(dc, Theme.NAV_CHEVRON_X, h / 2, false);
         }
         var cx = w / 2;
         for (var i = 0; i < count; i++) {
             dc.setColor(i == sub ? Theme.WHITE : Theme.GREY_MID, Graphics.COLOR_TRANSPARENT);
-            dc.fillCircle(cx + (i - (count - 1) / 2.0) * 20, Theme.Y_DOTS, Theme.DOT_R);
+            dc.fillCircle(cx + (i - (count - 1) / 2.0) * Theme.DOT_PITCH, Theme.Y_DOTS, Theme.DOT_R);
         }
     }
 
     private function chevron(dc as Dc, x as Numeric, y as Numeric, right as Boolean) as Void {
-        var d = right ? -6 : 6;
+        var d = right ? -Theme.CHEVRON_HALF_W : Theme.CHEVRON_HALF_W;
         dc.setPenWidth(3);
         dc.setColor(Theme.GREY_MID, Graphics.COLOR_TRANSPARENT);
-        dc.drawLine(x + d, y - 12, x - d, y);
-        dc.drawLine(x - d, y, x + d, y + 12);
+        dc.drawLine(x + d, y - Theme.CHEVRON_HALF_H, x - d, y);
+        dc.drawLine(x - d, y, x + d, y + Theme.CHEVRON_HALF_H);
         dc.setPenWidth(1);
     }
 
@@ -856,9 +857,11 @@ class DetailPage {
     private function drawStripes(dc as Dc, cx as Numeric, y as Numeric) as Void {
         var colors = [Theme.BLUE, Theme.NAVY, Theme.RED];
         for (var i = 0; i < 3; i++) {
-            var x = cx - 40 + i * 28;
+            var x = cx + Theme.STRIPE_X0 + i * Theme.STRIPE_PITCH;
             dc.setColor(colors[i], Graphics.COLOR_TRANSPARENT);
-            dc.fillPolygon([[x + 8, y - 7], [x + 28, y - 7], [x + 20, y + 7], [x, y + 7]]);
+            dc.fillPolygon([[x + Theme.STRIPE_SLANT, y - Theme.STRIPE_HALF_H],
+                            [x + Theme.STRIPE_SLANT + Theme.STRIPE_W, y - Theme.STRIPE_HALF_H],
+                            [x + Theme.STRIPE_W, y + Theme.STRIPE_HALF_H], [x, y + Theme.STRIPE_HALF_H]]);
         }
     }
 

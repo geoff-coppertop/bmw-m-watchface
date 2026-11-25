@@ -53,7 +53,7 @@ module Theme {
     const Y_SUB = 298;
     const Y_BAR = 326;
     const Y_ROWS = 366;          // first row on the metric pages
-    const Y_WEATHER_ROWS = 274;  // first row on the weather page
+    const Y_WEATHER_ROWS = 270;  // first row on the weather page: Y_ROWS minus three row pitches
 
     // ---- graph pages and navigation ---------------------------------------
     const CHART_X = 60;           // left/right inset of the plot area
@@ -70,6 +70,48 @@ module Theme {
     const ACTIVITY_ROW_PITCH = 100;
     const BAR_COLS_W = 34;        // 7-day bar chart: bar width and gap
     const BAR_COLS_GAP = 8;
+
+    // ---- page furniture: accents, chevrons, marks ---------------------------
+    const STRIPE_X0 = -40;        // M stripe accent at the top of every page: first stripe, from centre
+    const STRIPE_PITCH = 28;
+    const STRIPE_W = 20;
+    const STRIPE_SLANT = 8;
+    const STRIPE_HALF_H = 7;
+    const NAV_CHEVRON_X = 24;     // edge chevrons, from the screen edge
+    const CHEVRON_HALF_W = 6;
+    const CHEVRON_HALF_H = 12;
+    const DOT_PITCH = 20;         // page dots
+    const MARK_DY = -12;          // moon and sun, above the top of the chart
+    const MOON_R = 7;
+    const MOON_CUT_R = 6;
+    const MOON_CUT_DX = 4;
+    const MOON_CUT_DY = -2;
+    const SUN_R = 4;
+    const SUN_RAY_IN = 6;
+    const SUN_RAY_OUT = 9;
+    const LINE_END_R = 4;         // dot on the latest value of a line chart
+    const CLOUD_STRIP_DY = -22;   // cloud cover strip, from the top of the chart
+    const CLOUD_STRIP_H = 12;
+
+    // ---- Activity page rows ------------------------------------------------
+    const ACT_GLYPH = 24;         // glyph size
+    const ACT_GLYPH_DX = 14;      // glyph centre, from the left margin
+    const ACT_TEXT_DX = 46;       // label and value, from the left margin
+    const ACT_LABEL_DY = -14;
+    const ACT_VALUE_DY = 10;
+    const ACT_BAR_DY = 40;
+    const ACT_CHEVRON_X = 36;     // row chevron, from the right edge
+    const ACT_CHEVRON_DY = 8;
+
+    // ---- Weather page ------------------------------------------------------
+    // Its rows sit on the same grid as the metric pages: the last of the four detail
+    // rows is at Y_ROWS, and the hourly strip uses the two rows below it.
+    const WEATHER_Y_HERO = 142;
+    const WEATHER_Y_UNIT = 120;
+    const WEATHER_UNIT_DX = 8;
+    const WEATHER_Y_COND = 204;
+    const WEATHER_Y_FEELS = 234;
+    const WEATHER_NODATA_DY = 34;
 
     // Line weight for stroked glyphs: grows with glyph size, never below 2 px.
     function glyphPen(s as Numeric) as Number {
