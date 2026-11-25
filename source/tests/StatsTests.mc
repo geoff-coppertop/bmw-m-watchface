@@ -64,3 +64,13 @@ function statsClockText(logger as Test.Logger) as Boolean {
     Test.assertEqual(Stats.clockText(12, 0, false), "12:00p");
     return true;
 }
+
+(:test)
+function statsGreyLevel(logger as Test.Logger) as Boolean {
+    Test.assertEqual(Stats.greyLevel(0), 0x000000);
+    Test.assertEqual(Stats.greyLevel(50), 0x5D5D5D);
+    Test.assertEqual(Stats.greyLevel(100), 0xBBBBBB);
+    Test.assertEqual(Stats.greyLevel(150), 0xBBBBBB);     // clamped
+    Test.assertEqual(Stats.greyLevel(-5), 0x000000);
+    return true;
+}

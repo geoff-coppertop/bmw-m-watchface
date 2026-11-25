@@ -55,6 +55,13 @@ module Stats {
         return out;
     }
 
+    // A grey from black (0%) to Theme.GREY_LIGHT (100%) for a cloud cover percentage.
+    function greyLevel(pct as Number) as Number {
+        var p = pct < 0 ? 0 : (pct > 100 ? 100 : pct);
+        var v = p * 0xBB / 100;
+        return (v << 16) | (v << 8) | v;
+    }
+
     // "23:05" on a 24 hour watch, "11:05p" on a 12 hour one.
     function clockText(hour as Number, min as Number, is24 as Boolean) as String {
         if (is24) {

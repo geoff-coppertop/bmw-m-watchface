@@ -404,7 +404,14 @@ def sun(s, x, y):
         s.line((x + math.cos(a) * 6, y + math.sin(a) * 6), (x + math.cos(a) * 9, y + math.sin(a) * 9), WHITE, 2)
 
 
-def line_chart(s, vals, color, xlabels, sleep=None):
+def grey_level(pct):
+    """Mirror of Stats.greyLevel()."""
+    p = max(0, min(100, pct))
+    v = p * 0xBB // 100
+    return "#%02X%02X%02X" % (v, v, v)
+
+
+def line_chart(s, vals, color, xlabels, sleep=None, rain=None, cloud=None, frozen=None):
     x0, x1 = CHART_X, W - CHART_X
     s.line((x0, CHART_BOTTOM), (x1, CHART_BOTTOM), GREY_DARK, 2)
     s.line((x0, CHART_TOP), (x1, CHART_TOP), GREY_DARK, 2)
@@ -412,6 +419,22 @@ def line_chart(s, vals, color, xlabels, sleep=None):
     lo, hi = min(good), max(good)
     if hi == lo:
         hi = lo + 1
+    if rain and cloud:
+        step = (x1 - x0) / (len(vals) - 1)
+        for i in range(len(vals)):
+            cx_ = x0 + step * i
+            if rain[i]:
+                rh = rain[i] * (CHART_BOTTOM - CHART_TOP) / 100.0
+                s.add('<rect x="%.1f" y="%.1f" width="%.1f" height="%.1f" fill="%s"/>'
+                      % (cx_ - step * .35, CHART_BOTTOM - rh, step * .7, rh, WHITE if frozen and frozen[i] else BLUE))
+            sx, sw = cx_ - step / 2, step
+            if sx < x0:
+                sw -= x0 - sx
+                sx = x0
+            if sx + sw > x1:
+                sw = x1 - sx
+            s.add('<rect x="%.1f" y="%d" width="%.1f" height="12" fill="%s"/>'
+                  % (sx, CHART_TOP - 22, sw, grey_level(cloud[i])))
     if sleep:
         a_, b_ = sleep
         n_ = len(vals)
@@ -476,7 +499,7 @@ def graphs():
         m = (t0 + idx * 30) % (24 * 60)
         return "%02d:%02d" % (m // 60, m % 60)
     note = "Sleep %s–%s · estimated" % (hhmm(sleep[0]), hhmm(sleep[1]))
-    temp = [18, 19, 20, 20, 19, 18, 17, 15, 14, 13, 12, 11]
+    temp = [4, 4, 3, 3, 2, 1, 1, 0, 0, -1, -1, -2]       # a cold evening: rain turns to snow
 
     graph_page(s, 0, 0, "STEPS · 7 DAYS", "Avg 6284   Best 9400   Goal 10000",
                lambda: bar_chart(s, steps, 10000, METRIC["steps"], days))
@@ -486,8 +509,12 @@ def graphs():
                lambda: line_chart(s, body, METRIC["body"], ["24h ago", "12h", "now"], sleep), note)
     graph_page(s, 0, py, "HEART RATE · 24 H", "Min %d   Max %d" % (min(hr), max(hr)),
                lambda: line_chart(s, hr, METRIC["hr"], ["24h ago", "12h", "now"], sleep), note)
-    graph_page(s, px, py, "TEMPERATURE · 12 H", "Low 11&#176;   High 20&#176;",
-               lambda: line_chart(s, temp, METRIC["weather"], ["14:00", "20:00", "01:00"]))
+    rain = [0, 10, 30, 60, 70, 60, 50, 60, 80, 70, 50, 30]
+    frozen = [False] * 7 + [True] * 5                       # rain first, then snow from 21:00
+    cloud = [40, 60, 80, 90, 100, 100, 90, 100, 100, 90, 80, 70]
+    graph_page(s, px, py, "TEMPERATURE · 12 H", "Low %d&#176;   High %d&#176;" % (min(temp), max(temp)),
+               lambda: line_chart(s, temp, METRIC["weather"], ["14:00", "20:00", "01:00"], None, rain, cloud, frozen),
+               "Bars: precipitation · Strip: cloud cover")
     return s.doc(tw + 40, th + 40, "-20 -20 %d %d" % (tw + 40, th + 40))
 
 

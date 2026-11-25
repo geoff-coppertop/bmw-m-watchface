@@ -41,7 +41,9 @@ simulator screenshots. They are generated from `source/Theme.mc` by
 - Graph pages. Every metric page has a graph page behind it: steps and active
   minutes for the last 7 days (each day is a small gauge: dark track up to the goal,
   bright fill to the value, in the same colours as the dial rings), body battery over 24 hours,
-  heart rate over 24 hours, and a 12 hour temperature forecast for weather.
+  heart rate over 24 hours, and a 12 hour temperature forecast for weather, with precipitation bars behind the line (blue for rain, white for snow and other frozen
+  precipitation)
+  and a cloud-cover strip above it (both are forecast values, like the temperature).
 - Sleep on the body battery and heart rate graphs: a faint band with a moon at
   bedtime and a sun at wake time, and a caption saying where it came from. **This is
   not measured sleep.** Connect IQ does not expose sleep data to a watch face; the only
@@ -70,6 +72,7 @@ source/
   PageNav.mc            which page is open and how taps move between pages (pure, tested)
   SleepInference.mc     estimated sleep window from heart rate and body battery (pure, tested)
   Stats.mc              min/max/average, time buckets, clock text (pure, tested)
+  Precip.mc             rain vs snow from the forecast condition (tested)
   tests/                unit tests, run with ./tools/test.sh
   BmwMWatchDelegate.mc  forwards taps to the view
 resources/            strings and launcher icon
@@ -110,7 +113,7 @@ Different renderers use different fonts, so text widths vary slightly.
 
 The logic that does not need the watch is split into small modules (`Geometry`,
 `PageNav`, `SleepInference`, `Stats`, `Theme`) and covered by Connect IQ unit tests in
-`source/tests/`: 34 tests for the sleep inference and schedule fallback, page
+`source/tests/`: 37 tests for the sleep inference and schedule fallback, page
 navigation, tap hit-testing, the statistics and bucketing helpers, and the theme
 mappings. Drawing code and anything that reads live watch data is not tested.
 

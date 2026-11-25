@@ -30,7 +30,11 @@ class DetailPage {
     // (null when there is none) plus a caption saying where it came from.
     private var _gSleepA as Number or Null = null;
     private var _gSleepB as Number or Null = null;     // exclusive
-    private var _gSleepNote as String = "";
+    private var _gCaption as String = "";
+    // Weather graph overlays, one value per hour: chance of precipitation and cloud cover (percent)
+    private var _gRain as Array<Numeric or Null> = [] as Array<Numeric or Null>;
+    private var _gCloud as Array<Numeric or Null> = [] as Array<Numeric or Null>;
+    private var _gFrozen as Array<Boolean> = [] as Array<Boolean>;     // that hour's precipitation is snow or ice
 
     function initialize(face as BmwMWatchView) {
         _face = face;
@@ -343,6 +347,12 @@ class DetailPage {
         if (c == Weather.CONDITION_FOG || c == Weather.CONDITION_MIST) { return "Fog"; }
         if (c == Weather.CONDITION_HAZY) { return "Hazy"; }
         if (c == Weather.CONDITION_WINDY) { return "Windy"; }
+        if (c == Weather.CONDITION_FLURRIES) { return "Flurries"; }
+        if (c == Weather.CONDITION_SLEET) { return "Sleet"; }
+        if (c == Weather.CONDITION_WINTRY_MIX || c == Weather.CONDITION_RAIN_SNOW) { return "Wintry mix"; }
+        if (c == Weather.CONDITION_FREEZING_RAIN) { return "Freezing rain"; }
+        if (c == Weather.CONDITION_HAIL) { return "Hail"; }
+        if (c == Weather.CONDITION_MOSTLY_CLEAR) { return "Mostly clear"; }
         return "";
     }
 
@@ -392,9 +402,9 @@ class DetailPage {
         dc.drawText(cx, Theme.Y_TITLE, Theme.FONT_TITLE, _gTitle,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
 
-        if (_gSleepNote.length() > 0) {
+        if (_gCaption.length() > 0) {
             dc.setColor(Theme.GREY_LIGHT, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(cx, Theme.Y_CAPTION, Theme.FONT_LABEL, _gSleepNote,
+            dc.drawText(cx, Theme.Y_CAPTION, Theme.FONT_LABEL, _gCaption,
                 Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
         }
 
@@ -425,7 +435,10 @@ class DetailPage {
         _gStats = "";
         _gSleepA = null;
         _gSleepB = null;
-        _gSleepNote = "";
+        _gCaption = "";
+        _gRain = [] as Array<Numeric or Null>;
+        _gCloud = [] as Array<Numeric or Null>;
+        _gFrozen = [] as Array<Boolean>;
 
         if (kind == :steps || kind == :active) {
             _gBars = true;
@@ -492,7 +505,11 @@ class DetailPage {
             if (n > 12) { n = 12; }
             for (var i = 0; i < n; i++) {
                 vals.add(fc[i].temperature == null ? null : tempNum(fc[i].temperature));
+                _gRain.add(fc[i].precipitationChance);
+                _gCloud.add(fc[i].cloudCover);
+                _gFrozen.add(Precip.isFrozen(fc[i].condition));
             }
+            if (n > 1) { _gCaption = "Bars: precipitation · Strip: cloud cover"; }
             if (n > 0) {
                 _gXl = [hourLabel(fc[0].forecastTime), hourLabel(fc[n / 2].forecastTime), hourLabel(fc[n - 1].forecastTime)];
             }
@@ -605,6 +622,30 @@ class DetailPage {
         }
         if (hi == lo) { hi = lo + 1; }
 
+        // weather overlays: precipitation chance as bars behind the line, cloud cover as a strip above
+        if (_gRain.size() == n && n > 1) {
+            var colStep = (x1 - x0).toFloat() / (n - 1);
+            for (var i = 0; i < n; i++) {
+                var cx = x0 + colStep * i;
+                var rain = _gRain[i];
+                if (rain != null && rain > 0) {
+                    var rh = rain.toFloat() * (bot - top) / 100.0;
+                    // blue for rain, white for snow and other frozen precipitation
+                    dc.setColor(_gFrozen[i] ? Theme.WHITE : Theme.BLUE, Graphics.COLOR_TRANSPARENT);
+                    dc.fillRectangle(cx - colStep * 0.35, bot - rh, colStep * 0.7, rh);
+                }
+                var cloud = _gCloud[i];
+                if (cloud != null) {
+                    var sx = cx - colStep / 2;
+                    var sw = colStep;
+                    if (sx < x0) { sw -= (x0 - sx); sx = x0; }
+                    if (sx + sw > x1) { sw = x1 - sx; }
+                    dc.setColor(Stats.greyLevel(cloud.toNumber()), Graphics.COLOR_TRANSPARENT);
+                    dc.fillRectangle(sx, top - 22, sw, 12);
+                }
+            }
+        }
+
         // sleep band behind the line, with a moon at bedtime and a sun at wake time
         if (_gSleepA != null && _gSleepB != null && n > 1) {
             var xa = x0 + (x1 - x0) * _gSleepA / (n - 1);
@@ -658,7 +699,7 @@ class DetailPage {
     private function findSleep(hr as Array<Numeric or Null>, bb as Array<Numeric or Null>) as Void {
         _gSleepA = null;
         _gSleepB = null;
-        _gSleepNote = "";
+        _gCaption = "";
         var n = hr.size();
         var now = Time.now().value();
         var t0 = now - 86400;
@@ -668,7 +709,7 @@ class DetailPage {
         if (inferred != null) {
             _gSleepA = inferred[0];
             _gSleepB = inferred[1];
-            _gSleepNote = "Sleep " + clock(t0 + inferred[0] * step) + "–" + clock(t0 + inferred[1] * step)
+            _gCaption = "Sleep " + clock(t0 + inferred[0] * step) + "–" + clock(t0 + inferred[1] * step)
                 + " · estimated";
             return;
         }
@@ -681,7 +722,7 @@ class DetailPage {
         if (sched == null) { return; }
         _gSleepA = sched[0];
         _gSleepB = sched[1];
-        _gSleepNote = "Sleep " + clock(sched[2]) + "–" + clock(sched[3]) + " · schedule";
+        _gCaption = "Sleep " + clock(sched[2]) + "–" + clock(sched[3]) + " · schedule";
     }
 
     private function clock(seconds as Number) as String {
