@@ -142,10 +142,11 @@ the Monkey C code). Treat the first simulator run as the real test.
 Everything visual comes from `source/Theme.mc`, so a change there changes the
 whole face.
 
-- **Colours:** the logo's blue `0066B1`, navy `003C78` and red `E32618`, a dark
-  tint of each for empty tracks, white, and three greys (light, mid, dark). One
-  deliberate exception: `NAVY_LIGHT` `4A90D9`, a lighter blue for the
-  active-minutes bolt, because navy is nearly invisible as a small glyph on black.
+- **Colours:** exactly eight, plus black for the background. The three BMW M logo
+  colours (blue `0066B1`, navy `003C78`, red `E32618`), a muted tint of each for empty
+  tracks, the sleep band and axes, white, and one grey `999999` for secondary text, glyph
+  strokes, chevrons and inactive dots. The cloud strip shades between black and the grey,
+  which is a ramp of that one grey, not another colour.
 - **Spacing:** one 2 px gap is used between the badge stripes, between ring bars
   and between the outer ring and the ticks. Ring bars are as wide as the badge
   stripes. Detail pages share a 70 px margin, a 32 px row pitch and one bar size.

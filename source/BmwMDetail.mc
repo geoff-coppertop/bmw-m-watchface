@@ -192,13 +192,13 @@ class DetailPage {
 
         _face.drawGlyph(dc, kind, cx, Theme.Y_GLYPH, Theme.GLYPH_BIG);
 
-        dc.setColor(Theme.GREY_LIGHT, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
         dc.drawText(cx, Theme.Y_TITLE_UNDER_GLYPH, Theme.FONT_TITLE, title,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
         dc.setColor(Theme.WHITE, Graphics.COLOR_TRANSPARENT);
         dc.drawText(cx, Theme.Y_HERO, Theme.FONT_HERO, big,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-        dc.setColor(Theme.GREY_LIGHT, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
         dc.drawText(cx, Theme.Y_SUB, Theme.FONT_LABEL, sub,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
         if (frac >= 0.0) {
@@ -232,7 +232,7 @@ class DetailPage {
 
     private function drawActivity(dc as Dc, w as Number, h as Number) as Void {
         var cx = w / 2;
-        dc.setColor(Theme.GREY_LIGHT, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
         dc.drawText(cx, Theme.Y_TITLE, Theme.FONT_TITLE, "ACTIVITY",
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
 
@@ -279,7 +279,7 @@ class DetailPage {
         for (var i = 0; i < 3; i++) {
             var y = Theme.ACTIVITY_ROW_TOP + 50 + i * Theme.ACTIVITY_ROW_PITCH;
             _face.drawGlyph(dc, kinds[i], Theme.MARGIN + Theme.ACT_GLYPH_DX, y, Theme.ACT_GLYPH);
-            dc.setColor(Theme.GREY_LIGHT, Graphics.COLOR_TRANSPARENT);
+            dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
             dc.drawText(Theme.MARGIN + Theme.ACT_TEXT_DX, y + Theme.ACT_LABEL_DY, Theme.FONT_LABEL, names[i],
                 Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
             dc.setColor(Theme.WHITE, Graphics.COLOR_TRANSPARENT);
@@ -299,7 +299,7 @@ class DetailPage {
             cond = Weather.getCurrentConditions();
         }
 
-        dc.setColor(Theme.GREY_LIGHT, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
         dc.drawText(cx, Theme.Y_TITLE, Theme.FONT_TITLE, "WEATHER",
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
 
@@ -307,7 +307,7 @@ class DetailPage {
             dc.setColor(Theme.WHITE, Graphics.COLOR_TRANSPARENT);
             dc.drawText(cx, h / 2, Theme.FONT_TITLE, "No weather data",
                 Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-            dc.setColor(Theme.GREY_LIGHT, Graphics.COLOR_TRANSPARENT);
+            dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
             dc.drawText(cx, h / 2 + Theme.WEATHER_NODATA_DY, Theme.FONT_LABEL, "Sync with Garmin Connect",
                 Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
             return;
@@ -319,7 +319,7 @@ class DetailPage {
         dc.setColor(Theme.WHITE, Graphics.COLOR_TRANSPARENT);
         dc.drawText(cx, Theme.WEATHER_Y_HERO, Theme.FONT_HERO, big,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-        dc.setColor(Theme.GREY_LIGHT, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
         dc.drawText(cx + bw / 2 + Theme.WEATHER_UNIT_DX, Theme.WEATHER_Y_UNIT, Theme.FONT_TITLE, tempUnit(),
             Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
 
@@ -327,7 +327,7 @@ class DetailPage {
         dc.drawText(cx, Theme.WEATHER_Y_COND, Theme.FONT_TITLE, conditionText(cond.condition),
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
         if (cond.feelsLikeTemperature != null) {
-            dc.setColor(Theme.GREY_LIGHT, Graphics.COLOR_TRANSPARENT);
+            dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
             dc.drawText(cx, Theme.WEATHER_Y_FEELS, Theme.FONT_LABEL,
                 "Feels like " + tempNum(cond.feelsLikeTemperature).toString() + "°",
                 Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
@@ -347,7 +347,7 @@ class DetailPage {
         if (fc != null) {
             for (var i = 0; i < 4 && i < fc.size(); i++) {
                 var x = w * (0.2 + 0.2 * i);
-                dc.setColor(Theme.GREY_LIGHT, Graphics.COLOR_TRANSPARENT);
+                dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
                 dc.drawText(x, Theme.Y_ROWS + Theme.ROW_PITCH, Theme.FONT_LABEL, hourLabel(fc[i].forecastTime),
                     Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
                 if (fc[i].temperature != null) {
@@ -427,12 +427,12 @@ class DetailPage {
             _gKind = kind;
         }
 
-        dc.setColor(Theme.GREY_LIGHT, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
         dc.drawText(cx, Theme.Y_TITLE, Theme.FONT_TITLE, _gTitle,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
 
         if (_gCaption.length() > 0) {
-            dc.setColor(Theme.GREY_LIGHT, Graphics.COLOR_TRANSPARENT);
+            dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
             dc.drawText(cx, Theme.Y_CAPTION, Theme.FONT_LABEL, _gCaption,
                 Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
         }
@@ -444,13 +444,13 @@ class DetailPage {
             var x1 = w - Theme.CHART_X;
             var xs = [Theme.CHART_X, cx, x1];
             var js = [Graphics.TEXT_JUSTIFY_LEFT, Graphics.TEXT_JUSTIFY_CENTER, Graphics.TEXT_JUSTIFY_RIGHT];
-            dc.setColor(Theme.GREY_LIGHT, Graphics.COLOR_TRANSPARENT);
+            dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
             for (var i = 0; i < _gXl.size() && i < 3; i++) {
                 dc.drawText(xs[i], Theme.Y_XLABELS, Theme.FONT_LABEL, _gXl[i], js[i] | Graphics.TEXT_JUSTIFY_VCENTER);
             }
         }
 
-        dc.setColor(Theme.GREY_LIGHT, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
         dc.drawText(cx, Theme.Y_STATS, Theme.FONT_LABEL, _gStats,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
     }
@@ -659,7 +659,7 @@ class DetailPage {
                 dc.setColor(_gColor, Graphics.COLOR_TRANSPARENT);
                 dc.fillRectangle(x, bot - hgt, bw, hgt);
             }
-            dc.setColor(i == n - 1 ? Theme.WHITE : Theme.GREY_LIGHT, Graphics.COLOR_TRANSPARENT);
+            dc.setColor(i == n - 1 ? Theme.WHITE : Theme.GREY, Graphics.COLOR_TRANSPARENT);
             if (i < _gXl.size()) {
                 dc.drawText(x + bw / 2, Theme.Y_XLABELS, Theme.FONT_LABEL, _gXl[i],
                     Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
@@ -667,7 +667,7 @@ class DetailPage {
         }
 
         dc.setPenWidth(2);
-        dc.setColor(Theme.GREY_DARK, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(Theme.BLUE_DIM, Graphics.COLOR_TRANSPARENT);
         dc.drawLine(x0, bot, x0 + n * bw + (n - 1) * gap, bot);
         dc.setPenWidth(1);
     }
@@ -682,12 +682,12 @@ class DetailPage {
         var lo = Stats.minOf(_gVals);
         var hi = Stats.maxOf(_gVals);
         dc.setPenWidth(2);
-        dc.setColor(Theme.GREY_DARK, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(Theme.BLUE_DIM, Graphics.COLOR_TRANSPARENT);
         dc.drawLine(x0, bot, x1, bot);
         dc.drawLine(x0, top, x1, top);
         dc.setPenWidth(1);
         if (n < 2 || lo == null || hi == null) {
-            dc.setColor(Theme.GREY_LIGHT, Graphics.COLOR_TRANSPARENT);
+            dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
             dc.drawText(w / 2, (top + bot) / 2, Theme.FONT_VALUE, "No data",
                 Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
             return;
@@ -729,7 +729,7 @@ class DetailPage {
         }
 
         // axis values on the right
-        dc.setColor(Theme.GREY_LIGHT, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
         dc.drawText(x1 + 6, top, Theme.FONT_LABEL, _gTenths ? Stats.tenthsText(hi.toNumber()) : hi.toString(),
             Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
         dc.drawText(x1 + 6, bot, Theme.FONT_LABEL, _gTenths ? Stats.tenthsText(lo.toNumber()) : lo.toString(),
@@ -805,7 +805,7 @@ class DetailPage {
     }
 
     private function drawMoon(dc as Dc, x as Numeric, y as Numeric) as Void {
-        dc.setColor(Theme.NAVY_LIGHT, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
         dc.fillCircle(x, y, Theme.MOON_R);
         dc.setColor(Theme.BLACK, Graphics.COLOR_TRANSPARENT);
         dc.fillCircle(x + Theme.MOON_CUT_DX, y + Theme.MOON_CUT_DY, Theme.MOON_CUT_R);
@@ -837,7 +837,7 @@ class DetailPage {
         }
         var cx = w / 2;
         for (var i = 0; i < count; i++) {
-            dc.setColor(i == sub ? Theme.WHITE : Theme.GREY_MID, Graphics.COLOR_TRANSPARENT);
+            dc.setColor(i == sub ? Theme.WHITE : Theme.GREY, Graphics.COLOR_TRANSPARENT);
             dc.fillCircle(cx + (i - (count - 1) / 2.0) * Theme.DOT_PITCH, Theme.Y_DOTS, Theme.DOT_R);
         }
     }
@@ -845,7 +845,7 @@ class DetailPage {
     private function chevron(dc as Dc, x as Numeric, y as Numeric, right as Boolean) as Void {
         var d = right ? -Theme.CHEVRON_HALF_W : Theme.CHEVRON_HALF_W;
         dc.setPenWidth(3);
-        dc.setColor(Theme.GREY_MID, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
         dc.drawLine(x + d, y - Theme.CHEVRON_HALF_H, x - d, y);
         dc.drawLine(x - d, y, x + d, y + Theme.CHEVRON_HALF_H);
         dc.setPenWidth(1);
@@ -880,7 +880,7 @@ class DetailPage {
     }
 
     private function drawRow(dc as Dc, w as Number, y as Numeric, label as String, value as String) as Void {
-        dc.setColor(Theme.GREY_LIGHT, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
         dc.drawText(Theme.MARGIN, y, Theme.FONT_LABEL, label,
             Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
         dc.setColor(Theme.WHITE, Graphics.COLOR_TRANSPARENT);

@@ -68,9 +68,9 @@ function statsClockText(logger as Test.Logger) as Boolean {
 (:test)
 function statsGreyLevel(logger as Test.Logger) as Boolean {
     Test.assertEqual(Stats.greyLevel(0), 0x000000);
-    Test.assertEqual(Stats.greyLevel(50), 0x5D5D5D);
-    Test.assertEqual(Stats.greyLevel(100), 0xBBBBBB);
-    Test.assertEqual(Stats.greyLevel(150), 0xBBBBBB);     // clamped
+    Test.assertEqual(Stats.greyLevel(100), Theme.GREY);               // the top of the ramp is the one grey
+    Test.assertEqual(Stats.greyLevel(50), 0x4C4C4C);                  // half of 0x99, rounded down
+    Test.assertEqual(Stats.greyLevel(150), Theme.GREY);               // clamped
     Test.assertEqual(Stats.greyLevel(-5), 0x000000);
     return true;
 }

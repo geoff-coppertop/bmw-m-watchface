@@ -118,7 +118,7 @@ class BmwMWatchView extends WatchUi.WatchFace {
         } else if (kind == :steps) {
             drawWalker(dc, x, y, s, Theme.BLUE);
         } else if (kind == :active) {
-            drawBolt(dc, x, y, s, Theme.NAVY_LIGHT);
+            drawBolt(dc, x, y, s, Theme.WHITE);
         } else if (kind == :body) {
             var bb = bodyBatFrac();
             drawBodyBattery(dc, x, y, s, Theme.RED, bb);
@@ -150,7 +150,7 @@ class BmwMWatchView extends WatchUi.WatchFace {
             var outer = r - Theme.TICK_INSET;
             var inner = outer - (major ? r * Theme.TICK_MAJOR : r * Theme.TICK_MINOR);
             dc.setPenWidth(major ? 4 : 2);
-            dc.setColor(major ? Theme.WHITE : Theme.GREY_LIGHT, Graphics.COLOR_TRANSPARENT);
+            dc.setColor(major ? Theme.WHITE : Theme.GREY, Graphics.COLOR_TRANSPARENT);
             dc.drawLine(
                 cx + Math.sin(a) * inner, cy - Math.cos(a) * inner,
                 cx + Math.sin(a) * outer, cy - Math.cos(a) * outer);
@@ -165,7 +165,7 @@ class BmwMWatchView extends WatchUi.WatchFace {
     private function drawRing(dc as Dc, cx as Numeric, cy as Numeric, R as Numeric, pen as Number,
                               frac as Float, color as Number) as Void {
         dc.setPenWidth(pen);
-        dc.setColor(_asleep ? Theme.GREY_DARK : Theme.dimOf(color), Graphics.COLOR_TRANSPARENT);
+        dc.setColor(Theme.dimOf(color), Graphics.COLOR_TRANSPARENT);
         dc.drawArc(cx, cy, R, Graphics.ARC_COUNTER_CLOCKWISE, 240, 300);
         if (frac > 1.0) { frac = 1.0; }
         if (frac > 0.01 && !_asleep) {
@@ -193,13 +193,13 @@ class BmwMWatchView extends WatchUi.WatchFace {
         for (var i = 0; i < 3; i++) {
             var xt = stripeX[i];
             var pts = [[xt, 0], [xt + 36, 0], [xt + 36 - 57, 99], [xt - 57, 99]];
-            dc.setColor(_asleep ? Theme.GREY_MID : colors[i], Graphics.COLOR_TRANSPARENT);
+            dc.setColor(_asleep ? Theme.GREY : colors[i], Graphics.COLOR_TRANSPARENT);
             dc.fillPolygon(logoPoints(pts, left, top, k));
         }
 
         var m = [[132, 99], [189, 0], [227.5, 0], [227.5, 40], [252, 0], [290, 0], [290, 99],
                  [254.5, 99], [254.5, 58], [229.5, 99], [196.5, 99], [196.5, 58], [171.5, 99]];
-        dc.setColor(_asleep ? Theme.GREY_LIGHT : Theme.WHITE, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(_asleep ? Theme.GREY : Theme.WHITE, Graphics.COLOR_TRANSPARENT);
         dc.fillPolygon(logoPoints(m, left, top, k));
     }
 
@@ -234,7 +234,7 @@ class BmwMWatchView extends WatchUi.WatchFace {
         dc.fillCircle(cx, cy, R);
         dc.setColor(Theme.WHITE, Graphics.COLOR_TRANSPARENT);
         dc.fillCircle(cx, cy, ri);
-        dc.setColor(_asleep ? Theme.GREY_MID : Theme.BLUE, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(_asleep ? Theme.GREY : Theme.BLUE, Graphics.COLOR_TRANSPARENT);
         fillSector(dc, cx, cy, ri, 90, 180);
         fillSector(dc, cx, cy, ri, 270, 360);
     }
@@ -256,7 +256,7 @@ class BmwMWatchView extends WatchUi.WatchFace {
         var bat = System.getSystemStats().battery.toNumber();
         var txt = info.day_of_week.toString().toUpper() + " " + info.day.toString()
             + "  ·  " + weatherText() + "  ·  " + bat.toString() + "%";
-        dc.setColor(Theme.GREY_LIGHT, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
         dc.drawText(cx, y, Theme.FONT_LABEL, txt,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
     }
@@ -301,7 +301,7 @@ class BmwMWatchView extends WatchUi.WatchFace {
                                      color as Number, frac as Float) as Void {
         var rr = s * 0.62;
         dc.setPenWidth(Theme.glyphPen(s));
-        dc.setColor(Theme.GREY_MID, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(Theme.dimOf(color), Graphics.COLOR_TRANSPARENT);
         dc.drawCircle(x, y, rr);
         if (frac > 1.0) { frac = 1.0; }
         if (frac > 0.02) {
@@ -313,7 +313,7 @@ class BmwMWatchView extends WatchUi.WatchFace {
             }
         }
         // figure: head, torso, raised arms, legs
-        dc.setColor(_asleep ? Theme.GREY_MID : Theme.GREY_LIGHT, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
         dc.fillCircle(x, y - s * 0.24, s * 0.1);
         dc.drawLine(x, y - s * 0.1, x, y + s * 0.15);
         dc.drawLine(x, y - s * 0.02, x - s * 0.22, y - s * 0.17);

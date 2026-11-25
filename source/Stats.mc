@@ -70,10 +70,11 @@ module Stats {
         return (t < 0 ? "-" : "") + (a / 10).toString() + "." + (a % 10).toString();
     }
 
-    // A grey from black (0%) to Theme.GREY_LIGHT (100%) for a cloud cover percentage.
+    // A shade between black (0%) and Theme.GREY (100%) for a cloud cover percentage.
+    // It is a ramp of the one grey, not extra palette colours.
     function greyLevel(pct as Number) as Number {
         var p = pct < 0 ? 0 : (pct > 100 ? 100 : pct);
-        var v = p * 0xBB / 100;
+        var v = p * (Theme.GREY & 0xFF) / 100;
         return (v << 16) | (v << 8) | v;
     }
 

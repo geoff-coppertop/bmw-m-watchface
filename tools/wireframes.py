@@ -46,9 +46,9 @@ def col(name):
 
 BLUE, NAVY, RED = col("BLUE"), col("NAVY"), col("RED")
 BLUE_DIM, NAVY_DIM, RED_DIM = col("BLUE_DIM"), col("NAVY_DIM"), col("RED_DIM")
-NAVY_LIGHT = col("NAVY_LIGHT")
 WHITE, BLACK = col("WHITE"), col("BLACK")
-GREY_LIGHT, GREY_MID, GREY_DARK = col("GREY_LIGHT"), col("GREY_MID"), col("GREY_DARK")
+GREY = col("GREY")
+CHROME = "#555555"          # the mock watch bezel in the images; not part of the face
 GAP, TICK_INSET = num("GAP"), num("TICK_INSET")
 TICK_MAJOR, TICK_MINOR = num("TICK_MAJOR"), num("TICK_MINOR")
 MARGIN, ROW_PITCH = num("MARGIN"), num("ROW_PITCH")
@@ -133,7 +133,7 @@ class Svg:
 
 def screen(s, ox=0, oy=0):
     s.add('<g transform="translate(%d,%d)"><rect width="%d" height="%d" rx="70" fill="%s" '
-          'stroke="%s" stroke-width="3"/>' % (ox, oy, W, H, BLACK, GREY_MID))
+          'stroke="%s" stroke-width="3"/>' % (ox, oy, W, H, BLACK, CHROME))
 
 
 # ---------------------------------------------------------------- shared geometry
@@ -196,9 +196,9 @@ def dial(zones=False):
         outer = R - TICK_INSET
         inner = outer - (R * TICK_MAJOR if major else R * TICK_MINOR)
         s.line(pt(inner, 90 - i * 6), pt(outer, 90 - i * 6),
-               WHITE if major else GREY_LIGHT, 4 if major else 2)
+               WHITE if major else GREY, 4 if major else 2)
     draw_badge(s, CY - R * .4)
-    s.text(CX, CY - R * .58, "WED 25 &#160;&#183;&#160; 18&#176;C &#160;&#183;&#160; 82%", "label", GREY_LIGHT)
+    s.text(CX, CY - R * .58, "WED 25 &#160;&#183;&#160; 18&#176;C &#160;&#183;&#160; 82%", "label", GREY)
     draw_hand(s, (10 + 8 / 60) * 30, R * .56, R * .07, R * .1)
     draw_hand(s, (8 + 35 / 60) * 6, R * .88, R * .05, R * .12)
     a = math.radians(35 * 6)
@@ -245,12 +245,12 @@ def g_bolt(s, x, y, sz, c):
 
 def g_body(s, x, y, sz, c, frac):
     rr = sz * .62
-    s.add('<circle cx="%.1f" cy="%.1f" r="%.1f" fill="none" stroke="%s" stroke-width="%d"/>' % (x, y, rr, GREY_MID, glyph_pen(sz)))
+    s.add('<circle cx="%.1f" cy="%.1f" r="%.1f" fill="none" stroke="%s" stroke-width="%d"/>' % (x, y, rr, DIM.get(c, BLUE_DIM), glyph_pen(sz)))
     s.arc(x, y, rr, 90, 90 - 360 * frac, c, glyph_pen(sz), cw=True)
-    s.circle(x, y - sz * .24, sz * .1, GREY_LIGHT)
+    s.circle(x, y - sz * .24, sz * .1, GREY)
     for x1, y1, x2, y2 in [(0, -.1, 0, .15), (0, -.02, -.22, -.17), (0, -.02, .22, -.17),
                            (0, .15, -.14, .36), (0, .15, .14, .36)]:
-        s.line((x + x1 * sz, y + y1 * sz), (x + x2 * sz, y + y2 * sz), GREY_LIGHT, glyph_pen(sz))
+        s.line((x + x1 * sz, y + y1 * sz), (x + x2 * sz, y + y2 * sz), GREY, glyph_pen(sz))
 
 
 # ---------------------------------------------------------------- detail pages
@@ -263,20 +263,20 @@ def stripes(s, ox):
 
 def bar(s, ox, y, frac, c):
     s.add('<rect x="%.1f" y="%.1f" width="%d" height="%d" rx="%d" fill="%s"/>'
-          % (ox + CX - BAR_W / 2, y - BAR_H / 2, BAR_W, BAR_H, BAR_R, DIM.get(c, GREY_DARK)))
+          % (ox + CX - BAR_W / 2, y - BAR_H / 2, BAR_W, BAR_H, BAR_R, DIM.get(c, BLUE_DIM)))
     s.add('<rect x="%.1f" y="%.1f" width="%.1f" height="%d" rx="%d" fill="%s"/>'
           % (ox + CX - BAR_W / 2, y - BAR_H / 2, BAR_W * frac, BAR_H, BAR_R, c))
 
 
 def row(s, ox, y, label, value):
-    s.text(ox + MARGIN, y, label, "label", GREY_LIGHT, "start")
+    s.text(ox + MARGIN, y, label, "label", GREY, "start")
     s.text(ox + W - MARGIN, y, value, "value", WHITE, "end")
 
 
 def chevron(s, x, y, right):
     d = -CHEVRON_HALF_W if right else CHEVRON_HALF_W
     s.add('<polyline points="%.1f,%.1f %.1f,%.1f %.1f,%.1f" fill="none" stroke="%s" stroke-width="3"/>'
-          % (x + d, y - CHEVRON_HALF_H, x - d, y, x + d, y + CHEVRON_HALF_H, GREY_MID))
+          % (x + d, y - CHEVRON_HALF_H, x - d, y, x + d, y + CHEVRON_HALF_H, GREY))
 
 
 def nav(s, sub, from_activity, count=2):
@@ -286,7 +286,7 @@ def nav(s, sub, from_activity, count=2):
     if sub >= 1 or from_activity:
         chevron(s, NAV_CHEVRON_X, H / 2, False)
     for i in range(count):
-        s.circle(CX + (i - (count - 1) / 2.0) * DOT_PITCH, Y_DOTS, DOT_R, WHITE if i == sub else GREY_MID)
+        s.circle(CX + (i - (count - 1) / 2.0) * DOT_PITCH, Y_DOTS, DOT_R, WHITE if i == sub else GREY)
 
 
 def pages():
@@ -297,7 +297,7 @@ def pages():
     # 1: Activity page (tap the ring zone). Each row opens that metric.
     screen(s, 0)
     stripes(s, 0)
-    s.text(CX, Y_TITLE, "ACTIVITY", "title", GREY_LIGHT)
+    s.text(CX, Y_TITLE, "ACTIVITY", "title", GREY)
     items = [("Steps", "6214 / 10000", .62, BLUE, "walker"),
              ("Active minutes (week)", "68 / 150 min", .45, NAVY, "bolt"),
              ("Body battery", "78 / 100", .78, RED, "body")]
@@ -307,10 +307,10 @@ def pages():
         if g == "walker":
             g_walker(s, gx, y, ACT_GLYPH, BLUE)
         elif g == "bolt":
-            g_bolt(s, gx, y, ACT_GLYPH, NAVY_LIGHT)
+            g_bolt(s, gx, y, ACT_GLYPH, WHITE)
         else:
             g_body(s, gx, y, ACT_GLYPH, RED, frac)
-        s.text(MARGIN + ACT_TEXT_DX, y + ACT_LABEL_DY, name, "label", GREY_LIGHT, "start")
+        s.text(MARGIN + ACT_TEXT_DX, y + ACT_LABEL_DY, name, "label", GREY, "start")
         s.text(MARGIN + ACT_TEXT_DX, y + ACT_VALUE_DY, val, "value", WHITE, "start")
         bar(s, 0, y + ACT_BAR_DY, frac, c)
         chevron(s, W - ACT_CHEVRON_X, y + ACT_CHEVRON_DY, True)
@@ -320,9 +320,9 @@ def pages():
     screen(s, W + 40)
     stripes(s, 0)
     g_walker(s, CX, Y_GLYPH, GLYPH_BIG, BLUE)
-    s.text(CX, Y_TITLE_UNDER_GLYPH, "STEPS", "title", GREY_LIGHT)
+    s.text(CX, Y_TITLE_UNDER_GLYPH, "STEPS", "title", GREY)
     s.text(CX, Y_HERO, "6214", "hero", WHITE)
-    s.text(CX, Y_SUB, "of 10000 goal", "label", GREY_LIGHT)
+    s.text(CX, Y_SUB, "of 10000 goal", "label", GREY)
     bar(s, 0, Y_BAR, .62, BLUE)
     for i, (l, v) in enumerate([("Distance", "4.7 km"), ("Calories", "312 kcal"), ("Floors", "6 / 10")]):
         row(s, 0, Y_ROWS + i * ROW_PITCH, l, v)
@@ -332,17 +332,17 @@ def pages():
     # 3: weather page, opened from the dial
     screen(s, (W + 40) * 2)
     stripes(s, 0)
-    s.text(CX, Y_TITLE, "WEATHER", "title", GREY_LIGHT)
+    s.text(CX, Y_TITLE, "WEATHER", "title", GREY)
     s.text(CX, WEATHER_Y_HERO, "18", "hero", WHITE)
-    s.text(CX + 61 + WEATHER_UNIT_DX - 8, WEATHER_Y_UNIT, "&#176;C", "title", GREY_LIGHT, "start")
+    s.text(CX + 61 + WEATHER_UNIT_DX - 8, WEATHER_Y_UNIT, "&#176;C", "title", GREY, "start")
     s.text(CX, WEATHER_Y_COND, "Partly cloudy", "title", WHITE)
-    s.text(CX, WEATHER_Y_FEELS, "Feels like 16&#176;", "label", GREY_LIGHT)
+    s.text(CX, WEATHER_Y_FEELS, "Feels like 16&#176;", "label", GREY)
     for i, (l, v) in enumerate([("High / low", "20&#176; / 9&#176;"), ("Rain chance", "30%"),
                                 ("Wind", "12 km/h NW"), ("Humidity", "65%")]):
         row(s, 0, Y_WEATHER_ROWS + i * ROW_PITCH, l, v)
     for i, (t, v) in enumerate([("14:00", "19&#176;"), ("15:00", "20&#176;"), ("16:00", "19&#176;"), ("17:00", "17&#176;")]):
         x = W * (.2 + .2 * i)
-        s.text(x, Y_ROWS + ROW_PITCH, t, "label", GREY_LIGHT)
+        s.text(x, Y_ROWS + ROW_PITCH, t, "label", GREY)
         s.text(x, Y_ROWS + 2 * ROW_PITCH, v, "value", WHITE)
     nav(s, 0, False)
     s.add("</g>")
@@ -350,9 +350,9 @@ def pages():
     screen(s, (W + 40) * 3)
     stripes(s, 0)
     g_body(s, CX, Y_GLYPH, GLYPH_BIG, RED, .78)
-    s.text(CX, Y_TITLE_UNDER_GLYPH, "BODY BATTERY", "title", GREY_LIGHT)
+    s.text(CX, Y_TITLE_UNDER_GLYPH, "BODY BATTERY", "title", GREY)
     s.text(CX, Y_HERO, "78", "hero", WHITE)
-    s.text(CX, Y_SUB, "High energy", "label", GREY_LIGHT)
+    s.text(CX, Y_SUB, "High energy", "label", GREY)
     bar(s, 0, Y_BAR, .78, METRIC["body"])
     for i, (l, v) in enumerate([("24 h low / high", "34 / 88"), ("Stress", "34 &#183; Low"), ("Sleep score", "82")]):
         row(s, 0, Y_ROWS + i * ROW_PITCH, l, v)
@@ -373,13 +373,13 @@ def bar_chart(s, vals, goal, color, labels):
         if goal:
             th = goal * (CHART_BOTTOM - CHART_TOP) / maxv
             s.add('<rect x="%.1f" y="%.1f" width="%d" height="%.1f" fill="%s"/>'
-                  % (x, CHART_BOTTOM - th, BAR_COLS_W, th, DIM.get(color, GREY_DARK)))
+                  % (x, CHART_BOTTOM - th, BAR_COLS_W, th, DIM.get(color, BLUE_DIM)))
         if v is not None:
             hgt = v * (CHART_BOTTOM - CHART_TOP) / maxv
             s.add('<rect x="%.1f" y="%.1f" width="%d" height="%.1f" fill="%s"/>'
                   % (x, CHART_BOTTOM - hgt, BAR_COLS_W, hgt, color))
-        s.text(x + BAR_COLS_W / 2, Y_XLABELS, labels[i], "label", WHITE if i == n - 1 else GREY_LIGHT)
-    s.line((x0, CHART_BOTTOM), (x0 + total, CHART_BOTTOM), GREY_DARK, 2)
+        s.text(x + BAR_COLS_W / 2, Y_XLABELS, labels[i], "label", WHITE if i == n - 1 else GREY)
+    s.line((x0, CHART_BOTTOM), (x0 + total, CHART_BOTTOM), BLUE_DIM, 2)
 
 
 def find_sleep(hr, bb):
@@ -419,7 +419,7 @@ def find_sleep(hr, bb):
 
 
 def moon(s, x, y):
-    s.circle(x, y, MOON_R, NAVY_LIGHT)
+    s.circle(x, y, MOON_R, GREY)
     s.circle(x + MOON_CUT_DX, y + MOON_CUT_DY, MOON_CUT_R, BLACK)
 
 
@@ -434,14 +434,14 @@ def sun(s, x, y):
 def grey_level(pct):
     """Mirror of Stats.greyLevel()."""
     p = max(0, min(100, pct))
-    v = p * 0xBB // 100
+    v = p * int(GREY[3:5], 16) // 100
     return "#%02X%02X%02X" % (v, v, v)
 
 
 def line_chart(s, vals, color, xlabels, sleep=None, rain=None, cloud=None, frozen=None, tenths=False):
     x0, x1 = CHART_X, W - CHART_X
-    s.line((x0, CHART_BOTTOM), (x1, CHART_BOTTOM), GREY_DARK, 2)
-    s.line((x0, CHART_TOP), (x1, CHART_TOP), GREY_DARK, 2)
+    s.line((x0, CHART_BOTTOM), (x1, CHART_BOTTOM), BLUE_DIM, 2)
+    s.line((x0, CHART_TOP), (x1, CHART_TOP), BLUE_DIM, 2)
     good = [v for v in vals if v is not None]
     lo, hi = min(good), max(good)
     if hi == lo:
@@ -473,8 +473,8 @@ def line_chart(s, vals, color, xlabels, sleep=None, rain=None, cloud=None, froze
         if b_ < n_:
             sun(s, xb, CHART_TOP + MARK_DY)
     fmt = (lambda v: "%.1f" % (v / 10.0)) if tenths else str
-    s.text(x1 + 6, CHART_TOP, fmt(max(good)), "label", GREY_LIGHT, "start")
-    s.text(x1 + 6, CHART_BOTTOM, fmt(min(good)), "label", GREY_LIGHT, "start")
+    s.text(x1 + 6, CHART_TOP, fmt(max(good)), "label", GREY, "start")
+    s.text(x1 + 6, CHART_BOTTOM, fmt(min(good)), "label", GREY, "start")
     n = len(vals)
     prev = None
     for i, v in enumerate(vals):
@@ -489,17 +489,17 @@ def line_chart(s, vals, color, xlabels, sleep=None, rain=None, cloud=None, froze
     if prev:
         s.circle(prev[0], prev[1], LINE_END_R, color)
     for x, anchor, t in zip((x0, CX, x1), ("start", "middle", "end"), xlabels):
-        s.text(x, Y_XLABELS, t, "label", GREY_LIGHT, anchor)
+        s.text(x, Y_XLABELS, t, "label", GREY, anchor)
 
 
 def graph_page(s, ox, oy, title, stats, draw, caption=None, sub=1, count=2):
     screen(s, ox, oy)
     stripes(s, 0)
-    s.text(CX, Y_TITLE, title, "title", GREY_LIGHT)
+    s.text(CX, Y_TITLE, title, "title", GREY)
     if caption:
-        s.text(CX, Y_CAPTION, caption, "label", GREY_LIGHT)
+        s.text(CX, Y_CAPTION, caption, "label", GREY)
     draw()
-    s.text(CX, Y_STATS, stats, "label", GREY_LIGHT)
+    s.text(CX, Y_STATS, stats, "label", GREY)
     nav(s, sub, False, count)
     s.add("</g>")
 

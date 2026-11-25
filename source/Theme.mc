@@ -5,26 +5,24 @@ import Toybox.Lang;
 // detail pages both read from here, so changing a value changes everything.
 module Theme {
 
-    // ---- palette: the BMW M logo ------------------------------------------
+    // ---- palette ------------------------------------------------------------
+    // Eight colours plus black, and nothing else is ever drawn:
+    //   the three BMW M logo colours, a muted (dark) tint of each, white, and one grey.
+    // Black is the AMOLED background. (The cloud strip shades between black and the
+    // grey; that is a ramp of the one grey, not another colour.)
     const BLUE = 0x0066B1;
     const NAVY = 0x003C78;
     const RED  = 0xE32618;
 
-    // Dark tints of each, used for empty ring and bar tracks.
+    // Muted tints of each: empty tracks, the sleep band, axes.
     const BLUE_DIM = 0x00203A;
     const NAVY_DIM = 0x00101F;
     const RED_DIM  = 0x3A0C08;
 
-    // The one deliberate exception: NAVY is nearly invisible as a small glyph on
-    // black, so the active-minutes bolt uses this lighter blue instead.
-    const NAVY_LIGHT = 0x4A90D9;
-
-    // ---- neutrals: three greys plus white and black -----------------------
-    const WHITE      = 0xFFFFFF;   // primary text, the M letter
-    const GREY_LIGHT = 0xBBBBBB;   // secondary text, labels, glyph strokes
-    const GREY_MID   = 0x555555;   // low-power (sleep) accents, outlines
-    const GREY_DARK  = 0x2A2A2A;   // neutral empty track
-    const BLACK      = 0x000000;
+    const WHITE = 0xFFFFFF;   // primary text, the M letter, the active page dot
+    const GREY  = 0x999999;   // secondary text, labels, glyph strokes, chevrons,
+                              // inactive dots, low-power (sleep) accents
+    const BLACK = 0x000000;
 
     // ---- font roles (Garmin system fonts) ---------------------------------
     const FONT_LABEL = Graphics.FONT_XTINY;        // labels, date row
@@ -129,11 +127,11 @@ module Theme {
         return WHITE;
     }
 
-    // The empty-track tint that goes with a bar colour.
+    // The muted tint that goes with a bar colour (its empty track).
     function dimOf(color as Number) as Number {
         if (color == BLUE) { return BLUE_DIM; }
         if (color == NAVY) { return NAVY_DIM; }
         if (color == RED) { return RED_DIM; }
-        return GREY_DARK;
+        return BLUE_DIM;     // anything else: the muted blue, so tracks stay inside the palette
     }
 }
