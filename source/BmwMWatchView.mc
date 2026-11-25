@@ -136,7 +136,7 @@ class BmwMWatchView extends WatchUi.WatchFace {
             var d = Math.sqrt(dx * dx + dy * dy);
             var ringR = ringOuterR(r);
             var ang = Math.atan2(dx.abs(), dy) * 180.0 / Math.PI;   // from straight down
-            if (ang < 60 && d <= ringR + 14 && d >= ringR - 2 * (ringWidth(r) + 2) - 20) {
+            if (ang < 42 && d <= ringR + 14 && d >= ringR - 2 * (ringWidth(r) + 2) - 20) {
                 return :rings;
             }
         }
@@ -196,16 +196,19 @@ class BmwMWatchView extends WatchUi.WatchFace {
         dc.setPenWidth(1);
     }
 
-    // Sweep runs left to right along the bottom (215 to 325 degrees).
+    // The track is a 60 degree wedge centred on 6 o'clock. Its ends are straight
+    // lines out from the roundel centre at 30 degrees either side of straight
+    // down (240 and 300), the same lean as the M badge stripes, and they point at
+    // the 7 and 5 o'clock ticks. The fill runs left to right from the 240 end.
     private function drawRing(dc as Dc, cx as Numeric, cy as Numeric, R as Numeric, pen as Number,
                               frac as Float, color as Number, dim as Number) as Void {
         dc.setPenWidth(pen);
         dc.setColor(_asleep ? TRACK_GREY : dim, Graphics.COLOR_TRANSPARENT);
-        dc.drawArc(cx, cy, R, Graphics.ARC_COUNTER_CLOCKWISE, 215, 325);
+        dc.drawArc(cx, cy, R, Graphics.ARC_COUNTER_CLOCKWISE, 240, 300);
         if (frac > 1.0) { frac = 1.0; }
         if (frac > 0.01 && !_asleep) {
             dc.setColor(color, Graphics.COLOR_TRANSPARENT);
-            dc.drawArc(cx, cy, R, Graphics.ARC_COUNTER_CLOCKWISE, 215, 215 + 110 * frac);
+            dc.drawArc(cx, cy, R, Graphics.ARC_COUNTER_CLOCKWISE, 240, 240 + 60 * frac);
         }
         dc.setPenWidth(1);
     }
