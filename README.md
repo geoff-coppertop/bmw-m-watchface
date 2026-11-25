@@ -7,9 +7,9 @@ An analog BMW M Motorsport watch face for Garmin Connect IQ. Target device:
 
 ![Watch face wireframe](docs/wireframe.png)
 
-Tap and hold zones: yellow is the temperature (opens weather), purple is the date and
-battery (a card, no page), red is the roundel (opens heart rate) and blue is the ring band
-(opens Activity). A hold on any of them shows its quick card.
+Touch zones on the dial: yellow is the temperature (tap opens weather), red is the roundel (tap
+opens heart rate) and blue is the ring band (tap opens Activity). Purple is the date and the
+battery: they have no page, so a tap does nothing. A hold on any of the five shows its quick card.
 
 ![Tap zones](docs/tap-zones.png)
 
@@ -39,6 +39,10 @@ simulator screenshots. They are generated from `source/Theme.mc` by
 - Three readouts on one arc, the same distance from the centre as the middle ring: the
   temperature at 12 o'clock, the date at 3 o'clock, and the watch battery at 9 o'clock as a
   simple icon that empties as the battery drains (red below 20%).
+- One touch rule. A **tap goes deeper**: it opens a page (only for the temperature, roundel and
+  rings, which have one) and moves between pages. A **hold peeks**: it shows a quick card for any
+  of the five dial zones and never opens a page. A tap behaves the same whether or not a card is
+  showing: the card is dismissed and the tap then does its normal job.
 - Quick cards on touch and hold: hold the temperature, date, battery, roundel or rings and a
   small card appears over the dial with more detail (weather and feels-like, the date in full,
   battery percentage and days left, heart rate with resting rate and stress, the three activity
@@ -130,7 +134,7 @@ Different renderers use different fonts, so text widths vary slightly.
 
 The logic that does not need the watch is split into small modules (`Geometry`,
 `PageNav`, `SleepInference`, `Stats`, `Theme`) and covered by Connect IQ unit tests in
-`source/tests/`: 45 tests for the sleep inference and schedule fallback, page
+`source/tests/`: 48 tests for the sleep inference and schedule fallback, page
 navigation, tap hit-testing, the statistics and bucketing helpers, and the theme
 mappings. Drawing code and anything that reads live watch data is not tested.
 

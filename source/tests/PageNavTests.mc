@@ -134,3 +134,36 @@ function navOtherPagesStopAtTheGraph(logger as Test.Logger) as Boolean {
     Test.assertEqual(nav.sub, 1);
     return true;
 }
+
+// The touch rule: a tap goes deeper (opens a page, only where one exists); a hold peeks
+// (a quick card, for every zone, never a page).
+
+(:test)
+function touchTapOpensExactlyTheZonesThatHaveAPage(logger as Test.Logger) as Boolean {
+    Test.assert(PageNav.tapOpens(:weather));
+    Test.assert(PageNav.tapOpens(:hr));
+    Test.assert(PageNav.tapOpens(:activity));
+    Test.assert(!PageNav.tapOpens(:date));
+    Test.assert(!PageNav.tapOpens(:battery));
+    return true;
+}
+
+(:test)
+function touchHoldShowsACardForEveryZone(logger as Test.Logger) as Boolean {
+    var zones = [:weather, :hr, :activity, :date, :battery];
+    for (var i = 0; i < zones.size(); i++) {
+        Test.assert(PageNav.holdShowsCard(zones[i]));
+    }
+    return true;
+}
+
+(:test)
+function touchEveryZoneThatOpensAPageHasPages(logger as Test.Logger) as Boolean {
+    var zones = [:weather, :hr, :activity, :date, :battery];
+    for (var i = 0; i < zones.size(); i++) {
+        if (PageNav.tapOpens(zones[i])) {
+            Test.assert(PageNav.subCount(zones[i]) >= 1);
+        }
+    }
+    return true;
+}

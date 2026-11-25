@@ -19,6 +19,17 @@ class PageNav {
         return kind == :body ? 4 : 2;
     }
 
+    // The touch rule, in one place:
+    //   a TAP goes deeper: it opens a page, and only for a zone that has a page;
+    //   a HOLD peeks: it shows a quick card, for every zone, and never opens a page.
+    static function tapOpens(zone as Symbol) as Boolean {
+        return zone == :weather || zone == :hr || zone == :activity;
+    }
+
+    static function holdShowsCard(zone as Symbol) as Boolean {
+        return zone == :weather || zone == :hr || zone == :activity || zone == :date || zone == :battery;
+    }
+
     function isOpen() as Boolean {
         return page != null;
     }

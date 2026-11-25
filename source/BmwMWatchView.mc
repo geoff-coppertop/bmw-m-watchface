@@ -80,22 +80,20 @@ class BmwMWatchView extends WatchUi.WatchFace {
 
     // ---- taps -------------------------------------------------------------
 
-    // A tap. Returns true if it was used. A showing card is dismissed first. On the dial a
-    // tap on a zone opens that zone's page (the date and battery have no page, so they show
-    // their card); while a page is open the navigation rules live in PageNav.
+    // A tap goes deeper (see PageNav.tapOpens): on the dial it opens that zone's page, if it
+    // has one, and while a page is open it moves between pages. A tap never shows a card. If a
+    // card is up, any touch dismisses it first and the tap then does what it normally does, so
+    // a tap behaves the same whether or not a card was showing. Returns true if it was used.
     function handleTap(x as Number, y as Number) as Boolean {
+        var dismissed = false;
         if (_card != null) {
             closeCard();
-            return true;
+            dismissed = true;
         }
         if (!_nav.isOpen()) {
             var hit = Geometry.hitTest(x, y, _w, _h, _r);
-            if (hit == null) {
-                return false;
-            }
-            if (hit == :date || hit == :battery) {
-                showCard(hit);
-                return true;
+            if (hit == null || !PageNav.tapOpens(hit)) {
+                return dismissed;       // the date and battery have no page: a tap does nothing
             }
             _nav.open(hit);
             restartTimer();
@@ -112,13 +110,14 @@ class BmwMWatchView extends WatchUi.WatchFace {
         return true;
     }
 
-    // A touch and hold: a quick card for the element held. Not used while a page is open.
+    // A hold peeks (see PageNav.holdShowsCard): a quick card for the element held, never a page.
+    // Not used while a page is open.
     function handleHold(x as Number, y as Number) as Boolean {
         if (_nav.isOpen()) {
             return false;
         }
         var hit = Geometry.hitTest(x, y, _w, _h, _r);
-        if (hit == null) {
+        if (hit == null || !PageNav.holdShowsCard(hit)) {
             return false;
         }
         showCard(hit);
