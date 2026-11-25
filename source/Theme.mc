@@ -77,6 +77,15 @@ module Theme {
         return p < 2 ? 2 : p;
     }
 
+    // Which colour each metric uses everywhere: dial rings, Activity page bars,
+    // detail page bars and graphs.
+    function metricColor(kind as Symbol) as Number {
+        if (kind == :steps) { return BLUE; }
+        if (kind == :active) { return NAVY; }
+        if (kind == :body || kind == :hr) { return RED; }
+        return WHITE;
+    }
+
     // The empty-track tint that goes with a bar colour.
     function dimOf(color as Number) as Number {
         if (color == BLUE) { return BLUE_DIM; }

@@ -39,7 +39,8 @@ simulator screenshots. They are generated from `source/Theme.mc` by
   - top row: weather (conditions, feels-like, high/low, rain chance, wind,
     humidity, next four hours)
 - Graph pages. Every metric page has a graph page behind it: steps and active
-  minutes for the last 7 days (bars, with the goal line), body battery over 24 hours,
+  minutes for the last 7 days (each day is a small gauge: dark track up to the goal,
+  bright fill to the value, in the same colours as the dial rings), body battery over 24 hours,
   heart rate over 24 hours, and a 12 hour temperature forecast for weather.
 - Sleep on the body battery and heart rate graphs: a faint band with a moon at
   bedtime and a sun at wake time, and a caption saying where it came from. **This is

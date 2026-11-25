@@ -63,6 +63,8 @@ Y_CAPTION = num("Y_CAPTION")
 ACTIVITY_ROW_TOP, ACTIVITY_ROW_PITCH = num("ACTIVITY_ROW_TOP"), num("ACTIVITY_ROW_PITCH")
 BAR_COLS_W, BAR_COLS_GAP = num("BAR_COLS_W"), num("BAR_COLS_GAP")
 DIM = {BLUE: BLUE_DIM, NAVY: NAVY_DIM, RED: RED_DIM}
+# Theme.metricColor(): one colour per metric everywhere
+METRIC = {"steps": BLUE, "active": NAVY, "body": RED, "hr": RED}
 
 # approximate pixel heights of the Garmin system fonts, per Theme font role
 FONT_PX = {"label": 18, "value": 22, "title": 24, "hero": 96}
@@ -172,7 +174,7 @@ def dial(zones=False):
     s.add('<rect x="-30" y="-30" width="%d" height="%d" fill="#1b1b1b"/>' % (W + 60, H + 60))
     screen(s)
     # ring track + fill: a 60 degree wedge, 240..300, fill runs left to right
-    for i, (c, frac) in enumerate([(BLUE, .62), (NAVY, .45), (RED, .78)]):
+    for i, (c, frac) in enumerate([(METRIC["steps"], .62), (METRIC["active"], .45), (METRIC["body"], .78)]):
         rad = RING_OUT - i * PITCH
         s.arc(CX, CY, rad, 240, 300, DIM[c], RING_W)
         s.arc(CX, CY, rad, 240, 240 + 60 * frac, c, RING_W)
@@ -335,24 +337,23 @@ def pages():
 
 # ---------------------------------------------------------------- graph pages
 def bar_chart(s, vals, goal, color, labels):
+    """Each day is a vertical gauge: dim track up to the goal, bright fill to the value."""
     n = len(vals)
     total = n * BAR_COLS_W + (n - 1) * BAR_COLS_GAP
     x0 = W / 2 - total / 2
     maxv = max([goal or 0] + [v for v in vals if v is not None]) or 1
     for i, v in enumerate(vals):
         x = x0 + i * (BAR_COLS_W + BAR_COLS_GAP)
+        if goal:
+            th = goal * (CHART_BOTTOM - CHART_TOP) / maxv
+            s.add('<rect x="%.1f" y="%.1f" width="%d" height="%.1f" fill="%s"/>'
+                  % (x, CHART_BOTTOM - th, BAR_COLS_W, th, DIM.get(color, GREY_DARK)))
         if v is not None:
             hgt = v * (CHART_BOTTOM - CHART_TOP) / maxv
             s.add('<rect x="%.1f" y="%.1f" width="%d" height="%.1f" fill="%s"/>'
                   % (x, CHART_BOTTOM - hgt, BAR_COLS_W, hgt, color))
         s.text(x + BAR_COLS_W / 2, Y_XLABELS, labels[i], "label", WHITE if i == n - 1 else GREY_LIGHT)
     s.line((x0, CHART_BOTTOM), (x0 + total, CHART_BOTTOM), GREY_DARK, 2)
-    if goal:
-        gy = CHART_BOTTOM - goal * (CHART_BOTTOM - CHART_TOP) / maxv
-        gx = x0
-        while gx < x0 + total:
-            s.line((gx, gy), (gx + 7, gy), GREY_LIGHT, 2)
-            gx += 12
 
 
 def find_sleep(hr, bb):
@@ -476,13 +477,13 @@ def graphs():
     temp = [18, 19, 20, 20, 19, 18, 17, 15, 14, 13, 12, 11]
 
     graph_page(s, 0, 0, "STEPS · 7 DAYS", "Avg 6284   Best 9400   Goal 10000",
-               lambda: bar_chart(s, steps, 10000, BLUE, days))
+               lambda: bar_chart(s, steps, 10000, METRIC["steps"], days))
     graph_page(s, px, 0, "ACTIVE MIN · 7 DAYS", "Avg 22   Best 41   Daily target 21",
-               lambda: bar_chart(s, active, 21, NAVY, days))
+               lambda: bar_chart(s, active, 21, METRIC["active"], days))
     graph_page(s, px * 2, 0, "BODY BATTERY · 24 H", "Low %d   High %d" % (min(body), max(body)),
-               lambda: line_chart(s, body, RED, ["24h ago", "12h", "now"], sleep), note)
+               lambda: line_chart(s, body, METRIC["body"], ["24h ago", "12h", "now"], sleep), note)
     graph_page(s, 0, py, "HEART RATE · 24 H", "Min %d   Max %d" % (min(hr), max(hr)),
-               lambda: line_chart(s, hr, RED, ["24h ago", "12h", "now"], sleep), note)
+               lambda: line_chart(s, hr, METRIC["hr"], ["24h ago", "12h", "now"], sleep), note)
     graph_page(s, px, py, "TEMPERATURE · 12 H", "Low 11&#176;   High 20&#176;",
                lambda: line_chart(s, temp, WHITE, ["14:00", "20:00", "01:00"]))
     return s.doc(tw + 40, th + 40, "-20 -20 %d %d" % (tw + 40, th + 40))

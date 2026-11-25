@@ -102,7 +102,7 @@ class DetailPage {
 
         } else if (kind == :steps) {
             title = "STEPS";
-            barColor = Theme.BLUE;
+            barColor = Theme.metricColor(kind);
             var info = ActivityMonitor.getInfo();
             if (info.steps != null) {
                 big = info.steps.toString();
@@ -128,7 +128,7 @@ class DetailPage {
 
         } else if (kind == :active) {
             title = "ACTIVE MINUTES";
-            barColor = Theme.NAVY;
+            barColor = Theme.metricColor(kind);
             var info = ActivityMonitor.getInfo();
             var wk = info.activeMinutesWeek;
             var day = info.activeMinutesDay;
@@ -164,7 +164,7 @@ class DetailPage {
             if (bb != null) {
                 big = bb.toString();
                 frac = bb / 100.0;
-                barColor = Theme.RED;
+                barColor = Theme.metricColor(kind);
                 if (bb >= 76) { sub = "High energy"; }
                 else if (bb >= 51) { sub = "Good"; }
                 else if (bb >= 26) { sub = "Moderate"; }
@@ -241,7 +241,7 @@ class DetailPage {
         var names = ["Steps", "Active minutes (week)", "Body battery"];
         var vals = [stepsTxt, actTxt, bbTxt];
         var fracs = [stepsFrac, actFrac, bbFrac];
-        var colors = [Theme.BLUE, Theme.NAVY, Theme.RED];
+        var colors = [Theme.metricColor(:steps), Theme.metricColor(:active), Theme.metricColor(:body)];
 
         for (var i = 0; i < 3; i++) {
             var y = Theme.ACTIVITY_ROW_TOP + 50 + i * Theme.ACTIVITY_ROW_PITCH;
@@ -454,12 +454,12 @@ class DetailPage {
             }
             if (kind == :steps) {
                 _gTitle = "STEPS · 7 DAYS";
-                _gColor = Theme.BLUE;
+                _gColor = Theme.metricColor(kind);
                 vals.add(info.steps);
                 if (info.stepGoal != null) { _gGoal = info.stepGoal; }
             } else {
                 _gTitle = "ACTIVE MIN · 7 DAYS";
-                _gColor = Theme.NAVY;
+                _gColor = Theme.metricColor(kind);
                 vals.add(info.activeMinutesDay == null ? null : info.activeMinutesDay.total);
                 if (info.activeMinutesWeekGoal != null) { _gGoal = info.activeMinutesWeekGoal / 7; }
             }
@@ -469,7 +469,7 @@ class DetailPage {
 
         } else if (kind == :body) {
             _gTitle = "BODY BATTERY · 24 H";
-            _gColor = Theme.RED;
+            _gColor = Theme.metricColor(kind);
             vals = bucketSeries(86400, true);
             findSleep(bucketSeries(86400, false), vals);
             _gXl = ["24h ago", "12h", "now"];
@@ -477,7 +477,7 @@ class DetailPage {
 
         } else if (kind == :hr) {
             _gTitle = "HEART RATE · 24 H";
-            _gColor = Theme.RED;
+            _gColor = Theme.metricColor(kind);
             vals = bucketSeries(86400, false);
             findSleep(vals, bucketSeries(86400, true));
             _gXl = ["24h ago", "12h", "now"];
@@ -485,7 +485,7 @@ class DetailPage {
 
         } else {
             _gTitle = "TEMPERATURE · 12 H";
-            _gColor = Theme.WHITE;
+            _gColor = Theme.metricColor(kind);
             var fc = null;
             if (Toybox has :Weather) { fc = Weather.getHourlyForecast(); }
             var n = (fc == null) ? 0 : fc.size();
@@ -562,6 +562,12 @@ class DetailPage {
         for (var i = 0; i < n; i++) {
             var x = x0 + i * (bw + gap);
             var v = _gVals[i];
+            if (_gGoal != null) {
+                // empty track up to the goal, in the same dark tint the dial gauges use
+                var th = _gGoal.toFloat() * (bot - top) / maxV;
+                dc.setColor(Theme.dimOf(_gColor), Graphics.COLOR_TRANSPARENT);
+                dc.fillRectangle(x, bot - th, bw, th);
+            }
             if (v != null) {
                 var hgt = v.toFloat() * (bot - top) / maxV;
                 dc.setColor(_gColor, Graphics.COLOR_TRANSPARENT);
@@ -577,13 +583,6 @@ class DetailPage {
         dc.setPenWidth(2);
         dc.setColor(Theme.GREY_DARK, Graphics.COLOR_TRANSPARENT);
         dc.drawLine(x0, bot, x0 + n * bw + (n - 1) * gap, bot);
-        if (_gGoal != null) {
-            var gy = bot - _gGoal.toFloat() * (bot - top) / maxV;     // dashed goal line
-            dc.setColor(Theme.GREY_LIGHT, Graphics.COLOR_TRANSPARENT);
-            for (var gx = x0; gx < x0 + n * bw + (n - 1) * gap; gx += 12) {
-                dc.drawLine(gx, gy, gx + 7, gy);
-            }
-        }
         dc.setPenWidth(1);
     }
 

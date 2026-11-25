@@ -219,9 +219,9 @@ class BmwMWatchView extends WatchUi.WatchFace {
         var w = ringWidth(r);
         var pitch = w + Theme.GAP;
         var ringR = ringOuterR(r);
-        drawRing(dc, cx, cy, ringR,             w, stepsFrac(),   Theme.BLUE, Theme.BLUE_DIM);
-        drawRing(dc, cx, cy, ringR - pitch,     w, activeFrac(),  Theme.NAVY,  Theme.NAVY_DIM);
-        drawRing(dc, cx, cy, ringR - 2 * pitch, w, bodyBatFrac(), Theme.RED,        Theme.RED_DIM);
+        drawRing(dc, cx, cy, ringR,             w, stepsFrac(),   Theme.metricColor(:steps));
+        drawRing(dc, cx, cy, ringR - pitch,     w, activeFrac(),  Theme.metricColor(:active));
+        drawRing(dc, cx, cy, ringR - 2 * pitch, w, bodyBatFrac(), Theme.metricColor(:body));
 
         // minute / hour ticks
         for (var i = 0; i < 60; i++) {
@@ -243,9 +243,9 @@ class BmwMWatchView extends WatchUi.WatchFace {
     // down (240 and 300), the same lean as the M badge stripes, and they point at
     // the 7 and 5 o'clock ticks. The fill runs left to right from the 240 end.
     private function drawRing(dc as Dc, cx as Numeric, cy as Numeric, R as Numeric, pen as Number,
-                              frac as Float, color as Number, dim as Number) as Void {
+                              frac as Float, color as Number) as Void {
         dc.setPenWidth(pen);
-        dc.setColor(_asleep ? Theme.GREY_DARK : dim, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(_asleep ? Theme.GREY_DARK : Theme.dimOf(color), Graphics.COLOR_TRANSPARENT);
         dc.drawArc(cx, cy, R, Graphics.ARC_COUNTER_CLOCKWISE, 240, 300);
         if (frac > 1.0) { frac = 1.0; }
         if (frac > 0.01 && !_asleep) {
