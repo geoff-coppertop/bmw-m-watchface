@@ -227,6 +227,106 @@ class DetailPage {
         return null;
     }
 
+    // ---- quick cards (touch and hold on the dial) ------------------------------
+    // A small card over the dial with a little more detail than the face shows. It is
+    // not a page: it disappears by itself after a few seconds, or on the next tap.
+
+    function drawCard(dc as Dc, kind as Symbol) as Void {
+        var w = dc.getWidth();
+        var cx = w / 2;
+        var rows = (kind == :activity);
+        var ch = rows ? Theme.CARD_H_ROWS : Theme.CARD_H;
+        var left = cx - Theme.CARD_W / 2;
+        var top = dc.getHeight() / 2 - ch / 2;
+
+        dc.setColor(Theme.BLACK, Graphics.COLOR_TRANSPARENT);
+        dc.fillRoundedRectangle(left, top, Theme.CARD_W, ch, Theme.CARD_R);
+        dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
+        dc.setPenWidth(2);
+        dc.drawRoundedRectangle(left, top, Theme.CARD_W, ch, Theme.CARD_R);
+        dc.setPenWidth(1);
+
+        var title = "";
+        var big = "--";
+        var detail = "";
+        var j = Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER;
+
+        if (kind == :battery) {
+            var st = System.getSystemStats();
+            title = "WATCH BATTERY";
+            big = st.battery.toNumber().toString() + "%";
+            detail = Stats.daysText(st.batteryInDays) + " left" + (st.charging ? " · Charging" : "");
+
+        } else if (kind == :date) {
+            var info = Gregorian.info(Time.now(), Time.FORMAT_LONG);
+            title = "TODAY";
+            big = info.day_of_week.toString();
+            detail = info.day.toString() + " " + info.month.toString() + " " + info.year.toString();
+
+        } else if (kind == :weather) {
+            title = "WEATHER";
+            var cond = (Toybox has :Weather) ? Weather.getCurrentConditions() : null;
+            if (cond != null && cond.temperature != null) {
+                big = tempNum(cond.temperature).toString() + tempUnit();
+                detail = conditionText(cond.condition);
+                if (cond.feelsLikeTemperature != null) {
+                    detail += (detail.length() > 0 ? " · " : "") + "feels " + tempNum(cond.feelsLikeTemperature).toString() + "°";
+                }
+            } else {
+                detail = "No weather data";
+            }
+
+        } else if (kind == :hr) {
+            title = "HEART RATE";
+            var act = Activity.getActivityInfo();
+            if (act != null && act.currentHeartRate != null) { big = act.currentHeartRate.toString() + " bpm"; }
+            var prof = UserProfile.getProfile();
+            var st2 = ActivityMonitor.getInfo().stressScore;
+            detail = "Resting " + ((prof != null && prof.restingHeartRate != null) ? prof.restingHeartRate.toString() : "--")
+                + " · Stress " + (st2 == null ? "--" : st2.toString());
+
+        } else {
+            // :activity, the rings: three rows
+            title = "ACTIVITY";
+            var info2 = ActivityMonitor.getInfo();
+            var stepsTxt = (info2.steps == null) ? "--" : info2.steps.toString()
+                + ((info2.stepGoal != null) ? " / " + info2.stepGoal.toString() : "");
+            var wk = info2.activeMinutesWeek;
+            var actTxt = (wk == null) ? "--" : wk.total.toString()
+                + ((info2.activeMinutesWeekGoal != null) ? " / " + info2.activeMinutesWeekGoal.toString() : "") + " min";
+            var bb = bodyBatteryNow();
+            var names = ["Steps", "Active (week)", "Body battery"];
+            var vals = [stepsTxt, actTxt, bb == null ? "--" : bb.toString()];
+            for (var i = 0; i < 3; i++) {
+                var y = top + Theme.CARD_ROW_Y + i * Theme.CARD_ROW_PITCH;
+                dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
+                dc.drawText(left + Theme.CARD_PAD, y, Theme.FONT_LABEL, names[i],
+                    Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
+                dc.setColor(Theme.WHITE, Graphics.COLOR_TRANSPARENT);
+                dc.drawText(left + Theme.CARD_W - Theme.CARD_PAD, y, Theme.FONT_VALUE, vals[i],
+                    Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER);
+            }
+        }
+
+        dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(cx, top + Theme.CARD_TITLE_Y, Theme.FONT_LABEL, title, j);
+        if (!rows) {
+            dc.setColor(Theme.WHITE, Graphics.COLOR_TRANSPARENT);
+            dc.drawText(cx, top + Theme.CARD_BIG_Y, Theme.FONT_TITLE, big, j);
+            dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
+            dc.drawText(cx, top + Theme.CARD_DETAIL_Y, Theme.FONT_LABEL, detail, j);
+        }
+    }
+
+    private function bodyBatteryNow() as Number or Null {
+        if ((Toybox has :SensorHistory) && (SensorHistory has :getBodyBatteryHistory)) {
+            var it = SensorHistory.getBodyBatteryHistory({ :period => 1 });
+            var smp = (it != null) ? it.next() : null;
+            if (smp != null && smp.data != null) { return smp.data.toNumber(); }
+        }
+        return null;
+    }
+
     // ---- Activity page (tap the ring zone on the dial) ---------------------
     // Each row opens that metric's page; the chevrons show that they are tappable.
 

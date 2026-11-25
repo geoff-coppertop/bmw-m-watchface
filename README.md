@@ -7,14 +7,19 @@ An analog BMW M Motorsport watch face for Garmin Connect IQ. Target device:
 
 ![Watch face wireframe](docs/wireframe.png)
 
-Tap zones: yellow opens weather, red opens heart rate, blue opens the
-Activity page.
+Tap and hold zones: yellow is the temperature (opens weather), purple is the date and
+battery (a card, no page), red is the roundel (opens heart rate) and blue is the ring band
+(opens Activity). A hold on any of them shows its quick card.
 
 ![Tap zones](docs/tap-zones.png)
 
 Tap pages (Activity, a metric page, weather):
 
 ![Tap pages](docs/pages.png)
+
+Quick cards, shown on touch and hold (battery, weather and the three activity figures):
+
+![Quick cards](docs/cards.png)
 
 Graph pages (the second page behind each detail page):
 
@@ -31,8 +36,13 @@ simulator screenshots. They are generated from `source/Theme.mc` by
 - M badge at 12 o'clock, drawn from the flat M logo's geometry.
 - Three activity rings inside the lower dial, in the badge colours:
   steps (blue), weekly active minutes (navy) and body battery (red).
-- Date window at 3 o'clock and watch battery window (BATT) at 9 o'clock; the current
-  temperature sits alone above the badge.
+- Date window at 3 o'clock. The watch battery is a simple icon at 9 o'clock that empties as
+  the battery drains (red below 20%). The temperature sits at 12 o'clock, the same distance
+  from the centre as the middle ring is at 6 o'clock.
+- Quick cards on touch and hold: hold the temperature, date, battery, roundel or rings and a
+  small card appears over the dial with more detail (weather and feels-like, the date in full,
+  battery percentage and days left, heart rate with resting rate and stress, the three activity
+  figures). It disappears after four seconds or on the next tap. It is not a page.
 - Tap pages. Tap a zone on the dial to open a full-screen page:
   - ring band: the **Activity** page, with steps, active minutes and body battery
     as rows. Tap a row to open that metric's page.
@@ -120,7 +130,7 @@ Different renderers use different fonts, so text widths vary slightly.
 
 The logic that does not need the watch is split into small modules (`Geometry`,
 `PageNav`, `SleepInference`, `Stats`, `Theme`) and covered by Connect IQ unit tests in
-`source/tests/`: 42 tests for the sleep inference and schedule fallback, page
+`source/tests/`: 45 tests for the sleep inference and schedule fallback, page
 navigation, tap hit-testing, the statistics and bucketing helpers, and the theme
 mappings. Drawing code and anything that reads live watch data is not tested.
 
@@ -207,7 +217,9 @@ container. Use it on a desktop SDK install, or sideload the `.prg` to the watch.
 Written without access to the Connect IQ SDK, so **it has not been compiled or
 run yet**. Expect a few compile fixes on the first build. In particular:
 
-- `WatchFaceDelegate.onPress` is used for taps; confirm it fires on the Venu X1.
+- Touch input uses `WatchFaceDelegate`: `onTap` for taps (pages) and `onPress`, which the SDK docs
+  describe as a touch and hold, for the quick cards. An earlier version used `onPress` for taps,
+  which was wrong. Confirm both fire on the Venu X1.
 - Sleep score comes from `Complications` (type 42, API 6.0.2), which needs the
   `ComplicationSubscriber` permission in the manifest. Garmin's docs name that permission,
   but some forum posts report it being rejected for watch faces: if the build complains,

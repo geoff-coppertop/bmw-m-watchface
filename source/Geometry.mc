@@ -21,17 +21,34 @@ module Geometry {
         return tickInner - Theme.GAP - ringWidth(r) / 2.0;
     }
 
-    // Which element a tap on the dial hit. Three big, non-overlapping targets:
-    //   top row -> :weather, roundel area -> :hr, ring band -> :activity.
+    // Centre radius of the middle ring (the navy active minutes gauge).
+    function middleRingR(r as Number) as Float {
+        return ringOuterR(r) - (ringWidth(r) + Theme.GAP);
+    }
+
+    // Where the temperature sits at 12 o'clock: the same distance from the dial centre as
+    // the middle ring is at 6 o'clock, mirrored, which also keeps it clear of the badge.
+    function tempY(cy as Number, r as Number) as Float {
+        return cy - middleRingR(r);
+    }
+
+    // Which element a tap or hold on the dial hit. Non-overlapping targets:
+    //   temperature -> :weather, date window -> :date, battery icon -> :battery,
+    //   roundel area -> :hr, ring band -> :activity.
     function hitTest(x as Number, y as Number, w as Number, h as Number, r as Number) as Symbol or Null {
         if (w == 0) { return null; }
         var cx = w / 2;
         var cy = h / 2;
 
-        // date / weather / battery row (checked first: it sits above the roundel zone)
-        if ((y - (cy - r * 0.58)).abs() < 24 && (x - cx).abs() < 140) {
+        // the temperature at 12 o'clock
+        if ((y - tempY(cy, r)).abs() < 30 && (x - cx).abs() < 140) {
             return :weather;
         }
+
+        // the date window (3 o'clock) and the battery icon (9 o'clock)
+        var side = r * Theme.DIAL_SIDE_X;
+        if (near(x, y, cx + side, cy, r * 0.2)) { return :date; }
+        if (near(x, y, cx - side, cy, r * 0.2)) { return :battery; }
 
         // roundel: a generous circle that stops well short of the rings
         var dx = x - cx;
@@ -50,5 +67,11 @@ module Geometry {
             }
         }
         return null;
+    }
+
+    private function near(x as Number, y as Number, px as Numeric, py as Numeric, reach as Numeric) as Boolean {
+        var dx = x - px;
+        var dy = y - py;
+        return Math.sqrt(dx * dx + dy * dy) < reach;
     }
 }

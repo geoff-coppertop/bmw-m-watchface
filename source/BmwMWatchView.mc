@@ -19,6 +19,8 @@ class BmwMWatchView extends WatchUi.WatchFace {
 
     // tap detail pages
     private var _nav as PageNav = new PageNav();
+    private var _card as Symbol or Null = null;       // the quick card showing, if any
+    private var _cardTimer as Timer.Timer or Null = null;
     private var _detail as DetailPage or Null = null;
     private var _timer as Timer.Timer or Null = null;
     private var _w as Number = 0;
@@ -29,6 +31,7 @@ class BmwMWatchView extends WatchUi.WatchFace {
         WatchFace.initialize();
         _detail = new DetailPage(self);
         _timer = new Timer.Timer();
+        _cardTimer = new Timer.Timer();
     }
 
     function onEnterSleep() as Void {
@@ -61,25 +64,38 @@ class BmwMWatchView extends WatchUi.WatchFace {
 
         drawBezel(dc, cx, cy, r);
         drawMMark(dc, cx, cy - r * 0.4, r);
-        drawTemperature(dc, cx, cy - r * 0.58);
+        drawTemperature(dc, cx, Geometry.tempY(cy, r));
         var info = Gregorian.info(Time.now(), Time.FORMAT_MEDIUM);
         drawWindow(dc, cx + r * Theme.DIAL_SIDE_X, cy, info.day_of_week.toString().toUpper(), info.day.toString());
-        drawWindow(dc, cx - r * Theme.DIAL_SIDE_X, cy, "BATT", System.getSystemStats().battery.toNumber().toString() + "%");
+        drawBatteryIcon(dc, cx - r * Theme.DIAL_SIDE_X, cy);
 
         drawHands(dc, cx, cy, r);
+
+        if (_card != null && !_asleep && _detail != null) {
+            _detail.drawCard(dc, _card);      // a quick card over the dial
+        }
     }
 
     // ---- dial -----------------------------------------------------------
 
     // ---- taps -------------------------------------------------------------
 
-    // Returns true if the tap was used. On the dial a tap on a zone opens a page; while
-    // a page is open the navigation rules live in PageNav.
+    // A tap. Returns true if it was used. A showing card is dismissed first. On the dial a
+    // tap on a zone opens that zone's page (the date and battery have no page, so they show
+    // their card); while a page is open the navigation rules live in PageNav.
     function handleTap(x as Number, y as Number) as Boolean {
+        if (_card != null) {
+            closeCard();
+            return true;
+        }
         if (!_nav.isOpen()) {
             var hit = Geometry.hitTest(x, y, _w, _h, _r);
             if (hit == null) {
                 return false;
+            }
+            if (hit == :date || hit == :battery) {
+                showCard(hit);
+                return true;
             }
             _nav.open(hit);
             restartTimer();
@@ -96,6 +112,36 @@ class BmwMWatchView extends WatchUi.WatchFace {
         return true;
     }
 
+    // A touch and hold: a quick card for the element held. Not used while a page is open.
+    function handleHold(x as Number, y as Number) as Boolean {
+        if (_nav.isOpen()) {
+            return false;
+        }
+        var hit = Geometry.hitTest(x, y, _w, _h, _r);
+        if (hit == null) {
+            return false;
+        }
+        showCard(hit);
+        return true;
+    }
+
+    private function showCard(kind as Symbol) as Void {
+        _card = kind;
+        if (_cardTimer != null) {
+            _cardTimer.stop();
+            _cardTimer.start(method(:closeCard), Theme.CARD_MS, false);
+        }
+        WatchUi.requestUpdate();
+    }
+
+    function closeCard() as Void {
+        _card = null;
+        if (_cardTimer != null) {
+            _cardTimer.stop();
+        }
+        WatchUi.requestUpdate();
+    }
+
     private function restartTimer() as Void {
         if (_timer != null) {
             _timer.stop();
@@ -105,6 +151,10 @@ class BmwMWatchView extends WatchUi.WatchFace {
 
     function closePage() as Void {
         _nav.close();
+        _card = null;
+        if (_cardTimer != null) {
+            _cardTimer.stop();
+        }
         if (_timer != null) {
             _timer.stop();
         }
@@ -260,8 +310,26 @@ class BmwMWatchView extends WatchUi.WatchFace {
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
     }
 
-    // A dial window: a small grey label over a white value. The date sits at 3 o'clock and
-    // the watch battery at 9 o'clock (labelled BATT so it is not mistaken for body battery).
+    // The watch battery as a simple icon that empties as the battery drains: a grey outline
+    // and terminal, a white fill (red below 20%). The exact figure is on the quick card.
+    private function drawBatteryIcon(dc as Dc, x as Numeric, y as Numeric) as Void {
+        var pct = System.getSystemStats().battery;
+        var left = x - Theme.BATT_W / 2;
+        var top = y - Theme.BATT_H / 2;
+        dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
+        dc.setPenWidth(2);
+        dc.drawRoundedRectangle(left, top, Theme.BATT_W, Theme.BATT_H, 4);
+        dc.setPenWidth(1);
+        dc.fillRectangle(left + Theme.BATT_W, y - Theme.BATT_TERM_H / 2, Theme.BATT_TERM_W, Theme.BATT_TERM_H);
+        var fillW = (Theme.BATT_W - 2 * Theme.BATT_PAD) * pct / 100.0;
+        if (fillW > 0) {
+            var low = Stats.isLowBattery(pct.toNumber());
+            dc.setColor(_asleep ? Theme.GREY : (low ? Theme.RED : Theme.WHITE), Graphics.COLOR_TRANSPARENT);
+            dc.fillRectangle(left + Theme.BATT_PAD, top + Theme.BATT_PAD, fillW, Theme.BATT_H - 2 * Theme.BATT_PAD);
+        }
+    }
+
+    // The date window at 3 o'clock: a small grey weekday over a white day number.
     private function drawWindow(dc as Dc, x as Numeric, y as Numeric, label as String, value as String) as Void {
         dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
         dc.drawText(x, y + Theme.WINDOW_LABEL_DY, Theme.FONT_LABEL, label,

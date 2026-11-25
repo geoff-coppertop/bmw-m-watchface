@@ -60,6 +60,13 @@ Y_ROWS, Y_WEATHER_ROWS = num("Y_ROWS"), num("Y_WEATHER_ROWS")
 CHART_X, CHART_TOP, CHART_BOTTOM = num("CHART_X"), num("CHART_TOP"), num("CHART_BOTTOM")
 Y_XLABELS, Y_STATS, Y_DOTS, DOT_R = num("Y_XLABELS"), num("Y_STATS"), num("Y_DOTS"), num("DOT_R")
 Y_CAPTION = num("Y_CAPTION")
+BATT_W, BATT_H, BATT_TERM_W, BATT_TERM_H, BATT_PAD = (num("BATT_W"), num("BATT_H"), num("BATT_TERM_W"),
+                                                       num("BATT_TERM_H"), num("BATT_PAD"))
+CARD_W, CARD_H, CARD_H_ROWS, CARD_R, CARD_PAD = (num("CARD_W"), num("CARD_H"), num("CARD_H_ROWS"), num("CARD_R"),
+                                                  num("CARD_PAD"))
+CARD_TITLE_Y, CARD_BIG_Y, CARD_DETAIL_Y, CARD_ROW_Y, CARD_ROW_PITCH = (num("CARD_TITLE_Y"), num("CARD_BIG_Y"),
+                                                                        num("CARD_DETAIL_Y"), num("CARD_ROW_Y"),
+                                                                        num("CARD_ROW_PITCH"))
 DIAL_SIDE_X, WINDOW_LABEL_DY, WINDOW_VALUE_DY = num("DIAL_SIDE_X"), num("WINDOW_LABEL_DY"), num("WINDOW_VALUE_DY")
 STRIPE_X0, STRIPE_PITCH, STRIPE_W = num("STRIPE_X0"), num("STRIPE_PITCH"), num("STRIPE_W")
 STRIPE_SLANT, STRIPE_HALF_H = num("STRIPE_SLANT"), num("STRIPE_HALF_H")
@@ -183,10 +190,46 @@ def draw_roundel(s):
               % (CX, CY, p0[0], p0[1], ri, ri, p1[0], p1[1], BLUE))
 
 
-def dial(zones=False):
-    s = Svg()
-    s.add('<rect x="-30" y="-30" width="%d" height="%d" fill="#1b1b1b"/>' % (W + 60, H + 60))
-    screen(s)
+def draw_battery_icon(s, x, y, pct):
+    """Mirror of drawBatteryIcon(): grey outline and terminal, white fill (red below 20%)."""
+    left, top = x - BATT_W / 2, y - BATT_H / 2
+    s.add('<rect x="%.1f" y="%.1f" width="%d" height="%d" rx="4" fill="none" stroke="%s" stroke-width="2"/>'
+          % (left, top, BATT_W, BATT_H, GREY))
+    s.add('<rect x="%.1f" y="%.1f" width="%d" height="%d" fill="%s"/>'
+          % (left + BATT_W, y - BATT_TERM_H / 2, BATT_TERM_W, BATT_TERM_H, GREY))
+    fill_w = (BATT_W - 2 * BATT_PAD) * pct / 100.0
+    if fill_w > 0:
+        s.add('<rect x="%.1f" y="%.1f" width="%.1f" height="%d" fill="%s"/>'
+              % (left + BATT_PAD, top + BATT_PAD, fill_w, BATT_H - 2 * BATT_PAD, RED if pct < 20 else WHITE))
+
+
+def draw_card(s, kind):
+    """Mirror of DetailPage.drawCard(): a quick card over the dial, with example values."""
+    rows = kind == "activity"
+    ch = CARD_H_ROWS if rows else CARD_H
+    left, top = CX - CARD_W / 2, CY - ch / 2
+    s.add('<rect x="%.1f" y="%.1f" width="%d" height="%d" rx="%d" fill="%s" stroke="%s" stroke-width="2"/>'
+          % (left, top, CARD_W, ch, CARD_R, BLACK, GREY))
+    title, big, detail = {
+        "battery": ("WATCH BATTERY", "82%", "6.3 days left"),
+        "date": ("TODAY", "Wednesday", "25 November 2026"),
+        "weather": ("WEATHER", "18&#176;C", "Partly cloudy &#183; feels 16&#176;"),
+        "hr": ("HEART RATE", "72 bpm", "Resting 52 &#183; Stress 34"),
+        "activity": ("ACTIVITY", "", ""),
+    }[kind]
+    s.text(CX, top + CARD_TITLE_Y, title, "label", GREY)
+    if rows:
+        for i, (n, v) in enumerate([("Steps", "6214 / 10000"), ("Active (week)", "68 / 150 min"), ("Body battery", "78")]):
+            y = top + CARD_ROW_Y + i * CARD_ROW_PITCH
+            s.text(left + CARD_PAD, y, n, "label", GREY, "start")
+            s.text(left + CARD_W - CARD_PAD, y, v, "value", WHITE, "end")
+    else:
+        s.text(CX, top + CARD_BIG_Y, big, "title", WHITE)
+        s.text(CX, top + CARD_DETAIL_Y, detail, "label", GREY)
+
+
+def dial_into(s, ox, oy, zones=False, card=None):
+    screen(s, ox, oy)
     # ring track + fill: a 60 degree wedge, 240..300, fill runs left to right
     for i, (c, frac) in enumerate([(METRIC["steps"], .62), (METRIC["active"], .45), (METRIC["body"], .78)]):
         rad = RING_OUT - i * PITCH
@@ -199,10 +242,12 @@ def dial(zones=False):
         s.line(pt(inner, 90 - i * 6), pt(outer, 90 - i * 6),
                WHITE if major else GREY, 4 if major else 2)
     draw_badge(s, CY - R * .4)
-    s.text(CX, CY - R * .58, "18&#176;C", "value", WHITE)                       # the weather tap target
-    for sx, label, value in [(CX + R * DIAL_SIDE_X, "WED", "25"), (CX - R * DIAL_SIDE_X, "BATT", "82%")]:
-        s.text(sx, CY + WINDOW_LABEL_DY, label, "label", GREY)
-        s.text(sx, CY + WINDOW_VALUE_DY, value, "value", WHITE)
+    temp_y = CY - (RING_OUT - PITCH)                 # Geometry.tempY(): the middle ring's distance, mirrored
+    s.text(CX, temp_y, "18&#176;C", "value", WHITE)  # the weather tap target
+    sx = CX + R * DIAL_SIDE_X                        # the date window at 3 o'clock
+    s.text(sx, CY + WINDOW_LABEL_DY, "WED", "label", GREY)
+    s.text(sx, CY + WINDOW_VALUE_DY, "25", "value", WHITE)
+    draw_battery_icon(s, CX - R * DIAL_SIDE_X, CY, 82)   # the battery at 9 o'clock
     draw_hand(s, (10 + 8 / 60) * 30, R * .56, R * .07, R * .1)
     draw_hand(s, (8 + 35 / 60) * 6, R * .88, R * .05, R * .12)
     a = math.radians(35 * 6)
@@ -210,16 +255,38 @@ def dial(zones=False):
            (CX + math.sin(a) * R * .94, CY - math.cos(a) * R * .94), RED, 3)
     draw_roundel(s)
     if zones:
-        s.add('<rect x="%.1f" y="%.1f" width="280" height="48" rx="10" fill="#FFD400" fill-opacity=".25" '
-              'stroke="#FFD400" stroke-width="2"/>' % (CX - 140, CY - R * .58 - 24))
+        s.add('<rect x="%.1f" y="%.1f" width="280" height="60" rx="10" fill="#FFD400" fill-opacity=".25" '
+              'stroke="#FFD400" stroke-width="2"/>' % (CX - 140, temp_y - 30))
+        for zx in (CX + R * DIAL_SIDE_X, CX - R * DIAL_SIDE_X):
+            s.add('<circle cx="%.1f" cy="%.1f" r="%.1f" fill="#B060FF" fill-opacity=".25" stroke="#B060FF" '
+                  'stroke-width="2"/>' % (zx, CY, R * .2))
         s.add('<circle cx="%.1f" cy="%.1f" r="%.1f" fill="%s" fill-opacity=".22" stroke="%s" '
               'stroke-width="2" stroke-dasharray="6 4"/>' % (CX, CY, R * .36, RED, RED))
         r_hi, r_lo = RING_OUT + 14, RING_OUT - 2 * PITCH - 20
         band = [pt(r_hi, a_) for a_ in range(228, 313, 3)] + [pt(r_lo, a_) for a_ in range(312, 227, -3)]
         s.add('<polygon points="%s" fill="#00C0FF" fill-opacity=".22" stroke="#00C0FF" stroke-width="2"/>'
               % pts(band))
+    if card:
+        draw_card(s, card)
     s.add("</g>")
+
+
+def dial(zones=False):
+    s = Svg()
+    s.add('<rect x="-30" y="-30" width="%d" height="%d" fill="#1b1b1b"/>' % (W + 60, H + 60))
+    dial_into(s, 0, 0, zones)
     return s.doc((W + 60) * 2, (H + 60) * 2, "-30 -30 %d %d" % (W + 60, H + 60))
+
+
+def cards():
+    """The quick cards shown on a touch and hold, over the dial."""
+    s = Svg()
+    kinds = ["battery", "weather", "activity"]
+    total = len(kinds) * W + (len(kinds) - 1) * 40
+    s.add('<rect x="-20" y="-20" width="%d" height="%d" fill="#1b1b1b"/>' % (total + 40, H + 40))
+    for i, k in enumerate(kinds):
+        dial_into(s, i * (W + 40), 0, False, k)
+    return s.doc(total + 40, H + 40, "-20 -20 %d %d" % (total + 40, H + 40))
 
 
 # ---------------------------------------------------------------- glyphs (page mock-ups)
@@ -565,6 +632,7 @@ OUTPUTS = {          # name -> (svg generator, png file name)
     "tap-zones": (lambda: dial(zones=True), "tap-zones.png"),
     "pages": (lambda: pages(), "pages.png"),
     "graphs": (lambda: graphs(), "graphs.png"),
+    "cards": (lambda: cards(), "cards.png"),
 }
 
 

@@ -97,3 +97,20 @@ function statsStressBands(logger as Test.Logger) as Boolean {
     Test.assertEqual(Stats.stressBand(100), "High");
     return true;
 }
+
+(:test)
+function statsLowBatteryThreshold(logger as Test.Logger) as Boolean {
+    Test.assert(Stats.isLowBattery(19));
+    Test.assert(!Stats.isLowBattery(20));
+    Test.assert(!Stats.isLowBattery(100));
+    return true;
+}
+
+(:test)
+function statsDaysText(logger as Test.Logger) as Boolean {
+    Test.assertEqual(Stats.daysText(null), "--");
+    Test.assertEqual(Stats.daysText(6.34), "6.3 days");
+    Test.assertEqual(Stats.daysText(0.5), "0.5 days");
+    Test.assertEqual(Stats.daysText(12.7), "12 days");
+    return true;
+}

@@ -74,6 +74,26 @@ module Theme {
     const WINDOW_LABEL_DY = -14;  // small grey label above the value
     const WINDOW_VALUE_DY = 8;
 
+    // ---- watch battery icon (9 o'clock) ---------------------------------------
+    const BATT_W = 46;
+    const BATT_H = 22;
+    const BATT_TERM_W = 4;
+    const BATT_TERM_H = 10;
+    const BATT_PAD = 3;           // gap between the outline and the fill
+
+    // ---- quick cards (touch and hold) -------------------------------------------
+    const CARD_W = 300;
+    const CARD_H = 124;           // one big value: title, value, detail
+    const CARD_H_ROWS = 164;      // the Activity card: title and three rows
+    const CARD_R = 14;
+    const CARD_PAD = 24;          // side padding for rows
+    const CARD_TITLE_Y = 24;      // from the top of the card
+    const CARD_BIG_Y = 62;
+    const CARD_DETAIL_Y = 98;
+    const CARD_ROW_Y = 62;
+    const CARD_ROW_PITCH = 36;
+    const CARD_MS = 4000;         // how long a card stays up
+
     // ---- page furniture: accents, chevrons, marks ---------------------------
     const STRIPE_X0 = -40;        // M stripe accent at the top of every page: first stripe, from centre
     const STRIPE_PITCH = 28;
