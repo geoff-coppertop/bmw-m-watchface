@@ -49,6 +49,7 @@ BLUE_DIM, NAVY_DIM, RED_DIM = col("BLUE_DIM"), col("NAVY_DIM"), col("RED_DIM")
 WHITE, BLACK = col("WHITE"), col("BLACK")
 GREY = col("GREY")
 CHROME = "#555555"          # the mock watch bezel in the images; not part of the face
+ZONE_COLORS = {1: "#FFD400", 2: "#E040FB", 3: "#3DDC84", 4: "#FF8A00", 5: "#00C0FF"}   # touch targets: yellow, magenta, green, orange, cyan
 GAP, TICK_INSET = num("GAP"), num("TICK_INSET")
 TICK_MAJOR, TICK_MINOR = num("TICK_MAJOR"), num("TICK_MINOR")
 MARGIN, ROW_PITCH = num("MARGIN"), num("ROW_PITCH")
@@ -257,24 +258,25 @@ def dial_into(s, ox, oy, zones=False, card=None):
            (CX + math.sin(a) * R * .94, CY - math.cos(a) * R * .94), RED, 3)
     draw_roundel(s)
     if zones:
-        s.add('<rect x="%.1f" y="%.1f" width="280" height="60" rx="10" fill="#FFD400" fill-opacity=".25" '
-              'stroke="#FFD400" stroke-width="2"/>' % (CX - 140, temp_y - 30))
-        for zx in (CX + arc, CX - arc):
-            s.add('<circle cx="%.1f" cy="%.1f" r="%.1f" fill="#B060FF" fill-opacity=".25" stroke="#B060FF" '
-                  'stroke-width="2"/>' % (zx, CY, R * .2))
-        s.add('<circle cx="%.1f" cy="%.1f" r="%.1f" fill="%s" fill-opacity=".22" stroke="%s" '
-              'stroke-width="2" stroke-dasharray="6 4"/>' % (CX, CY, R * .36, RED, RED))
+        # One colour per target, far apart in hue and none of them a watch colour (blue, navy,
+        # red, white, grey), so the overlay never reads as part of the face.
         r_hi, r_lo = RING_OUT + 14, RING_OUT - 2 * PITCH - 20
+        z = ZONE_COLORS
+        shape = 'fill="%s" fill-opacity=".25" stroke="%s" stroke-width="2"'
+        s.add('<rect x="%.1f" y="%.1f" width="280" height="60" rx="10" %s/>'
+              % (CX - 140, temp_y - 30, shape % (z[1], z[1])))
+        s.add('<circle cx="%.1f" cy="%.1f" r="%.1f" %s/>' % (CX + arc, CY, R * .2, shape % (z[2], z[2])))
+        s.add('<circle cx="%.1f" cy="%.1f" r="%.1f" %s/>' % (CX - arc, CY, R * .2, shape % (z[3], z[3])))
+        s.add('<circle cx="%.1f" cy="%.1f" r="%.1f" %s/>' % (CX, CY, R * .36, shape % (z[4], z[4])))
         band = [pt(r_hi, a_) for a_ in range(228, 313, 3)] + [pt(r_lo, a_) for a_ in range(312, 227, -3)]
-        s.add('<polygon points="%s" fill="#00C0FF" fill-opacity=".22" stroke="#00C0FF" stroke-width="2"/>'
-              % pts(band))
-    if zones:
-        badge = lambda x, y, n, c: (s.circle(x, y, 12, c), s.text(x, y, str(n), "label", BLACK))
-        badge(CX - 120, temp_y, 1, "#FFD400")                       # temperature
-        badge(CX + arc, CY - R * .2 - 14, 2, "#B060FF")             # date
-        badge(CX - arc, CY - R * .2 - 14, 3, "#B060FF")             # battery
-        badge(CX + R * .36 * .707, CY + R * .36 * .707, 4, "#FF5A4D")   # roundel: on its circle's lower right
-        badge(CX, CY + RING_OUT - 2 * PITCH - 20 - 14, 5, "#00C0FF")   # rings
+        s.add('<polygon points="%s" %s/>' % (pts(band), shape % (z[5], z[5])))
+        # The number badge always sits centred on the top edge of its target's outline.
+        badge = lambda x, y, n: (s.circle(x, y, 12, z[n]), s.text(x, y, str(n), "label", BLACK))
+        badge(CX, temp_y - 30, 1)                       # temperature: top of its band
+        badge(CX + arc, CY - R * .2, 2)                 # date: top of its circle
+        badge(CX - arc, CY - R * .2, 3)                 # battery: top of its circle
+        badge(CX, CY - R * .36, 4)                      # roundel: top of its circle
+        badge(CX, CY + r_lo, 5)                         # rings: top (inner edge) of the wedge
     if card:
         draw_card(s, card)
     s.add("</g>")
@@ -288,11 +290,11 @@ def tap_zones():
     dial_into(s, 0, 0, True)
     x0 = W + 40
     s.text(x0, 40, "Touch targets", "title", WHITE, "start")
-    rows = [("1", "#FFD400", "Temperature (12 o'clock)", "tap: Weather page", "hold: weather card"),
-            ("2", "#B060FF", "Date (3 o'clock)", "tap: nothing", "hold: date card"),
-            ("3", "#B060FF", "Battery (9 o'clock)", "tap: nothing", "hold: battery card"),
-            ("4", "#FF5A4D", "Roundel (centre)", "tap: Heart rate page", "hold: heart rate card"),
-            ("5", "#00C0FF", "Rings (bottom)", "tap: Activity page", "hold: activity card")]
+    rows = [("1", ZONE_COLORS[1], "Temperature (12 o'clock)", "tap: Weather page", "hold: weather card"),
+            ("2", ZONE_COLORS[2], "Date (3 o'clock)", "tap: nothing", "hold: date card"),
+            ("3", ZONE_COLORS[3], "Battery (9 o'clock)", "tap: nothing", "hold: battery card"),
+            ("4", ZONE_COLORS[4], "Roundel (centre)", "tap: Heart rate page", "hold: heart rate card"),
+            ("5", ZONE_COLORS[5], "Rings (bottom)", "tap: Activity page", "hold: activity card")]
     for i, (n, c, name, tap, hold) in enumerate(rows):
         y = 90 + i * 70
         s.circle(x0 + 12, y, 12, c)
