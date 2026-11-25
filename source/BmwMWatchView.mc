@@ -134,9 +134,9 @@ class BmwMWatchView extends WatchUi.WatchFace {
         var dy = y - cy;
         if (dy > 0) {
             var d = Math.sqrt(dx * dx + dy * dy);
-            var ringR = (r - 8) - r * 0.09 - 5;
+            var ringR = ringOuterR(r);
             var ang = Math.atan2(dx.abs(), dy) * 180.0 / Math.PI;   // from straight down
-            if (ang < 60 && d <= ringR + 14 && d >= ringR - 36) {
+            if (ang < 60 && d <= ringR + 14 && d >= ringR - 2 * (ringWidth(r) + 2) - 20) {
                 return :rings;
             }
         }
@@ -172,14 +172,14 @@ class BmwMWatchView extends WatchUi.WatchFace {
     //   outer light blue = steps, middle dark blue = active minutes,
     //   inner red        = body battery
     private function drawBezel(dc as Dc, cx as Numeric, cy as Numeric, r as Numeric) as Void {
-        // Rings are 6 px wide on an 8 px pitch, so the gap between rings is 2 px,
-        // about the same as the gaps between the M badge stripes. Put the outer
-        // ring the same 2 px inside the major ticks.
-        var tickInner = (r - 8) - r * 0.09;
-        var ringR = tickInner - 2 - 3;     // minus gap, minus half the pen width
-        drawRing(dc, cx, cy, ringR,      stepsFrac(),  M_LIGHT_BLUE, DIM_LIGHT_BLUE);
-        drawRing(dc, cx, cy, ringR - 8,  activeFrac(), M_DARK_BLUE,  DIM_DARK_BLUE);
-        drawRing(dc, cx, cy, ringR - 16, bodyBatFrac(), M_RED,       DIM_RED);
+        // Ring bars are as wide as the M badge stripes, with the same 2 px gap
+        // between bars and between the outer ring and the major ticks.
+        var w = ringWidth(r);
+        var pitch = w + 2;
+        var ringR = ringOuterR(r);
+        drawRing(dc, cx, cy, ringR,             w, stepsFrac(),   M_LIGHT_BLUE, DIM_LIGHT_BLUE);
+        drawRing(dc, cx, cy, ringR - pitch,     w, activeFrac(),  M_DARK_BLUE,  DIM_DARK_BLUE);
+        drawRing(dc, cx, cy, ringR - 2 * pitch, w, bodyBatFrac(), M_RED,        DIM_RED);
 
         // minute / hour ticks
         for (var i = 0; i < 60; i++) {
@@ -197,9 +197,9 @@ class BmwMWatchView extends WatchUi.WatchFace {
     }
 
     // Sweep runs left to right along the bottom (215 to 325 degrees).
-    private function drawRing(dc as Dc, cx as Numeric, cy as Numeric, R as Numeric,
+    private function drawRing(dc as Dc, cx as Numeric, cy as Numeric, R as Numeric, pen as Number,
                               frac as Float, color as Number, dim as Number) as Void {
-        dc.setPenWidth(6);
+        dc.setPenWidth(pen);
         dc.setColor(_asleep ? TRACK_GREY : dim, Graphics.COLOR_TRANSPARENT);
         dc.drawArc(cx, cy, R, Graphics.ARC_COUNTER_CLOCKWISE, 215, 325);
         if (frac > 1.0) { frac = 1.0; }
@@ -208,6 +208,18 @@ class BmwMWatchView extends WatchUi.WatchFace {
             dc.drawArc(cx, cy, R, Graphics.ARC_COUNTER_CLOCKWISE, 215, 215 + 110 * frac);
         }
         dc.setPenWidth(1);
+    }
+
+    // Badge stripe width measured square-on: 36 of 99 logo units across a badge
+    // 0.2 r tall, leaning 57 units over 99 (cos of that lean is about 0.87).
+    private function ringWidth(r as Number) as Number {
+        return (r * 0.2 / 99.0 * 36 * 0.866).toNumber();
+    }
+
+    // Centre radius of the outer ring: 2 px inside the major ticks.
+    private function ringOuterR(r as Number) as Float {
+        var tickInner = (r - 8) - r * 0.09;
+        return tickInner - 2 - ringWidth(r) / 2.0;
     }
 
     // M badge, traced from the flat logo. Coordinates are in logo units:
