@@ -59,6 +59,7 @@ module Theme {
     const CHART_X = 60;           // left/right inset of the plot area
     const CHART_TOP = 140;
     const CHART_BOTTOM = 360;
+    const Y_CAPTION = 108;        // one-line note under the graph title (sleep source)
     const Y_XLABELS = 384;
     const Y_STATS = 424;
     const Y_DOTS = 462;           // page dots

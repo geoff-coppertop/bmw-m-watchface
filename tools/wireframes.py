@@ -59,6 +59,7 @@ Y_TITLE_UNDER_GLYPH, Y_HERO, Y_SUB, Y_BAR = (num("Y_TITLE_UNDER_GLYPH"), num("Y_
 Y_ROWS, Y_WEATHER_ROWS = num("Y_ROWS"), num("Y_WEATHER_ROWS")
 CHART_X, CHART_TOP, CHART_BOTTOM = num("CHART_X"), num("CHART_TOP"), num("CHART_BOTTOM")
 Y_XLABELS, Y_STATS, Y_DOTS, DOT_R = num("Y_XLABELS"), num("Y_STATS"), num("Y_DOTS"), num("DOT_R")
+Y_CAPTION = num("Y_CAPTION")
 ACTIVITY_ROW_TOP, ACTIVITY_ROW_PITCH = num("ACTIVITY_ROW_TOP"), num("ACTIVITY_ROW_PITCH")
 BAR_COLS_W, BAR_COLS_GAP = num("BAR_COLS_W"), num("BAR_COLS_GAP")
 DIM = {BLUE: BLUE_DIM, NAVY: NAVY_DIM, RED: RED_DIM}
@@ -354,7 +355,53 @@ def bar_chart(s, vals, goal, color, labels):
             gx += 12
 
 
-def line_chart(s, vals, color, xlabels):
+def find_sleep(hr, bb):
+    """Python mirror of the inference in findSleep() (BmwMDetail.mc). Keep in sync."""
+    n = len(hr)
+    vals = sorted(int(v) for v in hr if v is not None)
+    if len(vals) < 24:
+        return None
+    lo, med = vals[len(vals) // 10], vals[len(vals) // 2]
+    thr = lo + (med - lo) * 0.4
+    best_s = best_e = -1
+    run_s = last_low = -1
+    gap = 0
+    for i in range(n + 1):
+        low = i < n and hr[i] is not None and hr[i] <= thr
+        if low:
+            if run_s < 0:
+                run_s = i
+            last_low = i
+            gap = 0
+        elif run_s >= 0:
+            gap += 1
+            if gap > 1 or i == n:
+                if best_s < 0 or last_low - run_s > best_e - best_s:
+                    best_s, best_e = run_s, last_low
+                run_s = -1
+                gap = 0
+    if best_s < 0 or best_e - best_s + 1 < 8:
+        return None
+    first = next((bb[i] for i in range(best_s, min(best_e, best_s + 3) + 1) if bb[i] is not None), None)
+    last = next((bb[i] for i in range(best_e, max(best_s, best_e - 3) - 1, -1) if bb[i] is not None), None)
+    if first is not None and last is not None and last - first < 8:
+        return None
+    return best_s, best_e + 1
+
+
+def moon(s, x, y):
+    s.circle(x, y, 7, NAVY_LIGHT)
+    s.circle(x + 4, y - 2, 6, BLACK)
+
+
+def sun(s, x, y):
+    s.circle(x, y, 4, WHITE)
+    for i in range(8):
+        a = i * math.pi / 4
+        s.line((x + math.cos(a) * 6, y + math.sin(a) * 6), (x + math.cos(a) * 9, y + math.sin(a) * 9), WHITE, 2)
+
+
+def line_chart(s, vals, color, xlabels, sleep=None):
     x0, x1 = CHART_X, W - CHART_X
     s.line((x0, CHART_BOTTOM), (x1, CHART_BOTTOM), GREY_DARK, 2)
     s.line((x0, CHART_TOP), (x1, CHART_TOP), GREY_DARK, 2)
@@ -362,6 +409,16 @@ def line_chart(s, vals, color, xlabels):
     lo, hi = min(good), max(good)
     if hi == lo:
         hi = lo + 1
+    if sleep:
+        a_, b_ = sleep
+        n_ = len(vals)
+        xa = x0 + (x1 - x0) * a_ / (n_ - 1)
+        xb = x0 + (x1 - x0) * (b_ - 1) / (n_ - 1)
+        s.add('<rect x="%.1f" y="%d" width="%.1f" height="%d" fill="%s"/>' % (xa, CHART_TOP, xb - xa, CHART_BOTTOM - CHART_TOP, BLUE_DIM))
+        if a_ > 0:
+            moon(s, xa, CHART_TOP - 12)
+        if b_ < n_:
+            sun(s, xb, CHART_TOP - 12)
     s.text(x1 + 6, CHART_TOP, str(max(good)), "label", GREY_LIGHT, "start")
     s.text(x1 + 6, CHART_BOTTOM, str(min(good)), "label", GREY_LIGHT, "start")
     n = len(vals)
@@ -381,10 +438,12 @@ def line_chart(s, vals, color, xlabels):
         s.text(x, Y_XLABELS, t, "label", GREY_LIGHT, anchor)
 
 
-def graph_page(s, ox, oy, title, stats, draw):
+def graph_page(s, ox, oy, title, stats, draw, caption=None):
     screen(s, ox, oy)
     stripes(s, 0)
     s.text(CX, Y_TITLE, title, "title", GREY_LIGHT)
+    if caption:
+        s.text(CX, Y_CAPTION, caption, "label", GREY_LIGHT)
     draw()
     s.text(CX, Y_STATS, stats, "label", GREY_LIGHT)
     nav(s, 1, False)
@@ -401,11 +460,19 @@ def graphs():
     steps = [4210, 8032, 6120, 9400, 3100, 7012, 6214]
     days = ["T", "F", "S", "S", "M", "T", "W"]
     active = [22, 35, 12, 0, 28, 41, 18]
-    body = [max(5, int(35 + i / 13 * 50) if i < 14 else int(85 - (i - 14) * 1.2) if i < 22 else int(75 - (i - 22) * 1.6))
-            for i in range(48)]
-    # 24 h of heart rate: low overnight, a morning bump and an afternoon walk
-    hr = [int((52 if i < 14 else 72) + (8 * math.sin(i / 2.3)) + (22 if 24 < i < 28 else 0)
-              + (14 if 36 < i < 40 else 0)) for i in range(48)]
+    # Mock 24 h ending at 08:00 Wed. A night at buckets 30..43 (23:00 to 06:00):
+    # heart rate drops and body battery rises, as it would for real sleep.
+    hr = [52 + int(3 * math.sin(i)) if 30 <= i < 44 else 72 + int(8 * math.sin(i / 2.3)) + (22 if 12 < i < 16 else 0)
+          for i in range(48)]
+    body = [int(85 - i * 1.7) if i < 30 else int(34 + (i - 30) * 4.0) if i < 44 else 88 for i in range(48)]
+    sleep = find_sleep(hr, body)
+    assert sleep, "mock night should be detected"
+    t0 = 8 * 60 - 24 * 60                       # minutes, relative to now = 08:00
+
+    def hhmm(idx):
+        m = (t0 + idx * 30) % (24 * 60)
+        return "%02d:%02d" % (m // 60, m % 60)
+    note = "Sleep %s–%s · estimated" % (hhmm(sleep[0]), hhmm(sleep[1]))
     temp = [18, 19, 20, 20, 19, 18, 17, 15, 14, 13, 12, 11]
 
     graph_page(s, 0, 0, "STEPS · 7 DAYS", "Avg 6284   Best 9400   Goal 10000",
@@ -413,9 +480,9 @@ def graphs():
     graph_page(s, px, 0, "ACTIVE MIN · 7 DAYS", "Avg 22   Best 41   Daily target 21",
                lambda: bar_chart(s, active, 21, NAVY, days))
     graph_page(s, px * 2, 0, "BODY BATTERY · 24 H", "Low %d   High %d" % (min(body), max(body)),
-               lambda: line_chart(s, body, RED, ["24h ago", "12h", "now"]))
+               lambda: line_chart(s, body, RED, ["24h ago", "12h", "now"], sleep), note)
     graph_page(s, 0, py, "HEART RATE · 24 H", "Min %d   Max %d" % (min(hr), max(hr)),
-               lambda: line_chart(s, hr, RED, ["24h ago", "12h", "now"]))
+               lambda: line_chart(s, hr, RED, ["24h ago", "12h", "now"], sleep), note)
     graph_page(s, px, py, "TEMPERATURE · 12 H", "Low 11&#176;   High 20&#176;",
                lambda: line_chart(s, temp, WHITE, ["14:00", "20:00", "01:00"]))
     return s.doc(tw + 40, th + 40, "-20 -20 %d %d" % (tw + 40, th + 40))

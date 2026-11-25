@@ -41,6 +41,14 @@ simulator screenshots. They are generated from `source/Theme.mc` by
 - Graph pages. Every metric page has a graph page behind it: steps and active
   minutes for the last 7 days (bars, with the goal line), body battery over 24 hours,
   heart rate over 24 hours, and a 12 hour temperature forecast for weather.
+- Sleep on the body battery and heart rate graphs: a faint band with a moon at
+  bedtime and a sun at wake time, and a caption saying where it came from. **This is
+  not measured sleep.** Connect IQ does not expose sleep data to a watch face; the only
+  sleep fields in the SDK are the typical sleep and wake time you set in Garmin
+  Connect. So the band is inferred first: the longest stretch of at least 4 hours where
+  heart rate is lowest while body battery rises (caption "estimated"). If the data
+  isn't clear, it falls back to your configured sleep and wake times (caption
+  "schedule"). With neither, no band is shown.
 - Navigation uses taps only, because a watch face does not receive swipes. Tap the
   right side of a page to go forward (detail, then graph) and the left side to go
   back. Chevrons at the edges and page dots at the bottom show what is possible.
@@ -157,6 +165,10 @@ Written without access to the Connect IQ SDK, so **it has not been compiled or
 run yet**. Expect a few compile fixes on the first build. In particular:
 
 - `WatchFaceDelegate.onPress` is used for taps; confirm it fires on the Venu X1.
+- Sleep: real sleep isn't available, as above, so the band is a guess. The inference
+  is mirrored in `tools/wireframes.py` (`find_sleep`) and was checked on made-up data
+  only; it has not seen real watch data. If it picks the wrong stretch, the thresholds
+  are in `findSleep()` in `BmwMDetail.mc`.
 - Graph data: today's entry is skipped if `ActivityMonitor.getHistory()` includes it
   (the docs say it is newest first, at most 7 entries) and taken from `getInfo()`. Body
   battery and heart rate come from `SensorHistory`; heart rate history only goes back to

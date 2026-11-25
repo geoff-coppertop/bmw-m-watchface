@@ -2,6 +2,7 @@ import Toybox.Activity;
 import Toybox.ActivityMonitor;
 import Toybox.Graphics;
 import Toybox.Lang;
+import Toybox.Math;
 import Toybox.SensorHistory;
 import Toybox.System;
 import Toybox.Time;
@@ -25,6 +26,11 @@ class DetailPage {
     private var _gStats as String = "";
     private var _gColor as Number = Theme.WHITE;
     private var _gBars as Boolean = false;
+    // Sleep band on the body battery and heart rate graphs, as bucket indices
+    // (null when there is none) plus a caption saying where it came from.
+    private var _gSleepA as Number or Null = null;
+    private var _gSleepB as Number or Null = null;     // exclusive
+    private var _gSleepNote as String = "";
 
     function initialize(face as BmwMWatchView) {
         _face = face;
@@ -386,6 +392,12 @@ class DetailPage {
         dc.drawText(cx, Theme.Y_TITLE, Theme.FONT_TITLE, _gTitle,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
 
+        if (_gSleepNote.length() > 0) {
+            dc.setColor(Theme.GREY_LIGHT, Graphics.COLOR_TRANSPARENT);
+            dc.drawText(cx, Theme.Y_CAPTION, Theme.FONT_LABEL, _gSleepNote,
+                Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+        }
+
         if (_gBars) {
             drawBarChart(dc, w);
         } else {
@@ -411,6 +423,9 @@ class DetailPage {
         _gBars = false;
         _gXl = [] as Array<String>;
         _gStats = "";
+        _gSleepA = null;
+        _gSleepB = null;
+        _gSleepNote = "";
 
         if (kind == :steps || kind == :active) {
             _gBars = true;
@@ -456,6 +471,7 @@ class DetailPage {
             _gTitle = "BODY BATTERY · 24 H";
             _gColor = Theme.RED;
             vals = bucketSeries(86400, true);
+            findSleep(bucketSeries(86400, false), vals);
             _gXl = ["24h ago", "12h", "now"];
             _gStats = "Low " + fmt(minOf(vals)) + "   High " + fmt(maxOf(vals));
 
@@ -463,6 +479,7 @@ class DetailPage {
             _gTitle = "HEART RATE · 24 H";
             _gColor = Theme.RED;
             vals = bucketSeries(86400, false);
+            findSleep(vals, bucketSeries(86400, true));
             _gXl = ["24h ago", "12h", "now"];
             _gStats = "Min " + fmt(minOf(vals)) + "   Max " + fmt(maxOf(vals));
 
@@ -592,6 +609,16 @@ class DetailPage {
         }
         if (hi == lo) { hi = lo + 1; }
 
+        // sleep band behind the line, with a moon at bedtime and a sun at wake time
+        if (_gSleepA != null && _gSleepB != null && n > 1) {
+            var xa = x0 + (x1 - x0) * _gSleepA / (n - 1);
+            var xb = x0 + (x1 - x0) * (_gSleepB - 1) / (n - 1);
+            dc.setColor(Theme.BLUE_DIM, Graphics.COLOR_TRANSPARENT);
+            dc.fillRectangle(xa, top, xb - xa, bot - top);
+            if (_gSleepA > 0) { drawMoon(dc, xa, top - 12); }
+            if (_gSleepB < n) { drawSun(dc, xb, top - 12); }
+        }
+
         // axis values on the right
         dc.setColor(Theme.GREY_LIGHT, Graphics.COLOR_TRANSPARENT);
         dc.drawText(x1 + 6, top, Theme.FONT_LABEL, hi.toString(), Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
@@ -655,6 +682,131 @@ class DetailPage {
             if (vals[i] != null) { sum += vals[i]; cnt++; }
         }
         return cnt == 0 ? 0 : (sum / cnt).toNumber();
+    }
+
+    // ---- sleep band ---------------------------------------------------------
+    // Connect IQ does not expose measured sleep (only the schedule set in Garmin
+    // Connect), so the band is a guess: first from the data, then from the schedule.
+
+    private function findSleep(hr as Array<Numeric or Null>, bb as Array<Numeric or Null>) as Void {
+        _gSleepA = null;
+        _gSleepB = null;
+        _gSleepNote = "";
+        var n = hr.size();
+        var now = Time.now().value();
+        var t0 = now - 86400;
+        var step = 86400 / n;
+
+        // 1. Inferred: the longest stretch of low heart rate, at least 4 h, while body
+        //    battery rises. Needs 12 h of heart rate samples to judge "low".
+        var vals = [] as Array<Number>;
+        for (var i = 0; i < n; i++) {
+            if (hr[i] != null) { vals.add(hr[i].toNumber()); }
+        }
+        if (vals.size() >= 24) {
+            for (var i = 1; i < vals.size(); i++) {            // insertion sort
+                var key = vals[i];
+                var j = i - 1;
+                while (j >= 0 && vals[j] > key) {
+                    vals[j + 1] = vals[j];
+                    j--;
+                }
+                vals[j + 1] = key;
+            }
+            var lo = vals[vals.size() / 10];
+            var med = vals[vals.size() / 2];
+            var thr = lo + (med - lo) * 0.4;
+
+            var bestS = -1;
+            var bestE = -1;
+            var runS = -1;
+            var lastLow = -1;
+            var gap = 0;
+            for (var i = 0; i <= n; i++) {
+                var low = (i < n) && (hr[i] != null) && (hr[i] <= thr);
+                if (low) {
+                    if (runS < 0) { runS = i; }
+                    lastLow = i;
+                    gap = 0;
+                } else if (runS >= 0) {
+                    gap += 1;
+                    if (gap > 1 || i == n) {                 // a single missing bucket is tolerated
+                        if (bestS < 0 || lastLow - runS > bestE - bestS) {
+                            bestS = runS;
+                            bestE = lastLow;
+                        }
+                        runS = -1;
+                        gap = 0;
+                    }
+                }
+            }
+            if (bestS >= 0 && bestE - bestS + 1 >= 8 && risesDuring(bb, bestS, bestE)) {
+                _gSleepA = bestS;
+                _gSleepB = bestE + 1;
+                _gSleepNote = "Sleep " + clock(t0 + bestS * step) + "–" + clock(t0 + (bestE + 1) * step) + " · estimated";
+                return;
+            }
+        }
+
+        // 2. Fallback: the typical sleep and wake time set in Garmin Connect.
+        var prof = UserProfile.getProfile();
+        if (prof == null || prof.sleepTime == null || prof.wakeTime == null) { return; }
+        var start = Time.today().value() + prof.sleepTime.value();
+        if (start > now) { start -= 86400; }
+        var end = Time.today().value() + prof.wakeTime.value();
+        while (end <= start) { end += 86400; }
+        if (end > now) { end = now; }                         // not awake yet by schedule
+        var a = (start - t0) / step;
+        var b = (end - t0 + step - 1) / step;
+        if (a < 0) { a = 0; }
+        if (b > n) { b = n; }
+        if (b - a < 2) { return; }
+        _gSleepA = a;
+        _gSleepB = b;
+        _gSleepNote = "Sleep " + clock(start) + "–" + clock(end) + " · schedule";
+    }
+
+    // True if body battery rises by at least 8 points across buckets s..e (or if
+    // there is too little body battery data to say it doesn't).
+    private function risesDuring(bb as Array<Numeric or Null>, s as Number, e as Number) as Boolean {
+        var first = null;
+        var last = null;
+        for (var i = s; i <= e && i < s + 4 && first == null; i++) {
+            if (bb[i] != null) { first = bb[i]; }
+        }
+        for (var i = e; i >= s && i > e - 4 && last == null; i--) {
+            if (bb[i] != null) { last = bb[i]; }
+        }
+        if (first == null || last == null) { return true; }
+        return last - first >= 8;
+    }
+
+    private function clock(seconds as Number) as String {
+        var info = Gregorian.info(new Time.Moment(seconds), Time.FORMAT_SHORT);
+        if (System.getDeviceSettings().is24Hour) {
+            return info.hour.format("%02d") + ":" + info.min.format("%02d");
+        }
+        var h12 = info.hour % 12;
+        if (h12 == 0) { h12 = 12; }
+        return h12.toString() + ":" + info.min.format("%02d") + (info.hour >= 12 ? "p" : "a");
+    }
+
+    private function drawMoon(dc as Dc, x as Numeric, y as Numeric) as Void {
+        dc.setColor(Theme.NAVY_LIGHT, Graphics.COLOR_TRANSPARENT);
+        dc.fillCircle(x, y, 7);
+        dc.setColor(Theme.BLACK, Graphics.COLOR_TRANSPARENT);
+        dc.fillCircle(x + 4, y - 2, 6);
+    }
+
+    private function drawSun(dc as Dc, x as Numeric, y as Numeric) as Void {
+        dc.setColor(Theme.WHITE, Graphics.COLOR_TRANSPARENT);
+        dc.fillCircle(x, y, 4);
+        dc.setPenWidth(2);
+        for (var i = 0; i < 8; i++) {
+            var a = i * Math.PI / 4.0;
+            dc.drawLine(x + Math.cos(a) * 6, y + Math.sin(a) * 6, x + Math.cos(a) * 9, y + Math.sin(a) * 9);
+        }
+        dc.setPenWidth(1);
     }
 
     // ---- navigation affordances ------------------------------------------
