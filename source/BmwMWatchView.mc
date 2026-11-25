@@ -66,8 +66,8 @@ class BmwMWatchView extends WatchUi.WatchFace {
         drawMMark(dc, cx, cy - r * 0.4, r);
         drawTemperature(dc, cx, Geometry.tempY(cy, r));
         var info = Gregorian.info(Time.now(), Time.FORMAT_MEDIUM);
-        drawWindow(dc, cx + r * Theme.DIAL_SIDE_X, cy, info.day_of_week.toString().toUpper(), info.day.toString());
-        drawBatteryIcon(dc, cx - r * Theme.DIAL_SIDE_X, cy);
+        drawWindow(dc, cx + Geometry.middleRingR(r), cy, info.day_of_week.toString().toUpper(), info.day.toString());
+        drawBatteryIcon(dc, cx - Geometry.middleRingR(r), cy);
 
         drawHands(dc, cx, cy, r);
 

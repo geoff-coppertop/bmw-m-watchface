@@ -36,9 +36,9 @@ simulator screenshots. They are generated from `source/Theme.mc` by
 - M badge at 12 o'clock, drawn from the flat M logo's geometry.
 - Three activity rings inside the lower dial, in the badge colours:
   steps (blue), weekly active minutes (navy) and body battery (red).
-- Date window at 3 o'clock. The watch battery is a simple icon at 9 o'clock that empties as
-  the battery drains (red below 20%). The temperature sits at 12 o'clock, the same distance
-  from the centre as the middle ring is at 6 o'clock.
+- Three readouts on one arc, the same distance from the centre as the middle ring: the
+  temperature at 12 o'clock, the date at 3 o'clock, and the watch battery at 9 o'clock as a
+  simple icon that empties as the battery drains (red below 20%).
 - Quick cards on touch and hold: hold the temperature, date, battery, roundel or rings and a
   small card appears over the dial with more detail (weather and feels-like, the date in full,
   battery percentage and days left, heart rate with resting rate and stress, the three activity

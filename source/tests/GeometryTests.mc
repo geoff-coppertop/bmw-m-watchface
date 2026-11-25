@@ -19,8 +19,8 @@ function geometryHitTestOnTheVenuX1(logger as Test.Logger) as Boolean {
     // screen 448 x 486, dial radius 220, centre (224, 243)
     Test.assertEqual(Geometry.hitTest(224, 76, 448, 486, 220), :weather);    // the temperature at 12 o'clock
     Test.assertEqual(Geometry.hitTest(224, 100, 448, 486, 220), :weather);
-    Test.assertEqual(Geometry.hitTest(356, 243, 448, 486, 220), :date);      // the date window at 3 o'clock
-    Test.assertEqual(Geometry.hitTest(92, 243, 448, 486, 220), :battery);    // the battery icon at 9 o'clock
+    Test.assertEqual(Geometry.hitTest(391, 243, 448, 486, 220), :date);      // the date window at 3 o'clock
+    Test.assertEqual(Geometry.hitTest(57, 243, 448, 486, 220), :battery);    // the battery icon at 9 o'clock
     Test.assertEqual(Geometry.hitTest(224, 243, 448, 486, 220), :hr);        // the roundel
     Test.assertEqual(Geometry.hitTest(284, 243, 448, 486, 220), :hr);        // inside the roundel zone
     Test.assertEqual(Geometry.hitTest(224, 426, 448, 486, 220), :activity);  // the rings at 6 o'clock

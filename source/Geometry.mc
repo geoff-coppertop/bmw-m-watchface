@@ -46,7 +46,7 @@ module Geometry {
         }
 
         // the date window (3 o'clock) and the battery icon (9 o'clock)
-        var side = r * Theme.DIAL_SIDE_X;
+        var side = middleRingR(r);                  // the same arc as the temperature
         if (near(x, y, cx + side, cy, r * 0.2)) { return :date; }
         if (near(x, y, cx - side, cy, r * 0.2)) { return :battery; }
 

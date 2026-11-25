@@ -67,7 +67,7 @@ CARD_W, CARD_H, CARD_H_ROWS, CARD_R, CARD_PAD = (num("CARD_W"), num("CARD_H"), n
 CARD_TITLE_Y, CARD_BIG_Y, CARD_DETAIL_Y, CARD_ROW_Y, CARD_ROW_PITCH = (num("CARD_TITLE_Y"), num("CARD_BIG_Y"),
                                                                         num("CARD_DETAIL_Y"), num("CARD_ROW_Y"),
                                                                         num("CARD_ROW_PITCH"))
-DIAL_SIDE_X, WINDOW_LABEL_DY, WINDOW_VALUE_DY = num("DIAL_SIDE_X"), num("WINDOW_LABEL_DY"), num("WINDOW_VALUE_DY")
+WINDOW_LABEL_DY, WINDOW_VALUE_DY = num("WINDOW_LABEL_DY"), num("WINDOW_VALUE_DY")
 STRIPE_X0, STRIPE_PITCH, STRIPE_W = num("STRIPE_X0"), num("STRIPE_PITCH"), num("STRIPE_W")
 STRIPE_SLANT, STRIPE_HALF_H = num("STRIPE_SLANT"), num("STRIPE_HALF_H")
 NAV_CHEVRON_X, CHEVRON_HALF_W, CHEVRON_HALF_H, DOT_PITCH = (num("NAV_CHEVRON_X"), num("CHEVRON_HALF_W"),
@@ -242,12 +242,13 @@ def dial_into(s, ox, oy, zones=False, card=None):
         s.line(pt(inner, 90 - i * 6), pt(outer, 90 - i * 6),
                WHITE if major else GREY, 4 if major else 2)
     draw_badge(s, CY - R * .4)
-    temp_y = CY - (RING_OUT - PITCH)                 # Geometry.tempY(): the middle ring's distance, mirrored
+    temp_y = CY - (RING_OUT - PITCH)                 # Geometry.tempY()
     s.text(CX, temp_y, "18&#176;C", "value", WHITE)  # the weather tap target
-    sx = CX + R * DIAL_SIDE_X                        # the date window at 3 o'clock
+    arc = RING_OUT - PITCH                           # one arc: the middle ring's distance from the centre
+    sx = CX + arc                                    # the date window at 3 o'clock
     s.text(sx, CY + WINDOW_LABEL_DY, "WED", "label", GREY)
     s.text(sx, CY + WINDOW_VALUE_DY, "25", "value", WHITE)
-    draw_battery_icon(s, CX - R * DIAL_SIDE_X, CY, 82)   # the battery at 9 o'clock
+    draw_battery_icon(s, CX - arc, CY, 82)   # the battery at 9 o'clock
     draw_hand(s, (10 + 8 / 60) * 30, R * .56, R * .07, R * .1)
     draw_hand(s, (8 + 35 / 60) * 6, R * .88, R * .05, R * .12)
     a = math.radians(35 * 6)
@@ -257,7 +258,7 @@ def dial_into(s, ox, oy, zones=False, card=None):
     if zones:
         s.add('<rect x="%.1f" y="%.1f" width="280" height="60" rx="10" fill="#FFD400" fill-opacity=".25" '
               'stroke="#FFD400" stroke-width="2"/>' % (CX - 140, temp_y - 30))
-        for zx in (CX + R * DIAL_SIDE_X, CX - R * DIAL_SIDE_X):
+        for zx in (CX + arc, CX - arc):
             s.add('<circle cx="%.1f" cy="%.1f" r="%.1f" fill="#B060FF" fill-opacity=".25" stroke="#B060FF" '
                   'stroke-width="2"/>' % (zx, CY, R * .2))
         s.add('<circle cx="%.1f" cy="%.1f" r="%.1f" fill="%s" fill-opacity=".22" stroke="%s" '

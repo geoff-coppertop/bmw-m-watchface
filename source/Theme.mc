@@ -69,8 +69,9 @@ module Theme {
     const BAR_COLS_W = 34;        // 7-day bar chart: bar width and gap
     const BAR_COLS_GAP = 8;
 
-    // ---- dial windows: date at 3 o'clock, watch battery at 9 o'clock --------
-    const DIAL_SIDE_X = 0.6;      // window centre from the dial centre, as a fraction of the radius
+    // ---- dial windows ------------------------------------------------------------
+    // The temperature (12 o'clock), the date (3) and the watch battery (9) all sit on one
+    // arc: the middle ring's distance from the centre (Geometry.middleRingR).
     const WINDOW_LABEL_DY = -14;  // small grey label above the value
     const WINDOW_VALUE_DY = 8;
 
