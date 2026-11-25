@@ -98,9 +98,8 @@ module Theme {
 
     // ---- touch targets on the dial (Geometry.hitTest and the touch-targets wireframe) --
     const TOUCH_R = 0.36;         // radius of the roundel, date and battery circles, as a fraction of the dial radius
-    const TOUCH_TEMP_HALF_H = 30; // the temperature target: half its height and half its width, in pixels
-    const TOUCH_TEMP_HALF_W = 140;
-    const TOUCH_RING_ANGLE = 42;  // the rings target: degrees either side of straight down
+    const TOUCH_ARC_ANGLE = 42;   // the temperature and rings targets are arcs: degrees either side of 12 / 6 o'clock
+    const TOUCH_TEMP_HALF_R = 30; // the temperature arc: half its thickness, around the temperature's own radius
     const TOUCH_RING_OUT = 14;    // pixels beyond the outer ring
     const TOUCH_RING_IN = 20;     // pixels inside the inner ring
 

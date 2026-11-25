@@ -70,8 +70,8 @@ CARD_TITLE_Y, CARD_BIG_Y, CARD_DETAIL_Y, CARD_ROW_Y, CARD_ROW_PITCH = (num("CARD
                                                                         num("CARD_DETAIL_Y"), num("CARD_ROW_Y"),
                                                                         num("CARD_ROW_PITCH"))
 WINDOW_LABEL_DY, WINDOW_VALUE_DY = num("WINDOW_LABEL_DY"), num("WINDOW_VALUE_DY")
-TOUCH_R, TOUCH_TEMP_HALF_H, TOUCH_TEMP_HALF_W = num("TOUCH_R"), num("TOUCH_TEMP_HALF_H"), num("TOUCH_TEMP_HALF_W")
-TOUCH_RING_ANGLE, TOUCH_RING_OUT, TOUCH_RING_IN = num("TOUCH_RING_ANGLE"), num("TOUCH_RING_OUT"), num("TOUCH_RING_IN")
+TOUCH_R, TOUCH_TEMP_HALF_R, TOUCH_ARC_ANGLE = num("TOUCH_R"), num("TOUCH_TEMP_HALF_R"), num("TOUCH_ARC_ANGLE")
+TOUCH_RING_OUT, TOUCH_RING_IN = num("TOUCH_RING_OUT"), num("TOUCH_RING_IN")
 STRIPE_X0, STRIPE_PITCH, STRIPE_W = num("STRIPE_X0"), num("STRIPE_PITCH"), num("STRIPE_W")
 STRIPE_SLANT, STRIPE_HALF_H = num("STRIPE_SLANT"), num("STRIPE_HALF_H")
 NAV_CHEVRON_X, CHEVRON_HALF_W, CHEVRON_HALF_H, DOT_PITCH = (num("NAV_CHEVRON_X"), num("CHEVRON_HALF_W"),
@@ -266,20 +266,22 @@ def dial_into(s, ox, oy, zones=False, card=None):
         z = ZONE_COLORS
         s.add('<clipPath id="scr"><rect width="%d" height="%d" rx="70"/></clipPath><g clip-path="url(#scr)">' % (W, H))
         shape = 'fill="%s" fill-opacity=".25" stroke="%s" stroke-width="2"'
-        s.add('<rect x="%.1f" y="%.1f" width="%d" height="%d" rx="10" %s/>'
-              % (CX - TOUCH_TEMP_HALF_W, temp_y - TOUCH_TEMP_HALF_H, 2 * TOUCH_TEMP_HALF_W, 2 * TOUCH_TEMP_HALF_H,
-                 shape % (z[1], z[1])))
+        top_lo, top_hi = 90 - TOUCH_ARC_ANGLE, 90 + TOUCH_ARC_ANGLE          # the temperature arc, around 12 o'clock
+        t_in, t_out = arc - TOUCH_TEMP_HALF_R, arc + TOUCH_TEMP_HALF_R
+        tband = ([pt(t_out, a_) for a_ in range(top_lo, top_hi + 1, 3)]
+                 + [pt(t_in, a_) for a_ in range(top_hi, top_lo - 1, -3)])
+        s.add('<polygon points="%s" %s/>' % (pts(tband), shape % (z[1], z[1])))
         s.add('<circle cx="%.1f" cy="%.1f" r="%.1f" %s/>' % (CX + arc, CY, R * TOUCH_R, shape % (z[2], z[2])))
         s.add('<circle cx="%.1f" cy="%.1f" r="%.1f" %s/>' % (CX - arc, CY, R * TOUCH_R, shape % (z[3], z[3])))
         s.add('<circle cx="%.1f" cy="%.1f" r="%.1f" %s/>' % (CX, CY, R * TOUCH_R, shape % (z[4], z[4])))
-        lo_a, hi_a = 270 - TOUCH_RING_ANGLE, 270 + TOUCH_RING_ANGLE
+        lo_a, hi_a = 270 - TOUCH_ARC_ANGLE, 270 + TOUCH_ARC_ANGLE
         band = ([pt(r_hi, a_) for a_ in range(lo_a, hi_a + 1, 3)]
                 + [pt(r_lo, a_) for a_ in range(hi_a, lo_a - 1, -3)])
         s.add('<polygon points="%s" %s/>' % (pts(band), shape % (z[5], z[5])))
         s.add('</g>')                                   # end of the screen clip
         # The number badge always sits centred on the top edge of its target's outline.
         badge = lambda x, y, n: (s.circle(x, y, 12, z[n]), s.text(x, y, str(n), "label", BLACK))
-        badge(CX, temp_y - TOUCH_TEMP_HALF_H, 1)        # temperature: top of its band
+        badge(CX, CY - t_out, 1)                        # temperature: top (outer edge) of its arc
         badge(CX + arc, CY - R * TOUCH_R, 2)                # date: top of its circle
         badge(CX - arc, CY - R * TOUCH_R, 3)                # battery: top of its circle
         badge(CX, CY - R * TOUCH_R, 4)                      # roundel: top of its circle

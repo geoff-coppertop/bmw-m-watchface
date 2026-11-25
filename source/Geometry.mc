@@ -33,15 +33,21 @@ module Geometry {
     }
 
     // Which element a tap or hold on the dial hit. Non-overlapping targets:
-    //   temperature -> :weather, date window -> :date, battery icon -> :battery,
-    //   roundel area -> :hr, ring band -> :activity.
+    //   temperature arc -> :weather, date window -> :date, battery icon -> :battery,
+    //   roundel area -> :hr, ring arc -> :activity.
     function hitTest(x as Number, y as Number, w as Number, h as Number, r as Number) as Symbol or Null {
         if (w == 0) { return null; }
         var cx = w / 2;
         var cy = h / 2;
 
-        // the temperature at 12 o'clock
-        if ((y - tempY(cy, r)).abs() < Theme.TOUCH_TEMP_HALF_H && (x - cx).abs() < Theme.TOUCH_TEMP_HALF_W) {
+        var dx = x - cx;
+        var dy = y - cy;
+        var dist = Math.sqrt(dx * dx + dy * dy);
+
+        // the temperature at 12 o'clock: an arc along its own radius, the mirror of the rings'
+        // arc at 6 o'clock
+        if (dy < 0 && (dist - middleRingR(r)).abs() < Theme.TOUCH_TEMP_HALF_R
+            && Math.atan2(dx.abs(), -dy) * 180.0 / Math.PI < Theme.TOUCH_ARC_ANGLE) {
             return :weather;
         }
 
@@ -54,19 +60,16 @@ module Geometry {
         if (near(x, y, cx - side, cy, zoneR)) { return :battery; }
 
         // roundel: a generous circle that stops well short of the rings
-        var dx = x - cx;
-        var dy = y - cy;
-        if (Math.sqrt(dx * dx + dy * dy) < zoneR) {
+        if (dist < zoneR) {
             return :hr;
         }
 
         // ring band, with margin
         if (dy > 0) {
-            var d = Math.sqrt(dx * dx + dy * dy);
             var ringR = ringOuterR(r);
             var ang = Math.atan2(dx.abs(), dy) * 180.0 / Math.PI;   // from straight down
-            if (ang < Theme.TOUCH_RING_ANGLE && d <= ringR + Theme.TOUCH_RING_OUT
-                && d >= ringR - 2 * (ringWidth(r) + Theme.GAP) - Theme.TOUCH_RING_IN) {
+            if (ang < Theme.TOUCH_ARC_ANGLE && dist <= ringR + Theme.TOUCH_RING_OUT
+                && dist >= ringR - 2 * (ringWidth(r) + Theme.GAP) - Theme.TOUCH_RING_IN) {
                 return :activity;
             }
         }

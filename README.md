@@ -132,7 +132,7 @@ Different renderers use different fonts, so text widths vary slightly.
 
 The logic that does not need the watch is split into small modules (`Geometry`,
 `PageNav`, `SleepInference`, `Stats`, `Theme`) and covered by Connect IQ unit tests in
-`source/tests/`: 50 tests for the sleep inference and schedule fallback, page
+`source/tests/`: 51 tests for the sleep inference and schedule fallback, page
 navigation, tap hit-testing, the statistics and bucketing helpers, and the theme
 mappings. Drawing code and anything that reads live watch data is not tested.
 
@@ -167,7 +167,7 @@ whole face.
   hero number.
 
 The touch targets' sizes (the shared radius of the roundel, date and battery circles, the
-temperature band and the ring margins) are tokens too, read by both the app and the wireframe
+temperature and rings arcs) are tokens too, read by both the app and the wireframe
 tool, so the touch-targets image follows the code.
 
 Page furniture (the M stripe accent, edge chevrons, page dots, the moon and sun marks, the

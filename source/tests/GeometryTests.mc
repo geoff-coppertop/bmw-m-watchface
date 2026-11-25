@@ -65,3 +65,14 @@ function geometryTouchRadiusComesFromTheTheme(logger as Test.Logger) as Boolean 
     Test.assert(Geometry.hitTest(224 + edge + 2, 243, 448, 486, 220) == null);       // just outside
     return true;
 }
+
+(:test)
+function geometryTemperatureTargetIsAnArcLikeTheRings(logger as Test.Logger) as Boolean {
+    // along the arc, out toward the edge of its 42 degree wedge (40 degrees from straight up)
+    Test.assertEqual(Geometry.hitTest(331, 115, 448, 486, 220), :weather);
+    // past the wedge (45 degrees)
+    Test.assert(Geometry.hitTest(342, 125, 448, 486, 220) == null);
+    // off the arc's radius: a point the old rectangle covered, near the top corner
+    Test.assert(Geometry.hitTest(350, 80, 448, 486, 220) == null);
+    return true;
+}
