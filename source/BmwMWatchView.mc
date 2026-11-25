@@ -134,7 +134,7 @@ class BmwMWatchView extends WatchUi.WatchFace {
         var dy = y - cy;
         if (dy > 0) {
             var d = Math.sqrt(dx * dx + dy * dy);
-            var ringR = (r - 8) - r * 0.09 - 6;
+            var ringR = (r - 8) - r * 0.09 - 5;
             var ang = Math.atan2(dx.abs(), dy) * 180.0 / Math.PI;   // from straight down
             if (ang < 60 && d <= ringR + 14 && d >= ringR - 36) {
                 return :rings;
@@ -172,13 +172,14 @@ class BmwMWatchView extends WatchUi.WatchFace {
     //   outer light blue = steps, middle dark blue = active minutes,
     //   inner red        = body battery
     private function drawBezel(dc as Dc, cx as Numeric, cy as Numeric, r as Numeric) as Void {
-        // Rings are 6 px wide on a 9 px pitch, so the gap between rings is 3 px.
-        // Put the outer ring the same 3 px inside the major ticks.
+        // Rings are 6 px wide on an 8 px pitch, so the gap between rings is 2 px,
+        // about the same as the gaps between the M badge stripes. Put the outer
+        // ring the same 2 px inside the major ticks.
         var tickInner = (r - 8) - r * 0.09;
-        var ringR = tickInner - 3 - 3;     // minus gap, minus half the pen width
+        var ringR = tickInner - 2 - 3;     // minus gap, minus half the pen width
         drawRing(dc, cx, cy, ringR,      stepsFrac(),  M_LIGHT_BLUE, DIM_LIGHT_BLUE);
-        drawRing(dc, cx, cy, ringR - 9,  activeFrac(), M_DARK_BLUE,  DIM_DARK_BLUE);
-        drawRing(dc, cx, cy, ringR - 18, bodyBatFrac(), M_RED,       DIM_RED);
+        drawRing(dc, cx, cy, ringR - 8,  activeFrac(), M_DARK_BLUE,  DIM_DARK_BLUE);
+        drawRing(dc, cx, cy, ringR - 16, bodyBatFrac(), M_RED,       DIM_RED);
 
         // minute / hour ticks
         for (var i = 0; i < 60; i++) {
