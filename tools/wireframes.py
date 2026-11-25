@@ -64,7 +64,7 @@ ACTIVITY_ROW_TOP, ACTIVITY_ROW_PITCH = num("ACTIVITY_ROW_TOP"), num("ACTIVITY_RO
 BAR_COLS_W, BAR_COLS_GAP = num("BAR_COLS_W"), num("BAR_COLS_GAP")
 DIM = {BLUE: BLUE_DIM, NAVY: NAVY_DIM, RED: RED_DIM}
 # Theme.metricColor(): one colour per metric everywhere
-METRIC = {"steps": BLUE, "active": NAVY, "body": RED, "hr": RED, "weather": RED}
+METRIC = {"steps": BLUE, "active": NAVY, "body": RED, "hr": RED, "weather": RED, "temp": RED}
 
 # approximate pixel heights of the Garmin system fonts, per Theme font role
 FONT_PX = {"label": 18, "value": 22, "title": 24, "hero": 96}
@@ -265,14 +265,14 @@ def chevron(s, x, y, right):
           % (x + d, y - 12, x - d, y, x + d, y + 12, GREY_MID))
 
 
-def nav(s, sub, from_activity):
+def nav(s, sub, from_activity, count=2):
     """Edge chevrons and page dots, as drawNav() in BmwMDetail.mc."""
-    if sub == 0:
+    if sub < count - 1:
         chevron(s, W - 24, H / 2, True)
-    if sub == 1 or from_activity:
+    if sub >= 1 or from_activity:
         chevron(s, 24, H / 2, False)
-    for i in range(2):
-        s.circle(CX - 10 + i * 20, Y_DOTS, DOT_R, WHITE if i == sub else GREY_MID)
+    for i in range(count):
+        s.circle(CX + (i - (count - 1) / 2.0) * 20, Y_DOTS, DOT_R, WHITE if i == sub else GREY_MID)
 
 
 def pages():
@@ -411,7 +411,7 @@ def grey_level(pct):
     return "#%02X%02X%02X" % (v, v, v)
 
 
-def line_chart(s, vals, color, xlabels, sleep=None, rain=None, cloud=None, frozen=None):
+def line_chart(s, vals, color, xlabels, sleep=None, rain=None, cloud=None, frozen=None, tenths=False):
     x0, x1 = CHART_X, W - CHART_X
     s.line((x0, CHART_BOTTOM), (x1, CHART_BOTTOM), GREY_DARK, 2)
     s.line((x0, CHART_TOP), (x1, CHART_TOP), GREY_DARK, 2)
@@ -445,8 +445,9 @@ def line_chart(s, vals, color, xlabels, sleep=None, rain=None, cloud=None, froze
             moon(s, xa, CHART_TOP - 12)
         if b_ < n_:
             sun(s, xb, CHART_TOP - 12)
-    s.text(x1 + 6, CHART_TOP, str(max(good)), "label", GREY_LIGHT, "start")
-    s.text(x1 + 6, CHART_BOTTOM, str(min(good)), "label", GREY_LIGHT, "start")
+    fmt = (lambda v: "%.1f" % (v / 10.0)) if tenths else str
+    s.text(x1 + 6, CHART_TOP, fmt(max(good)), "label", GREY_LIGHT, "start")
+    s.text(x1 + 6, CHART_BOTTOM, fmt(min(good)), "label", GREY_LIGHT, "start")
     n = len(vals)
     prev = None
     for i, v in enumerate(vals):
@@ -464,7 +465,7 @@ def line_chart(s, vals, color, xlabels, sleep=None, rain=None, cloud=None, froze
         s.text(x, Y_XLABELS, t, "label", GREY_LIGHT, anchor)
 
 
-def graph_page(s, ox, oy, title, stats, draw, caption=None):
+def graph_page(s, ox, oy, title, stats, draw, caption=None, sub=1, count=2):
     screen(s, ox, oy)
     stripes(s, 0)
     s.text(CX, Y_TITLE, title, "title", GREY_LIGHT)
@@ -472,7 +473,7 @@ def graph_page(s, ox, oy, title, stats, draw, caption=None):
         s.text(CX, Y_CAPTION, caption, "label", GREY_LIGHT)
     draw()
     s.text(CX, Y_STATS, stats, "label", GREY_LIGHT)
-    nav(s, 1, False)
+    nav(s, sub, False, count)
     s.add("</g>")
 
 
@@ -506,7 +507,7 @@ def graphs():
     graph_page(s, px, 0, "ACTIVE MIN · 7 DAYS", "Avg 22   Best 41   Daily target 21",
                lambda: bar_chart(s, active, 21, METRIC["active"], days))
     graph_page(s, px * 2, 0, "BODY BATTERY · 24 H", "Low %d   High %d" % (min(body), max(body)),
-               lambda: line_chart(s, body, METRIC["body"], ["24h ago", "12h", "now"], sleep), note)
+               lambda: line_chart(s, body, METRIC["body"], ["24h ago", "12h", "now"], sleep), note, 1, 3)
     graph_page(s, 0, py, "HEART RATE · 24 H", "Min %d   Max %d" % (min(hr), max(hr)),
                lambda: line_chart(s, hr, METRIC["hr"], ["24h ago", "12h", "now"], sleep), note)
     rain = [0, 10, 30, 60, 70, 60, 50, 60, 80, 70, 50, 30]
@@ -515,6 +516,10 @@ def graphs():
     graph_page(s, px, py, "TEMPERATURE · 12 H", "Low %d&#176;   High %d&#176;" % (min(temp), max(temp)),
                lambda: line_chart(s, temp, METRIC["weather"], ["14:00", "20:00", "01:00"], None, rain, cloud, frozen),
                "Bars: precipitation · Strip: cloud cover")
+    # Sensor temperature, in tenths of a degree: it typically climbs a little during sleep
+    skin = [int(332 + 6 * math.sin(i / 4.0) + (10 if 30 <= i < 44 else 0)) for i in range(48)]
+    graph_page(s, px * 2, py, "SENSOR TEMP · 24 H", "Low %.1f&#176;   High %.1f&#176;" % (min(skin) / 10, max(skin) / 10),
+               lambda: line_chart(s, skin, METRIC["temp"], ["24h ago", "12h", "now"], sleep, tenths=True), note, 2, 3)
     return s.doc(tw + 40, th + 40, "-20 -20 %d %d" % (tw + 40, th + 40))
 
 

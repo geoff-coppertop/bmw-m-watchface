@@ -55,6 +55,12 @@ module Stats {
         return out;
     }
 
+    // A value held in tenths as text with one decimal: 341 -> "34.1", -12 -> "-1.2".
+    function tenthsText(t as Number) as String {
+        var a = t < 0 ? -t : t;
+        return (t < 0 ? "-" : "") + (a / 10).toString() + "." + (a % 10).toString();
+    }
+
     // A grey from black (0%) to Theme.GREY_LIGHT (100%) for a cloud cover percentage.
     function greyLevel(pct as Number) as Number {
         var p = pct < 0 ? 0 : (pct > 100 ? 100 : pct);

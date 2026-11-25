@@ -74,3 +74,13 @@ function statsGreyLevel(logger as Test.Logger) as Boolean {
     Test.assertEqual(Stats.greyLevel(-5), 0x000000);
     return true;
 }
+
+(:test)
+function statsTenthsText(logger as Test.Logger) as Boolean {
+    Test.assertEqual(Stats.tenthsText(341), "34.1");
+    Test.assertEqual(Stats.tenthsText(305), "30.5");
+    Test.assertEqual(Stats.tenthsText(0), "0.0");
+    Test.assertEqual(Stats.tenthsText(-12), "-1.2");
+    Test.assertEqual(Stats.tenthsText(95), "9.5");
+    return true;
+}

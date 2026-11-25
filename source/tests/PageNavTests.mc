@@ -99,3 +99,38 @@ function navIgnoresTapsWhenClosed(logger as Test.Logger) as Boolean {
     Test.assert(!nav.isOpen());
     return true;
 }
+
+(:test)
+function navPageCounts(logger as Test.Logger) as Boolean {
+    Test.assertEqual(PageNav.subCount(:activity), 1);
+    Test.assertEqual(PageNav.subCount(:steps), 2);
+    Test.assertEqual(PageNav.subCount(:hr), 2);
+    Test.assertEqual(PageNav.subCount(:weather), 2);
+    Test.assertEqual(PageNav.subCount(:body), 3);       // the sensor temperature page
+    return true;
+}
+
+(:test)
+function navBodyHasAThirdPage(logger as Test.Logger) as Boolean {
+    var nav = new PageNav();
+    nav.open(:body);
+    nav.tap(400, 240, 448);
+    Test.assertEqual(nav.sub, 1);
+    nav.tap(400, 240, 448);
+    Test.assertEqual(nav.sub, 2);
+    nav.tap(400, 240, 448);               // no fourth page
+    Test.assertEqual(nav.sub, 2);
+    nav.tap(20, 240, 448);
+    Test.assertEqual(nav.sub, 1);
+    return true;
+}
+
+(:test)
+function navOtherPagesStopAtTheGraph(logger as Test.Logger) as Boolean {
+    var nav = new PageNav();
+    nav.open(:steps);
+    nav.tap(400, 240, 448);
+    nav.tap(400, 240, 448);
+    Test.assertEqual(nav.sub, 1);
+    return true;
+}

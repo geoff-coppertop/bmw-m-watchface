@@ -26,6 +26,7 @@ class DetailPage {
     private var _gStats as String = "";
     private var _gColor as Number = Theme.WHITE;
     private var _gBars as Boolean = false;
+    private var _gTenths as Boolean = false;      // values are tenths of a degree: label with one decimal
     // Sleep band on the body battery and heart rate graphs, as bucket indices
     // (null when there is none) plus a caption saying where it came from.
     private var _gSleepA as Number or Null = null;
@@ -59,14 +60,14 @@ class DetailPage {
             drawActivity(dc, w, h);
             return;
         }
-        if (sub == 1) {
-            drawGraph(dc, w, h, kind);
+        if (sub >= 1) {
+            drawGraph(dc, w, h, (kind == :body && sub == 2) ? :temp : kind);
         } else if (kind == :weather) {
             drawWeather(dc, w, h);
         } else {
             drawMetric(dc, w, h, kind);
         }
-        drawNav(dc, w, h, sub, fromActivity);
+        drawNav(dc, w, h, sub, fromActivity, PageNav.subCount(kind));
     }
 
     // ---- metric detail page (steps, active minutes, body battery, heart rate) ----
@@ -431,6 +432,7 @@ class DetailPage {
         var vals = [] as Array<Numeric or Null>;
         _gGoal = null;
         _gBars = false;
+        _gTenths = false;
         _gXl = [] as Array<String>;
         _gStats = "";
         _gSleepA = null;
@@ -483,16 +485,28 @@ class DetailPage {
         } else if (kind == :body) {
             _gTitle = "BODY BATTERY · 24 H";
             _gColor = Theme.metricColor(kind);
-            vals = bucketSeries(86400, true);
-            findSleep(bucketSeries(86400, false), vals);
+            vals = bucketSeries(86400, :body);
+            findSleep(bucketSeries(86400, :hr), vals);
             _gXl = ["24h ago", "12h", "now"];
             _gStats = "Low " + Stats.fmt(Stats.minOf(vals)) + "   High " + Stats.fmt(Stats.maxOf(vals));
+
+        } else if (kind == :temp) {
+            // The temperature sensor behind SensorHistory.getTemperatureHistory. The docs
+            // only call it "temperature"; whether it is skin temperature on the Venu X1
+            // is unconfirmed, hence the neutral title.
+            _gTitle = "SENSOR TEMP · 24 H";
+            _gColor = Theme.metricColor(kind);
+            _gTenths = true;
+            vals = bucketSeries(86400, :temp);
+            findSleep(bucketSeries(86400, :hr), bucketSeries(86400, :body));
+            _gXl = ["24h ago", "12h", "now"];
+            _gStats = "Low " + tenthsOrDash(Stats.minOf(vals)) + "°   High " + tenthsOrDash(Stats.maxOf(vals)) + "°";
 
         } else if (kind == :hr) {
             _gTitle = "HEART RATE · 24 H";
             _gColor = Theme.metricColor(kind);
-            vals = bucketSeries(86400, false);
-            findSleep(vals, bucketSeries(86400, true));
+            vals = bucketSeries(86400, :hr);
+            findSleep(vals, bucketSeries(86400, :body));
             _gXl = ["24h ago", "12h", "now"];
             _gStats = "Min " + Stats.fmt(Stats.minOf(vals)) + "   Max " + Stats.fmt(Stats.maxOf(vals));
 
@@ -518,19 +532,23 @@ class DetailPage {
         _gVals = vals;
     }
 
-    // Reads the last span seconds of body battery (or heart rate) into 48 time
-    // buckets, averaging the samples in each. Both come from SensorHistory; the docs
-    // say heart rate history only goes back to the last power cycle, so a freshly
-    // restarted watch will show gaps at the left.
-    private function bucketSeries(span as Number, bodyBattery as Boolean) as Array<Numeric or Null> {
+    // Reads the last span seconds of body battery, heart rate or sensor temperature
+    // (which is :body, :hr or :temp) into 48 time buckets, averaging the samples in
+    // each. All three come from SensorHistory. The docs say heart rate and temperature
+    // history only go back to the last power cycle, so a freshly restarted watch will
+    // show gaps at the left. Temperature is held in tenths of a degree, in the
+    // watch's own unit (Celsius or Fahrenheit).
+    private function bucketSeries(span as Number, which as Symbol) as Array<Numeric or Null> {
         var buckets = 48;
         var out = new [buckets] as Array<Numeric or Null>;
         if (!(Toybox has :SensorHistory)) { return out; }
 
         var it = null;
         var opts = { :period => new Time.Duration(span), :order => SensorHistory.ORDER_OLDEST_FIRST };
-        if (bodyBattery) {
+        if (which == :body) {
             if (SensorHistory has :getBodyBatteryHistory) { it = SensorHistory.getBodyBatteryHistory(opts); }
+        } else if (which == :temp) {
+            if (SensorHistory has :getTemperatureHistory) { it = SensorHistory.getTemperatureHistory(opts); }
         } else {
             if (SensorHistory has :getHeartRateHistory) { it = SensorHistory.getHeartRateHistory(opts); }
         }
@@ -547,16 +565,31 @@ class DetailPage {
         var smp = it.next();
         while (smp != null) {
             var v = smp.data;
-            if (v != null && smp.when != null && v != ActivityMonitor.INVALID_HR_SAMPLE) {
+            if (v != null && smp.when != null && (which != :hr || v != ActivityMonitor.INVALID_HR_SAMPLE)) {
                 var idx = Stats.bucketIndex(smp.when.value(), t0, step, buckets);
                 if (idx >= 0) {
-                    sums[idx] += v.toNumber();
+                    sums[idx] += sampleValue(v, which);
                     cnts[idx] += 1;
                 }
             }
             smp = it.next();
         }
         return Stats.bucketAverages(sums, cnts);
+    }
+
+    // One sample as a whole number: tenths of a degree for temperature (converted to
+    // Fahrenheit if the watch is set to it), otherwise the value itself.
+    private function sampleValue(v as Numeric, which as Symbol) as Number {
+        if (which != :temp) { return v.toNumber(); }
+        var c = v.toFloat();
+        if (System.getDeviceSettings().temperatureUnits == System.UNIT_STATUTE) {
+            c = c * 9.0 / 5.0 + 32.0;
+        }
+        return Math.round(c * 10).toNumber();
+    }
+
+    private function tenthsOrDash(v as Numeric or Null) as String {
+        return v == null ? "--" : Stats.tenthsText(v.toNumber());
     }
 
     private function drawBarChart(dc as Dc, w as Number) as Void {
@@ -658,8 +691,10 @@ class DetailPage {
 
         // axis values on the right
         dc.setColor(Theme.GREY_LIGHT, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(x1 + 6, top, Theme.FONT_LABEL, hi.toString(), Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
-        dc.drawText(x1 + 6, bot, Theme.FONT_LABEL, lo.toString(), Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
+        dc.drawText(x1 + 6, top, Theme.FONT_LABEL, _gTenths ? Stats.tenthsText(hi.toNumber()) : hi.toString(),
+            Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
+        dc.drawText(x1 + 6, bot, Theme.FONT_LABEL, _gTenths ? Stats.tenthsText(lo.toNumber()) : lo.toString(),
+            Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
 
         dc.setPenWidth(3);
         dc.setColor(_gColor, Graphics.COLOR_TRANSPARENT);
@@ -752,17 +787,18 @@ class DetailPage {
 
     // Chevrons at the edges and page dots at the bottom. The right chevron means
     // "graph"; the left one means "back".
-    private function drawNav(dc as Dc, w as Number, h as Number, sub as Number, fromActivity as Boolean) as Void {
-        if (sub == 0) {
+    private function drawNav(dc as Dc, w as Number, h as Number, sub as Number, fromActivity as Boolean,
+                             count as Number) as Void {
+        if (sub < count - 1) {
             chevron(dc, w - 24, h / 2, true);
         }
-        if (sub == 1 || fromActivity) {
+        if (sub >= 1 || fromActivity) {
             chevron(dc, 24, h / 2, false);
         }
         var cx = w / 2;
-        for (var i = 0; i < 2; i++) {
+        for (var i = 0; i < count; i++) {
             dc.setColor(i == sub ? Theme.WHITE : Theme.GREY_MID, Graphics.COLOR_TRANSPARENT);
-            dc.fillCircle(cx - 10 + i * 20, Theme.Y_DOTS, Theme.DOT_R);
+            dc.fillCircle(cx + (i - (count - 1) / 2.0) * 20, Theme.Y_DOTS, Theme.DOT_R);
         }
     }
 

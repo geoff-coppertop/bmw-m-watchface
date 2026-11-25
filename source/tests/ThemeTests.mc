@@ -17,6 +17,7 @@ function themeOneColourPerMetric(logger as Test.Logger) as Boolean {
     Test.assertEqual(Theme.metricColor(:body), Theme.RED);
     Test.assertEqual(Theme.metricColor(:hr), Theme.RED);
     Test.assertEqual(Theme.metricColor(:weather), Theme.RED);        // same red as the other line charts
+    Test.assertEqual(Theme.metricColor(:temp), Theme.RED);
     Test.assertEqual(Theme.metricColor(:anything), Theme.WHITE);
     return true;
 }
