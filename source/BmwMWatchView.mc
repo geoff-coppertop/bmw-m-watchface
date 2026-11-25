@@ -140,7 +140,7 @@ class BmwMWatchView extends WatchUi.WatchFace {
         if (kind == :hr) {
             drawHeart(dc, x, y, s, Theme.RED);
         } else if (kind == :steps) {
-            drawShoe(dc, x, y, s, Theme.BLUE);
+            drawWalker(dc, x, y, s, Theme.BLUE);
         } else if (kind == :active) {
             drawBolt(dc, x, y, s, Theme.NAVY_LIGHT);
         } else if (kind == :body) {
@@ -306,26 +306,20 @@ class BmwMWatchView extends WatchUi.WatchFace {
         dc.fillPolygon([[x - s * 0.51, y - s * 0.02], [x + s * 0.51, y - s * 0.02], [x, y + s * 0.55]]);
     }
 
-    // Side-view running shoe, toe to the right: coloured upper over a light sole.
-    private function drawShoe(dc as Dc, x as Numeric, y as Numeric, s as Numeric, color as Number) as Void {
-        var k = s * 1.15;
-        var cy = y + k * 0.035;     // centre the glyph vertically
-        var upper = [[-0.60, 0.22], [-0.60, -0.10], [-0.50, -0.45], [-0.20, -0.45], [-0.12, -0.15],
-                     [0.05, -0.12], [0.28, -0.02], [0.55, 0.08], [0.60, 0.22]];
-        var sole = [[-0.62, 0.22], [0.62, 0.22], [0.62, 0.38], [-0.55, 0.38]];
+    // Walking figure facing right, in the same stroked style as the body battery
+    // person: head, leaning torso, swinging arms, and two legs with a knee bend.
+    private function drawWalker(dc as Dc, x as Numeric, y as Numeric, s as Numeric, color as Number) as Void {
         dc.setColor(color, Graphics.COLOR_TRANSPARENT);
-        dc.fillPolygon(localPoints(upper, x, cy, k));
-        dc.setColor(_asleep ? Theme.GREY_MID : Theme.GREY_LIGHT, Graphics.COLOR_TRANSPARENT);
-        dc.fillPolygon(localPoints(sole, x, cy, k));
-    }
-
-    private function localPoints(pts as Array<Array<Numeric> >, x as Numeric, y as Numeric,
-                                 k as Numeric) as Array<[Numeric, Numeric]> {
-        var out = [] as Array<[Numeric, Numeric]>;
-        for (var i = 0; i < pts.size(); i++) {
-            out.add([x + pts[i][0] * k, y + pts[i][1] * k]);
-        }
-        return out;
+        dc.setPenWidth(Theme.glyphPen(s));
+        dc.fillCircle(x + s * 0.06, y - s * 0.40, s * 0.11);
+        dc.drawLine(x + s * 0.04, y - s * 0.24, x - s * 0.02, y + s * 0.08);          // torso
+        dc.drawLine(x + s * 0.03, y - s * 0.18, x + s * 0.22, y - s * 0.02);          // front arm
+        dc.drawLine(x + s * 0.03, y - s * 0.18, x - s * 0.15, y - s * 0.04);          // back arm
+        dc.drawLine(x - s * 0.02, y + s * 0.08, x + s * 0.14, y + s * 0.26);          // front thigh
+        dc.drawLine(x + s * 0.14, y + s * 0.26, x + s * 0.20, y + s * 0.50);          // front shin
+        dc.drawLine(x - s * 0.02, y + s * 0.08, x - s * 0.16, y + s * 0.28);          // back thigh
+        dc.drawLine(x - s * 0.16, y + s * 0.28, x - s * 0.30, y + s * 0.46);          // back shin
+        dc.setPenWidth(1);
     }
 
     private function drawBolt(dc as Dc, x as Numeric, y as Numeric, s as Numeric, color as Number) as Void {
@@ -342,7 +336,7 @@ class BmwMWatchView extends WatchUi.WatchFace {
     private function drawBodyBattery(dc as Dc, x as Numeric, y as Numeric, s as Numeric,
                                      color as Number, frac as Float) as Void {
         var rr = s * 0.62;
-        dc.setPenWidth(2);
+        dc.setPenWidth(Theme.glyphPen(s));
         dc.setColor(Theme.GREY_MID, Graphics.COLOR_TRANSPARENT);
         dc.drawCircle(x, y, rr);
         if (frac > 1.0) { frac = 1.0; }

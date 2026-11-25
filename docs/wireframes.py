@@ -195,13 +195,17 @@ def g_heart(s, x, y, sz, c):
     s.poly([(x - sz * .51, y - sz * .02), (x + sz * .51, y - sz * .02), (x, y + sz * .55)], c)
 
 
-def g_shoe(s, x, y, sz, c):
-    k = sz * 1.15
-    cy = y + k * .035
-    up = [(-.6, .22), (-.6, -.1), (-.5, -.45), (-.2, -.45), (-.12, -.15), (.05, -.12), (.28, -.02), (.55, .08), (.6, .22)]
-    so = [(-.62, .22), (.62, .22), (.62, .38), (-.55, .38)]
-    s.poly([(x + u * k, cy + v * k) for u, v in up], c)
-    s.poly([(x + u * k, cy + v * k) for u, v in so], GREY_LIGHT)
+def glyph_pen(sz):
+    return max(2, int(sz * 0.08))
+
+
+def g_walker(s, x, y, sz, c):
+    w = glyph_pen(sz)
+    s.circle(x + sz * .06, y - sz * .40, sz * .11, c)
+    for x1, y1, x2, y2 in [(.04, -.24, -.02, .08), (.03, -.18, .22, -.02), (.03, -.18, -.15, -.04),
+                           (-.02, .08, .14, .26), (.14, .26, .20, .50),
+                           (-.02, .08, -.16, .28), (-.16, .28, -.30, .46)]:
+        s.line((x + x1 * sz, y + y1 * sz), (x + x2 * sz, y + y2 * sz), c, w)
 
 
 def g_bolt(s, x, y, sz, c):
@@ -211,12 +215,12 @@ def g_bolt(s, x, y, sz, c):
 
 def g_body(s, x, y, sz, c, frac):
     rr = sz * .62
-    s.add('<circle cx="%.1f" cy="%.1f" r="%.1f" fill="none" stroke="%s" stroke-width="2"/>' % (x, y, rr, GREY_MID))
-    s.arc(x, y, rr, 90, 90 - 360 * frac, c, 2, cw=True)
+    s.add('<circle cx="%.1f" cy="%.1f" r="%.1f" fill="none" stroke="%s" stroke-width="%d"/>' % (x, y, rr, GREY_MID, glyph_pen(sz)))
+    s.arc(x, y, rr, 90, 90 - 360 * frac, c, glyph_pen(sz), cw=True)
     s.circle(x, y - sz * .24, sz * .1, GREY_LIGHT)
     for x1, y1, x2, y2 in [(0, -.1, 0, .15), (0, -.02, -.22, -.17), (0, -.02, .22, -.17),
                            (0, .15, -.14, .36), (0, .15, .14, .36)]:
-        s.line((x + x1 * sz, y + y1 * sz), (x + x2 * sz, y + y2 * sz), GREY_LIGHT, 2)
+        s.line((x + x1 * sz, y + y1 * sz), (x + x2 * sz, y + y2 * sz), GREY_LIGHT, glyph_pen(sz))
 
 
 # ---------------------------------------------------------------- detail pages
@@ -248,14 +252,14 @@ def pages():
     screen(s, ox)
     stripes(s, 0)
     s.text(CX, Y_TITLE, "ACTIVITY RINGS", "title", GREY_LIGHT)
-    items = [("Steps", "6214 / 10000", .62, BLUE, "shoe"),
+    items = [("Steps", "6214 / 10000", .62, BLUE, "walker"),
              ("Active minutes (week)", "68 / 150 min", .45, NAVY, "bolt"),
              ("Body battery", "78 / 100", .78, RED, "body")]
     for i, (name, val, frac, c, g) in enumerate(items):
         y = 150 + i * 100
         gx = MARGIN + 14
-        if g == "shoe":
-            g_shoe(s, gx, y, 24, BLUE)
+        if g == "walker":
+            g_walker(s, gx, y, 24, BLUE)
         elif g == "bolt":
             g_bolt(s, gx, y, 24, NAVY_LIGHT)
         else:
@@ -269,7 +273,7 @@ def pages():
     ox = W + 40
     screen(s, ox)
     stripes(s, 0)
-    g_shoe(s, CX, Y_GLYPH, GLYPH_BIG, BLUE)
+    g_walker(s, CX, Y_GLYPH, GLYPH_BIG, BLUE)
     s.text(CX, Y_TITLE_UNDER_GLYPH, "STEPS", "title", GREY_LIGHT)
     s.text(CX, Y_HERO, "6214", "hero", WHITE)
     s.text(CX, Y_SUB, "of 10000 goal", "label", GREY_LIGHT)

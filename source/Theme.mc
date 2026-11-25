@@ -55,6 +55,12 @@ module Theme {
     const Y_ROWS = 366;          // first row on the metric pages
     const Y_WEATHER_ROWS = 274;  // first row on the weather page
 
+    // Line weight for stroked glyphs: grows with glyph size, never below 2 px.
+    function glyphPen(s as Numeric) as Number {
+        var p = (s * 0.08).toNumber();
+        return p < 2 ? 2 : p;
+    }
+
     // The empty-track tint that goes with a bar colour.
     function dimOf(color as Number) as Number {
         if (color == BLUE) { return BLUE_DIM; }
