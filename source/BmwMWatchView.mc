@@ -318,7 +318,7 @@ class BmwMWatchView extends WatchUi.WatchFace {
         var top = y - Theme.BATT_H / 2;
         dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
         dc.setPenWidth(2);
-        dc.drawRoundedRectangle(left, top, Theme.BATT_W, Theme.BATT_H, 4);
+        dc.drawRoundedRectangle(left, top, Theme.BATT_W, Theme.BATT_H, Theme.BATT_R);
         dc.setPenWidth(1);
         dc.fillRectangle(left + Theme.BATT_W, y - Theme.BATT_TERM_H / 2, Theme.BATT_TERM_W, Theme.BATT_TERM_H);
         var fillW = (Theme.BATT_W - 2 * Theme.BATT_PAD) * pct / 100.0;

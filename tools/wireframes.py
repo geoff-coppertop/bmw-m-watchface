@@ -60,8 +60,9 @@ Y_ROWS, Y_WEATHER_ROWS = num("Y_ROWS"), num("Y_WEATHER_ROWS")
 CHART_X, CHART_TOP, CHART_BOTTOM = num("CHART_X"), num("CHART_TOP"), num("CHART_BOTTOM")
 Y_XLABELS, Y_STATS, Y_DOTS, DOT_R = num("Y_XLABELS"), num("Y_STATS"), num("Y_DOTS"), num("DOT_R")
 Y_CAPTION = num("Y_CAPTION")
-BATT_W, BATT_H, BATT_TERM_W, BATT_TERM_H, BATT_PAD = (num("BATT_W"), num("BATT_H"), num("BATT_TERM_W"),
-                                                       num("BATT_TERM_H"), num("BATT_PAD"))
+BATT_W, BATT_H, BATT_R, BATT_TERM_W, BATT_TERM_H, BATT_PAD = (num("BATT_W"), num("BATT_H"), num("BATT_R"),
+                                                                num("BATT_TERM_W"), num("BATT_TERM_H"),
+                                                                num("BATT_PAD"))
 CARD_W, CARD_H, CARD_H_ROWS, CARD_R, CARD_PAD = (num("CARD_W"), num("CARD_H"), num("CARD_H_ROWS"), num("CARD_R"),
                                                   num("CARD_PAD"))
 CARD_TITLE_Y, CARD_BIG_Y, CARD_DETAIL_Y, CARD_ROW_Y, CARD_ROW_PITCH = (num("CARD_TITLE_Y"), num("CARD_BIG_Y"),
@@ -193,8 +194,8 @@ def draw_roundel(s):
 def draw_battery_icon(s, x, y, pct):
     """Mirror of drawBatteryIcon(): grey outline and terminal, white fill (red below 20%)."""
     left, top = x - BATT_W / 2, y - BATT_H / 2
-    s.add('<rect x="%.1f" y="%.1f" width="%d" height="%d" rx="4" fill="none" stroke="%s" stroke-width="2"/>'
-          % (left, top, BATT_W, BATT_H, GREY))
+    s.add('<rect x="%.1f" y="%.1f" width="%d" height="%d" rx="%d" fill="none" stroke="%s" stroke-width="2"/>'
+          % (left, top, BATT_W, BATT_H, BATT_R, GREY))
     s.add('<rect x="%.1f" y="%.1f" width="%d" height="%d" fill="%s"/>'
           % (left + BATT_W, y - BATT_TERM_H / 2, BATT_TERM_W, BATT_TERM_H, GREY))
     fill_w = (BATT_W - 2 * BATT_PAD) * pct / 100.0

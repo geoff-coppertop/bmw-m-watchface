@@ -76,11 +76,12 @@ module Theme {
     const WINDOW_VALUE_DY = 8;
 
     // ---- watch battery icon (9 o'clock) ---------------------------------------
-    const BATT_W = 46;
-    const BATT_H = 22;
-    const BATT_TERM_W = 4;
-    const BATT_TERM_H = 10;
-    const BATT_PAD = 3;           // gap between the outline and the fill
+    const BATT_W = 34;            // small enough to clear the 9 o'clock tick (about 8 px)
+    const BATT_H = 17;
+    const BATT_R = 3;             // corner radius
+    const BATT_TERM_W = 3;
+    const BATT_TERM_H = 8;
+    const BATT_PAD = 2;           // gap between the outline and the fill
 
     // ---- quick cards (touch and hold) -------------------------------------------
     const CARD_W = 300;
