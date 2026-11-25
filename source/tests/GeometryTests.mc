@@ -57,3 +57,11 @@ function geometryDateAndBatteryZonesMatchTheRoundelsSize(logger as Test.Logger) 
     Test.assertEqual(Geometry.hitTest(284, 243, 448, 486, 220), :hr);
     return true;
 }
+
+(:test)
+function geometryTouchRadiusComesFromTheTheme(logger as Test.Logger) as Boolean {
+    var edge = (Theme.TOUCH_R * 220).toNumber();                            // 79 px on the Venu X1
+    Test.assertEqual(Geometry.hitTest(224 + edge - 2, 243, 448, 486, 220), :hr);     // just inside
+    Test.assert(Geometry.hitTest(224 + edge + 2, 243, 448, 486, 220) == null);       // just outside
+    return true;
+}

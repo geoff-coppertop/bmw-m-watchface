@@ -41,14 +41,14 @@ module Geometry {
         var cy = h / 2;
 
         // the temperature at 12 o'clock
-        if ((y - tempY(cy, r)).abs() < 30 && (x - cx).abs() < 140) {
+        if ((y - tempY(cy, r)).abs() < Theme.TOUCH_TEMP_HALF_H && (x - cx).abs() < Theme.TOUCH_TEMP_HALF_W) {
             return :weather;
         }
 
         // the date window (3 o'clock) and the battery icon (9 o'clock): circles the same size as
         // the roundel's, on the temperature's arc. They run off the edge of the screen, which is
         // fine: only the part on the screen can be touched.
-        var zoneR = r * 0.36;                        // the roundel, date and battery targets share one radius
+        var zoneR = r * Theme.TOUCH_R;               // the roundel, date and battery targets share one radius
         var side = middleRingR(r);
         if (near(x, y, cx + side, cy, zoneR)) { return :date; }
         if (near(x, y, cx - side, cy, zoneR)) { return :battery; }
@@ -65,7 +65,8 @@ module Geometry {
             var d = Math.sqrt(dx * dx + dy * dy);
             var ringR = ringOuterR(r);
             var ang = Math.atan2(dx.abs(), dy) * 180.0 / Math.PI;   // from straight down
-            if (ang < 42 && d <= ringR + 14 && d >= ringR - 2 * (ringWidth(r) + Theme.GAP) - 20) {
+            if (ang < Theme.TOUCH_RING_ANGLE && d <= ringR + Theme.TOUCH_RING_OUT
+                && d >= ringR - 2 * (ringWidth(r) + Theme.GAP) - Theme.TOUCH_RING_IN) {
                 return :activity;
             }
         }

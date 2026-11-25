@@ -96,6 +96,14 @@ module Theme {
     const CARD_ROW_PITCH = 36;
     const CARD_MS = 4000;         // how long a card stays up
 
+    // ---- touch targets on the dial (Geometry.hitTest and the touch-targets wireframe) --
+    const TOUCH_R = 0.36;         // radius of the roundel, date and battery circles, as a fraction of the dial radius
+    const TOUCH_TEMP_HALF_H = 30; // the temperature target: half its height and half its width, in pixels
+    const TOUCH_TEMP_HALF_W = 140;
+    const TOUCH_RING_ANGLE = 42;  // the rings target: degrees either side of straight down
+    const TOUCH_RING_OUT = 14;    // pixels beyond the outer ring
+    const TOUCH_RING_IN = 20;     // pixels inside the inner ring
+
     // ---- page furniture: accents, chevrons, marks ---------------------------
     const STRIPE_X0 = -40;        // M stripe accent at the top of every page: first stripe, from centre
     const STRIPE_PITCH = 28;
