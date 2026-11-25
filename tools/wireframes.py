@@ -262,19 +262,21 @@ def dial_into(s, ox, oy, zones=False, card=None):
         # red, white, grey), so the overlay never reads as part of the face.
         r_hi, r_lo = RING_OUT + 14, RING_OUT - 2 * PITCH - 20
         z = ZONE_COLORS
+        s.add('<clipPath id="scr"><rect width="%d" height="%d" rx="70"/></clipPath><g clip-path="url(#scr)">' % (W, H))
         shape = 'fill="%s" fill-opacity=".25" stroke="%s" stroke-width="2"'
         s.add('<rect x="%.1f" y="%.1f" width="280" height="60" rx="10" %s/>'
               % (CX - 140, temp_y - 30, shape % (z[1], z[1])))
-        s.add('<circle cx="%.1f" cy="%.1f" r="%.1f" %s/>' % (CX + arc, CY, R * .2, shape % (z[2], z[2])))
-        s.add('<circle cx="%.1f" cy="%.1f" r="%.1f" %s/>' % (CX - arc, CY, R * .2, shape % (z[3], z[3])))
+        s.add('<circle cx="%.1f" cy="%.1f" r="%.1f" %s/>' % (CX + arc, CY, R * .36, shape % (z[2], z[2])))
+        s.add('<circle cx="%.1f" cy="%.1f" r="%.1f" %s/>' % (CX - arc, CY, R * .36, shape % (z[3], z[3])))
         s.add('<circle cx="%.1f" cy="%.1f" r="%.1f" %s/>' % (CX, CY, R * .36, shape % (z[4], z[4])))
         band = [pt(r_hi, a_) for a_ in range(228, 313, 3)] + [pt(r_lo, a_) for a_ in range(312, 227, -3)]
         s.add('<polygon points="%s" %s/>' % (pts(band), shape % (z[5], z[5])))
+        s.add('</g>')                                   # end of the screen clip
         # The number badge always sits centred on the top edge of its target's outline.
         badge = lambda x, y, n: (s.circle(x, y, 12, z[n]), s.text(x, y, str(n), "label", BLACK))
         badge(CX, temp_y - 30, 1)                       # temperature: top of its band
-        badge(CX + arc, CY - R * .2, 2)                 # date: top of its circle
-        badge(CX - arc, CY - R * .2, 3)                 # battery: top of its circle
+        badge(CX + arc, CY - R * .36, 2)                # date: top of its circle
+        badge(CX - arc, CY - R * .36, 3)                # battery: top of its circle
         badge(CX, CY - R * .36, 4)                      # roundel: top of its circle
         badge(CX, CY + r_lo, 5)                         # rings: top (inner edge) of the wedge
     if card:

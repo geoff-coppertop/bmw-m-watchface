@@ -45,15 +45,18 @@ module Geometry {
             return :weather;
         }
 
-        // the date window (3 o'clock) and the battery icon (9 o'clock)
-        var side = middleRingR(r);                  // the same arc as the temperature
-        if (near(x, y, cx + side, cy, r * 0.2)) { return :date; }
-        if (near(x, y, cx - side, cy, r * 0.2)) { return :battery; }
+        // the date window (3 o'clock) and the battery icon (9 o'clock): circles the same size as
+        // the roundel's, on the temperature's arc. They run off the edge of the screen, which is
+        // fine: only the part on the screen can be touched.
+        var zoneR = r * 0.36;                        // the roundel, date and battery targets share one radius
+        var side = middleRingR(r);
+        if (near(x, y, cx + side, cy, zoneR)) { return :date; }
+        if (near(x, y, cx - side, cy, zoneR)) { return :battery; }
 
         // roundel: a generous circle that stops well short of the rings
         var dx = x - cx;
         var dy = y - cy;
-        if (Math.sqrt(dx * dx + dy * dy) < r * 0.36) {
+        if (Math.sqrt(dx * dx + dy * dy) < zoneR) {
             return :hr;
         }
 

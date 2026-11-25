@@ -132,7 +132,7 @@ Different renderers use different fonts, so text widths vary slightly.
 
 The logic that does not need the watch is split into small modules (`Geometry`,
 `PageNav`, `SleepInference`, `Stats`, `Theme`) and covered by Connect IQ unit tests in
-`source/tests/`: 48 tests for the sleep inference and schedule fallback, page
+`source/tests/`: 49 tests for the sleep inference and schedule fallback, page
 navigation, tap hit-testing, the statistics and bucketing helpers, and the theme
 mappings. Drawing code and anything that reads live watch data is not tested.
 

@@ -45,3 +45,15 @@ function geometryTemperatureMirrorsTheMiddleRing(logger as Test.Logger) as Boole
     Test.assert((Geometry.tempY(243, 220) - 75.8).abs() < 0.01);            // the same distance above the centre
     return true;
 }
+
+(:test)
+function geometryDateAndBatteryZonesMatchTheRoundelsSize(logger as Test.Logger) as Boolean {
+    // Radius 79.2 centred at (391, 243) and (57, 243): 70 px away still hits, vertically or horizontally
+    Test.assertEqual(Geometry.hitTest(391, 313, 448, 486, 220), :date);
+    Test.assertEqual(Geometry.hitTest(321, 243, 448, 486, 220), :date);
+    Test.assertEqual(Geometry.hitTest(57, 313, 448, 486, 220), :battery);
+    Test.assertEqual(Geometry.hitTest(127, 243, 448, 486, 220), :battery);
+    // and the roundel keeps what is nearer to it
+    Test.assertEqual(Geometry.hitTest(284, 243, 448, 486, 220), :hr);
+    return true;
+}
