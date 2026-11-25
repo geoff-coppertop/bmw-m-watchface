@@ -114,3 +114,14 @@ function statsDaysText(logger as Test.Logger) as Boolean {
     Test.assertEqual(Stats.daysText(12.7), "12 days");
     return true;
 }
+
+(:test)
+function statsHourText(logger as Test.Logger) as Boolean {
+    Test.assertEqual(Stats.hourText(14, true), "14");
+    Test.assertEqual(Stats.hourText(1, true), "01");
+    Test.assertEqual(Stats.hourText(14, false), "2p");
+    Test.assertEqual(Stats.hourText(0, false), "12a");
+    Test.assertEqual(Stats.hourText(12, false), "12p");
+    Test.assertEqual(Stats.hourText(23, false), "11p");
+    return true;
+}

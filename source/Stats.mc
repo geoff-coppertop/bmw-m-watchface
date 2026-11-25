@@ -90,6 +90,17 @@ module Stats {
         return (v << 16) | (v << 8) | v;
     }
 
+    // A compact hour for tight spaces, two characters at most: "14" on a 24 hour watch,
+    // "2p" on a 12 hour one ("12a" at midnight is the one three-character case).
+    function hourText(hour as Number, is24 as Boolean) as String {
+        if (is24) {
+            return hour.format("%02d");
+        }
+        var h12 = hour % 12;
+        if (h12 == 0) { h12 = 12; }
+        return h12.toString() + (hour >= 12 ? "p" : "a");
+    }
+
     // "23:05" on a 24 hour watch, "11:05p" on a 12 hour one.
     function clockText(hour as Number, min as Number, is24 as Boolean) as String {
         if (is24) {

@@ -57,6 +57,7 @@ module Theme {
     const CHART_X = 60;           // left/right inset of the plot area
     const CHART_TOP = 140;
     const CHART_BOTTOM = 360;
+    const CAPTION_MARGIN = 40;    // a caption wider than the screen minus this on each side switches to its short form
     const Y_CAPTION = 108;        // one-line note under the graph title (sleep source)
     const Y_XLABELS = 384;
     const Y_STATS = 424;

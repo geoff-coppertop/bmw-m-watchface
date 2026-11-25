@@ -50,7 +50,7 @@ simulator screenshots. They are generated from `source/Theme.mc` by
     as rows. Tap a row to open that metric's page.
   - roundel: heart rate (resting, today's low and high)
   - the temperature above the badge: weather (conditions, feels-like, high/low, rain chance, wind,
-    humidity, next four hours)
+    humidity, and the temperature every three hours over the next twelve)
 - Recovery on the Body Battery pages: its detail page also shows stress (current score
   and band: resting, low, medium, high) and sleep score. Behind it are four pages in
   all: detail, body battery over 24 hours, stress over 24 hours, and the watch's
@@ -144,7 +144,7 @@ Different renderers use different fonts, so text widths vary slightly.
 
 The logic that does not need the watch is split into small modules (`Geometry`,
 `PageNav`, `SleepInference`, `Stats`, `Theme`) and covered by Connect IQ unit tests in
-`source/tests/`: 58 tests for the sleep inference and schedule fallback, page
+`source/tests/`: 59 tests for the sleep inference and schedule fallback, page
 navigation, tap hit-testing, the statistics and bucketing helpers, and the theme
 mappings. Drawing code and anything that reads live watch data is not tested.
 

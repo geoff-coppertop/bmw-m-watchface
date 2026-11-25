@@ -455,7 +455,7 @@ def pages():
     for i, (l, v) in enumerate([("High / low", "20&#176; / 9&#176;"), ("Rain chance", "30%"),
                                 ("Wind", "12 km/h NW"), ("Humidity", "65%")]):
         row(s, 0, Y_WEATHER_ROWS + i * ROW_PITCH, l, v)
-    for i, (t, v) in enumerate([("14:00", "19&#176;"), ("15:00", "20&#176;"), ("16:00", "19&#176;"), ("17:00", "17&#176;")]):
+    for i, (t, v) in enumerate([("14", "19&#176;"), ("17", "20&#176;"), ("20", "17&#176;"), ("23", "14&#176;")]):
         x = W * (.2 + .2 * i)
         s.text(x, Y_ROWS + ROW_PITCH, t, "label", GREY)
         s.text(x, Y_ROWS + 2 * ROW_PITCH, v, "value", WHITE)
@@ -656,7 +656,7 @@ def graphs():
     frozen = [False] * 7 + [True] * 5                       # rain first, then snow from 21:00
     cloud = [40, 60, 80, 90, 100, 100, 90, 100, 100, 90, 80, 70]
     graph_page(s, px, py, "TEMPERATURE · 12 H", "Low %d&#176;   High %d&#176;" % (min(temp), max(temp)),
-               lambda: line_chart(s, temp, METRIC["weather"], ["14:00", "20:00", "01:00"], None, rain, cloud, frozen),
+               lambda: line_chart(s, temp, METRIC["weather"], ["14", "20", "01"], None, rain, cloud, frozen),
                "Bars: precipitation · Strip: cloud cover")
     # Stress: low overnight, bumps through the day
     stress = [max(5, int((14 if 30 <= i < 44 else 38) + 16 * math.sin(i / 3.0) + (20 if 14 < i < 18 else 0)))

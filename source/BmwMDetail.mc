@@ -33,6 +33,7 @@ class DetailPage {
     private var _gSleepA as Number or Null = null;
     private var _gSleepB as Number or Null = null;     // exclusive
     private var _gCaption as String = "";
+    private var _gCaptionShort as String = "";      // used if _gCaption is too wide for the screen
     // Weather graph overlays, one value per hour: chance of precipitation and cloud cover (percent)
     private var _gRain as Array<Numeric or Null> = [] as Array<Numeric or Null>;
     private var _gCloud as Array<Numeric or Null> = [] as Array<Numeric or Null>;
@@ -438,17 +439,19 @@ class DetailPage {
         drawRow(dc, w, Theme.Y_WEATHER_ROWS + 2 * Theme.ROW_PITCH, "Wind", windText(cond));
         drawRow(dc, w, Theme.Y_WEATHER_ROWS + 3 * Theme.ROW_PITCH, "Humidity", numStr(cond.relativeHumidity, "%"));
 
-        // next few hours
+        // every three hours across the next twelve: a label every hour would not fit
         var fc = Weather.getHourlyForecast();
         if (fc != null) {
-            for (var i = 0; i < 4 && i < fc.size(); i++) {
+            for (var i = 0; i < 4; i++) {
+                var idx = i * 3;
+                if (idx >= fc.size()) { break; }
                 var x = w * (0.2 + 0.2 * i);
                 dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
-                dc.drawText(x, Theme.Y_ROWS + Theme.ROW_PITCH, Theme.FONT_LABEL, hourLabel(fc[i].forecastTime),
+                dc.drawText(x, Theme.Y_ROWS + Theme.ROW_PITCH, Theme.FONT_LABEL, hourLabel(fc[idx].forecastTime),
                     Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-                if (fc[i].temperature != null) {
+                if (fc[idx].temperature != null) {
                     dc.setColor(Theme.WHITE, Graphics.COLOR_TRANSPARENT);
-                    dc.drawText(x, Theme.Y_ROWS + 2 * Theme.ROW_PITCH, Theme.FONT_VALUE, tempNum(fc[i].temperature).toString() + "°",
+                    dc.drawText(x, Theme.Y_ROWS + 2 * Theme.ROW_PITCH, Theme.FONT_VALUE, tempNum(fc[idx].temperature).toString() + "°",
                         Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
                 }
             }
@@ -500,14 +503,9 @@ class DetailPage {
         return Units.tempUnit(Units.tempImperial());
     }
 
+    // Two characters at most ("14", "2p"): there is no room for more along the graphs.
     private function hourLabel(t as Time.Moment) as String {
-        var hr = Gregorian.info(t, Time.FORMAT_SHORT).hour;
-        if (System.getDeviceSettings().is24Hour) {
-            return hr.format("%02d") + ":00";
-        }
-        var h12 = hr % 12;
-        if (h12 == 0) { h12 = 12; }
-        return h12.toString() + (hr >= 12 ? "p" : "a");
+        return Stats.hourText(Gregorian.info(t, Time.FORMAT_SHORT).hour, System.getDeviceSettings().is24Hour);
     }
 
     // ---- graph pages (the second page behind each detail page) -------------
@@ -524,8 +522,14 @@ class DetailPage {
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
 
         if (_gCaption.length() > 0) {
+            // measure the real text: if it does not fit, use the short form
+            var cap = _gCaption;
+            if (_gCaptionShort.length() > 0
+                && dc.getTextWidthInPixels(cap, Theme.FONT_LABEL) > w - 2 * Theme.CAPTION_MARGIN) {
+                cap = _gCaptionShort;
+            }
             dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(cx, Theme.Y_CAPTION, Theme.FONT_LABEL, _gCaption,
+            dc.drawText(cx, Theme.Y_CAPTION, Theme.FONT_LABEL, cap,
                 Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
         }
 
@@ -558,6 +562,7 @@ class DetailPage {
         _gSleepA = null;
         _gSleepB = null;
         _gCaption = "";
+        _gCaptionShort = "";
         _gRain = [] as Array<Numeric or Null>;
         _gCloud = [] as Array<Numeric or Null>;
         _gFrozen = [] as Array<Boolean>;
@@ -651,7 +656,10 @@ class DetailPage {
                 _gCloud.add(fc[i].cloudCover);
                 _gFrozen.add(Precip.isFrozen(fc[i].condition));
             }
-            if (n > 1) { _gCaption = "Bars: precipitation · Strip: cloud cover"; }
+            if (n > 1) {
+                _gCaption = "Bars: precipitation · Strip: cloud cover";
+                _gCaptionShort = "Bars: precip · Strip: cloud";
+            }
             if (n > 0) {
                 _gXl = [hourLabel(fc[0].forecastTime), hourLabel(fc[n / 2].forecastTime), hourLabel(fc[n - 1].forecastTime)];
             }
@@ -875,8 +883,9 @@ class DetailPage {
         if (inferred != null) {
             _gSleepA = inferred[0];
             _gSleepB = inferred[1];
-            _gCaption = "Sleep " + clock(t0 + inferred[0] * step) + "–" + clock(t0 + inferred[1] * step)
-                + " · estimated";
+            var span = clock(t0 + inferred[0] * step) + "–" + clock(t0 + inferred[1] * step);
+            _gCaption = "Sleep " + span + " · estimated";
+            _gCaptionShort = "Sleep " + span;
             return;
         }
 
@@ -888,7 +897,9 @@ class DetailPage {
         if (sched == null) { return; }
         _gSleepA = sched[0];
         _gSleepB = sched[1];
-        _gCaption = "Sleep " + clock(sched[2]) + "–" + clock(sched[3]) + " · schedule";
+        var span2 = clock(sched[2]) + "–" + clock(sched[3]);
+        _gCaption = "Sleep " + span2 + " · schedule";
+        _gCaptionShort = "Sleep " + span2;
     }
 
     private function clock(seconds as Number) as String {
