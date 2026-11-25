@@ -55,6 +55,21 @@ module Theme {
     const Y_ROWS = 366;          // first row on the metric pages
     const Y_WEATHER_ROWS = 274;  // first row on the weather page
 
+    // ---- graph pages and navigation ---------------------------------------
+    const CHART_X = 60;           // left/right inset of the plot area
+    const CHART_TOP = 140;
+    const CHART_BOTTOM = 360;
+    const Y_XLABELS = 384;
+    const Y_STATS = 424;
+    const Y_DOTS = 462;           // page dots
+    const DOT_R = 4;
+    const NAV_ZONE = 0.35;        // tap the outer 35% of the width to go back / forward
+    const CLOSE_Y = 64;           // tap above this to close the page
+    const ACTIVITY_ROW_TOP = 100; // tappable rows on the Activity page
+    const ACTIVITY_ROW_PITCH = 100;
+    const BAR_COLS_W = 34;        // 7-day bar chart: bar width and gap
+    const BAR_COLS_GAP = 8;
+
     // Line weight for stroked glyphs: grows with glyph size, never below 2 px.
     function glyphPen(s as Numeric) as Number {
         var p = (s * 0.08).toNumber();

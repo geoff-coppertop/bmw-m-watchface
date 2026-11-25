@@ -15,11 +15,28 @@ class DetailPage {
 
     private var _face as BmwMWatchView;
 
+    // Graph data is read once per page and cached, because the face redraws every
+    // second and the history iterators are slow.
+    private var _gKind as Symbol or Null = null;
+    private var _gVals as Array<Numeric or Null> = [] as Array<Numeric or Null>;
+    private var _gXl as Array<String> = [] as Array<String>;
+    private var _gGoal as Numeric or Null = null;
+    private var _gTitle as String = "";
+    private var _gStats as String = "";
+    private var _gColor as Number = Theme.WHITE;
+    private var _gBars as Boolean = false;
+
     function initialize(face as BmwMWatchView) {
         _face = face;
     }
 
-    function draw(dc as Dc, kind as Symbol) as Void {
+    function reset() as Void {
+        _gKind = null;
+    }
+
+    // kind: :activity, :steps, :active, :body, :hr, :weather.
+    // sub: 0 = the detail page, 1 = the graph page behind it.
+    function draw(dc as Dc, kind as Symbol, sub as Number, fromActivity as Boolean) as Void {
         var w = dc.getWidth();
         var h = dc.getHeight();
         var cx = w / 2;
@@ -28,14 +45,24 @@ class DetailPage {
         dc.clear();
         drawStripes(dc, cx, Theme.Y_STRIPES);
 
-        if (kind == :weather) {
+        if (kind == :activity) {
+            drawActivity(dc, w, h);
+            return;
+        }
+        if (sub == 1) {
+            drawGraph(dc, w, h, kind);
+        } else if (kind == :weather) {
             drawWeather(dc, w, h);
-            return;
+        } else {
+            drawMetric(dc, w, h, kind);
         }
-        if (kind == :rings) {
-            drawRings(dc, w, h);
-            return;
-        }
+        drawNav(dc, w, h, sub, fromActivity);
+    }
+
+    // ---- metric detail page (steps, active minutes, body battery, heart rate) ----
+
+    private function drawMetric(dc as Dc, w as Number, h as Number, kind as Symbol) as Void {
+        var cx = w / 2;
 
         var title = "";
         var big = "--";
@@ -161,12 +188,13 @@ class DetailPage {
         }
     }
 
-    // ---- combined ring page (tap anywhere on the ring zone) ---------------
+    // ---- Activity page (tap the ring zone on the dial) ---------------------
+    // Each row opens that metric's page; the chevrons show that they are tappable.
 
-    private function drawRings(dc as Dc, w as Number, h as Number) as Void {
+    private function drawActivity(dc as Dc, w as Number, h as Number) as Void {
         var cx = w / 2;
         dc.setColor(Theme.GREY_LIGHT, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, Theme.Y_TITLE, Theme.FONT_TITLE, "ACTIVITY RINGS",
+        dc.drawText(cx, Theme.Y_TITLE, Theme.FONT_TITLE, "ACTIVITY",
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
 
         var info = ActivityMonitor.getInfo();
@@ -210,7 +238,7 @@ class DetailPage {
         var colors = [Theme.BLUE, Theme.NAVY, Theme.RED];
 
         for (var i = 0; i < 3; i++) {
-            var y = 150 + i * 100;
+            var y = Theme.ACTIVITY_ROW_TOP + 50 + i * Theme.ACTIVITY_ROW_PITCH;
             _face.drawGlyph(dc, kinds[i], Theme.MARGIN + 14, y, 24);
             dc.setColor(Theme.GREY_LIGHT, Graphics.COLOR_TRANSPARENT);
             dc.drawText(Theme.MARGIN + 46, y - 14, Theme.FONT_LABEL, names[i],
@@ -219,6 +247,7 @@ class DetailPage {
             dc.drawText(Theme.MARGIN + 46, y + 10, Theme.FONT_VALUE, vals[i],
                 Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
             drawBar(dc, cx, y + 40, fracs[i], colors[i]);
+            chevron(dc, w - 36, y + 8, true);
         }
     }
 
@@ -342,6 +371,291 @@ class DetailPage {
         var h12 = hr % 12;
         if (h12 == 0) { h12 = 12; }
         return h12.toString() + (hr >= 12 ? "p" : "a");
+    }
+
+    // ---- graph pages (the second page behind each detail page) -------------
+
+    private function drawGraph(dc as Dc, w as Number, h as Number, kind as Symbol) as Void {
+        var cx = w / 2;
+        if (_gKind != kind) {
+            loadGraph(kind);
+            _gKind = kind;
+        }
+
+        dc.setColor(Theme.GREY_LIGHT, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(cx, Theme.Y_TITLE, Theme.FONT_TITLE, _gTitle,
+            Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+
+        if (_gBars) {
+            drawBarChart(dc, w);
+        } else {
+            drawLineChart(dc, w);
+            var x1 = w - Theme.CHART_X;
+            var xs = [Theme.CHART_X, cx, x1];
+            var js = [Graphics.TEXT_JUSTIFY_LEFT, Graphics.TEXT_JUSTIFY_CENTER, Graphics.TEXT_JUSTIFY_RIGHT];
+            dc.setColor(Theme.GREY_LIGHT, Graphics.COLOR_TRANSPARENT);
+            for (var i = 0; i < _gXl.size() && i < 3; i++) {
+                dc.drawText(xs[i], Theme.Y_XLABELS, Theme.FONT_LABEL, _gXl[i], js[i] | Graphics.TEXT_JUSTIFY_VCENTER);
+            }
+        }
+
+        dc.setColor(Theme.GREY_LIGHT, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(cx, Theme.Y_STATS, Theme.FONT_LABEL, _gStats,
+            Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+    }
+
+    // Reads the data for one graph into the cache fields.
+    private function loadGraph(kind as Symbol) as Void {
+        var vals = [] as Array<Numeric or Null>;
+        _gGoal = null;
+        _gBars = false;
+        _gXl = [] as Array<String>;
+        _gStats = "";
+
+        if (kind == :steps || kind == :active) {
+            _gBars = true;
+            var hist = ActivityMonitor.getHistory();
+            var info = ActivityMonitor.getInfo();
+            var n = (hist == null) ? 0 : hist.size();
+            if (n > 6) { n = 6; }
+            // history is newest first; the chart wants oldest first, with today last
+            for (var i = n - 1; i >= 0; i--) {
+                if (kind == :steps) {
+                    vals.add(hist[i].steps);
+                    if (_gGoal == null) { _gGoal = hist[i].stepGoal; }
+                } else {
+                    var am = (hist[i] has :activeMinutes) ? hist[i].activeMinutes : null;
+                    vals.add(am == null ? null : am.total);
+                }
+            }
+            if (kind == :steps) {
+                _gTitle = "STEPS · 7 DAYS";
+                _gColor = Theme.BLUE;
+                vals.add(info.steps);
+                if (info.stepGoal != null) { _gGoal = info.stepGoal; }
+            } else {
+                _gTitle = "ACTIVE MIN · 7 DAYS";
+                _gColor = Theme.NAVY;
+                vals.add(info.activeMinutesDay == null ? null : info.activeMinutesDay.total);
+                if (info.activeMinutesWeekGoal != null) { _gGoal = info.activeMinutesWeekGoal / 7; }
+            }
+            _gXl = dayLabels(vals.size());
+            _gStats = "Avg " + fmt(avgOf(vals)) + "   Best " + fmt(maxOf(vals))
+                + (_gGoal == null ? "" : (kind == :steps ? "   Goal " : "   Daily target ") + _gGoal.toString());
+
+        } else if (kind == :body) {
+            _gTitle = "BODY BATTERY · 24 H";
+            _gColor = Theme.RED;
+            vals = bucketSeries(86400, true);
+            _gXl = ["24h ago", "12h", "now"];
+            _gStats = "Low " + fmt(minOf(vals)) + "   High " + fmt(maxOf(vals));
+
+        } else if (kind == :hr) {
+            _gTitle = "HEART RATE · 4 H";
+            _gColor = Theme.RED;
+            vals = bucketSeries(14400, false);
+            _gXl = ["4h ago", "2h", "now"];
+            _gStats = "Min " + fmt(minOf(vals)) + "   Max " + fmt(maxOf(vals));
+
+        } else {
+            _gTitle = "TEMPERATURE · 12 H";
+            _gColor = Theme.WHITE;
+            var fc = null;
+            if (Toybox has :Weather) { fc = Weather.getHourlyForecast(); }
+            var n = (fc == null) ? 0 : fc.size();
+            if (n > 12) { n = 12; }
+            for (var i = 0; i < n; i++) {
+                vals.add(fc[i].temperature == null ? null : tempNum(fc[i].temperature));
+            }
+            if (n > 0) {
+                _gXl = [hourLabel(fc[0].forecastTime), hourLabel(fc[n / 2].forecastTime), hourLabel(fc[n - 1].forecastTime)];
+            }
+            _gStats = "Low " + fmt(minOf(vals)) + "°   High " + fmt(maxOf(vals)) + "°";
+        }
+        _gVals = vals;
+    }
+
+    // Reads the last span seconds of body battery (or heart rate) into 48 time buckets.
+    private function bucketSeries(span as Number, bodyBattery as Boolean) as Array<Numeric or Null> {
+        var buckets = 48;
+        var out = new [buckets] as Array<Numeric or Null>;
+        var t0 = Time.now().value() - span;
+        var step = span / buckets;
+        var it = null;
+        if (bodyBattery) {
+            if ((Toybox has :SensorHistory) && (SensorHistory has :getBodyBatteryHistory)) {
+                it = SensorHistory.getBodyBatteryHistory({ :period => new Time.Duration(span) });
+            }
+        } else {
+            it = ActivityMonitor.getHeartRateHistory(new Time.Duration(span), false);
+        }
+        if (it == null) { return out; }
+        var smp = it.next();
+        while (smp != null) {
+            var v = bodyBattery ? smp.data : smp.heartRate;
+            if (v != null && smp.when != null && (bodyBattery || v != ActivityMonitor.INVALID_HR_SAMPLE)) {
+                var idx = (smp.when.value() - t0) / step;
+                if (idx >= 0 && idx < buckets) { out[idx] = v.toNumber(); }
+            }
+            smp = it.next();
+        }
+        return out;
+    }
+
+    private function drawBarChart(dc as Dc, w as Number) as Void {
+        var n = _gVals.size();
+        var top = Theme.CHART_TOP;
+        var bot = Theme.CHART_BOTTOM;
+        var bw = Theme.BAR_COLS_W;
+        var gap = Theme.BAR_COLS_GAP;
+        var x0 = w / 2 - (n * bw + (n - 1) * gap) / 2;
+
+        var maxV = (_gGoal == null) ? 0 : _gGoal;
+        for (var i = 0; i < n; i++) {
+            if (_gVals[i] != null && _gVals[i] > maxV) { maxV = _gVals[i]; }
+        }
+        if (maxV <= 0) { maxV = 1; }
+
+        for (var i = 0; i < n; i++) {
+            var x = x0 + i * (bw + gap);
+            var v = _gVals[i];
+            if (v != null) {
+                var hgt = v.toFloat() * (bot - top) / maxV;
+                dc.setColor(_gColor, Graphics.COLOR_TRANSPARENT);
+                dc.fillRectangle(x, bot - hgt, bw, hgt);
+            }
+            dc.setColor(i == n - 1 ? Theme.WHITE : Theme.GREY_LIGHT, Graphics.COLOR_TRANSPARENT);
+            if (i < _gXl.size()) {
+                dc.drawText(x + bw / 2, Theme.Y_XLABELS, Theme.FONT_LABEL, _gXl[i],
+                    Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+            }
+        }
+
+        dc.setPenWidth(2);
+        dc.setColor(Theme.GREY_DARK, Graphics.COLOR_TRANSPARENT);
+        dc.drawLine(x0, bot, x0 + n * bw + (n - 1) * gap, bot);
+        if (_gGoal != null) {
+            var gy = bot - _gGoal.toFloat() * (bot - top) / maxV;     // dashed goal line
+            dc.setColor(Theme.GREY_LIGHT, Graphics.COLOR_TRANSPARENT);
+            for (var gx = x0; gx < x0 + n * bw + (n - 1) * gap; gx += 12) {
+                dc.drawLine(gx, gy, gx + 7, gy);
+            }
+        }
+        dc.setPenWidth(1);
+    }
+
+    private function drawLineChart(dc as Dc, w as Number) as Void {
+        var n = _gVals.size();
+        var x0 = Theme.CHART_X;
+        var x1 = w - Theme.CHART_X;
+        var top = Theme.CHART_TOP;
+        var bot = Theme.CHART_BOTTOM;
+
+        var lo = minOf(_gVals);
+        var hi = maxOf(_gVals);
+        dc.setPenWidth(2);
+        dc.setColor(Theme.GREY_DARK, Graphics.COLOR_TRANSPARENT);
+        dc.drawLine(x0, bot, x1, bot);
+        dc.drawLine(x0, top, x1, top);
+        dc.setPenWidth(1);
+        if (n < 2 || lo == null || hi == null) {
+            dc.setColor(Theme.GREY_LIGHT, Graphics.COLOR_TRANSPARENT);
+            dc.drawText(w / 2, (top + bot) / 2, Theme.FONT_VALUE, "No data",
+                Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+            return;
+        }
+        if (hi == lo) { hi = lo + 1; }
+
+        // axis values on the right
+        dc.setColor(Theme.GREY_LIGHT, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(x1 + 6, top, Theme.FONT_LABEL, hi.toString(), Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
+        dc.drawText(x1 + 6, bot, Theme.FONT_LABEL, lo.toString(), Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
+
+        dc.setPenWidth(3);
+        dc.setColor(_gColor, Graphics.COLOR_TRANSPARENT);
+        var px = null;
+        var py = null;
+        for (var i = 0; i < n; i++) {
+            var v = _gVals[i];
+            if (v == null) {
+                px = null;
+                continue;
+            }
+            var x = x0 + (x1 - x0) * i / (n - 1);
+            var y = bot - (v - lo).toFloat() * (bot - top) / (hi - lo);
+            if (px != null) { dc.drawLine(px, py, x, y); }
+            px = x;
+            py = y;
+        }
+        if (px != null) { dc.fillCircle(px, py, 4); }      // marks the latest value
+        dc.setPenWidth(1);
+    }
+
+    // Single-letter weekday labels for the last n days, today last.
+    private function dayLabels(n as Number) as Array<String> {
+        var initials = ["S", "M", "T", "W", "T", "F", "S"];
+        var out = [] as Array<String>;
+        for (var i = 0; i < n; i++) {
+            var m = Time.now().subtract(new Time.Duration((n - 1 - i) * 86400));
+            out.add(initials[Gregorian.info(m, Time.FORMAT_SHORT).day_of_week - 1]);
+        }
+        return out;
+    }
+
+    private function fmt(v as Numeric or Null) as String {
+        return v == null ? "--" : v.toString();
+    }
+
+    private function minOf(vals as Array<Numeric or Null>) as Numeric or Null {
+        var r = null;
+        for (var i = 0; i < vals.size(); i++) {
+            if (vals[i] != null && (r == null || vals[i] < r)) { r = vals[i]; }
+        }
+        return r;
+    }
+
+    private function maxOf(vals as Array<Numeric or Null>) as Numeric or Null {
+        var r = null;
+        for (var i = 0; i < vals.size(); i++) {
+            if (vals[i] != null && (r == null || vals[i] > r)) { r = vals[i]; }
+        }
+        return r;
+    }
+
+    private function avgOf(vals as Array<Numeric or Null>) as Numeric {
+        var sum = 0;
+        var cnt = 0;
+        for (var i = 0; i < vals.size(); i++) {
+            if (vals[i] != null) { sum += vals[i]; cnt++; }
+        }
+        return cnt == 0 ? 0 : (sum / cnt).toNumber();
+    }
+
+    // ---- navigation affordances ------------------------------------------
+
+    // Chevrons at the edges and page dots at the bottom. The right chevron means
+    // "graph"; the left one means "back".
+    private function drawNav(dc as Dc, w as Number, h as Number, sub as Number, fromActivity as Boolean) as Void {
+        if (sub == 0) {
+            chevron(dc, w - 24, h / 2, true);
+        }
+        if (sub == 1 || fromActivity) {
+            chevron(dc, 24, h / 2, false);
+        }
+        var cx = w / 2;
+        for (var i = 0; i < 2; i++) {
+            dc.setColor(i == sub ? Theme.WHITE : Theme.GREY_MID, Graphics.COLOR_TRANSPARENT);
+            dc.fillCircle(cx - 10 + i * 20, Theme.Y_DOTS, Theme.DOT_R);
+        }
+    }
+
+    private function chevron(dc as Dc, x as Numeric, y as Numeric, right as Boolean) as Void {
+        var d = right ? -6 : 6;
+        dc.setPenWidth(3);
+        dc.setColor(Theme.GREY_MID, Graphics.COLOR_TRANSPARENT);
+        dc.drawLine(x + d, y - 12, x - d, y);
+        dc.drawLine(x - d, y, x + d, y + 12);
+        dc.setPenWidth(1);
     }
 
     // ---- shared bits -----------------------------------------------------

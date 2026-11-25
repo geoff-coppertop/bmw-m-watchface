@@ -19,6 +19,8 @@ class BmwMWatchView extends WatchUi.WatchFace {
 
     // tap detail pages
     private var _page as Symbol or Null = null;
+    private var _sub as Number = 0;               // 0 = detail page, 1 = graph page
+    private var _from as Symbol or Null = null;   // page to go back to (set when opened from Activity)
     private var _detail as DetailPage or Null = null;
     private var _timer as Timer.Timer or Null = null;
     private var _w as Number = 0;
@@ -52,7 +54,7 @@ class BmwMWatchView extends WatchUi.WatchFace {
         _r = r;
 
         if (_page != null && !_asleep && _detail != null) {
-            _detail.draw(dc, _page);
+            _detail.draw(dc, _page, _sub, _from != null);
             return;
         }
 
@@ -70,35 +72,89 @@ class BmwMWatchView extends WatchUi.WatchFace {
 
     // ---- taps -------------------------------------------------------------
 
-    // Returns true if the tap was used. Tapping a page again closes it.
+    // Returns true if the tap was used.
+    //   Dial:        a tap on a zone opens that page (see hitTest).
+    //   Open page:   top strip closes. On the Activity page a row opens that metric.
+    //                On other pages the right side goes forward (detail -> graph)
+    //                and the left side goes back (graph -> detail -> Activity/dial).
     function handleTap(x as Number, y as Number) as Boolean {
-        if (_page != null) {
+        if (_page == null) {
+            var hit = hitTest(x, y);
+            if (hit == null) {
+                return false;
+            }
+            _page = hit;
+            _sub = 0;
+            _from = null;
+            restartTimer();
+            WatchUi.requestUpdate();
+            return true;
+        }
+
+        restartTimer();
+        if (y < Theme.CLOSE_Y) {
             closePage();
             return true;
         }
-        var hit = hitTest(x, y);
-        if (hit == null) {
-            return false;
-        }
-        _page = hit;
-        if (_timer != null) {
-            _timer.stop();
-            _timer.start(method(:closePage), 20000, false);   // auto-return after 20 s
+
+        if (_page == :activity) {
+            var idx = (y - Theme.ACTIVITY_ROW_TOP) / Theme.ACTIVITY_ROW_PITCH;
+            if (y >= Theme.ACTIVITY_ROW_TOP && idx < 3) {
+                var kinds = [:steps, :active, :body];
+                _page = kinds[idx];
+                _from = :activity;
+                _sub = 0;
+            } else {
+                closePage();
+                return true;
+            }
+        } else if (x > _w * (1.0 - Theme.NAV_ZONE)) {
+            if (_sub == 0) {
+                _sub = 1;
+            }
+        } else if (x < _w * Theme.NAV_ZONE) {
+            goBack();
+            return true;
         }
         WatchUi.requestUpdate();
         return true;
     }
 
-    function closePage() as Void {
-        _page = null;
+    private function goBack() as Void {
+        if (_sub == 1) {
+            _sub = 0;
+        } else if (_from != null) {
+            _page = _from;
+            _from = null;
+        } else {
+            closePage();
+            return;
+        }
+        WatchUi.requestUpdate();
+    }
+
+    private function restartTimer() as Void {
         if (_timer != null) {
             _timer.stop();
+            _timer.start(method(:closePage), 20000, false);   // auto-return after 20 s
+        }
+    }
+
+    function closePage() as Void {
+        _page = null;
+        _sub = 0;
+        _from = null;
+        if (_timer != null) {
+            _timer.stop();
+        }
+        if (_detail != null) {
+            _detail.reset();      // drop cached graph data
         }
         WatchUi.requestUpdate();
     }
 
     // Which element was tapped. Three big, non-overlapping targets:
-    //   top row -> weather, roundel area -> heart rate, ring band -> activity.
+    //   top row -> weather, roundel area -> heart rate, ring band -> Activity page.
     private function hitTest(x as Number, y as Number) as Symbol or Null {
         if (_w == 0) { return null; }
         var cx = _w / 2;
@@ -123,7 +179,7 @@ class BmwMWatchView extends WatchUi.WatchFace {
             var ringR = ringOuterR(r);
             var ang = Math.atan2(dx.abs(), dy) * 180.0 / Math.PI;   // from straight down
             if (ang < 42 && d <= ringR + 14 && d >= ringR - 2 * (ringWidth(r) + Theme.GAP) - 20) {
-                return :rings;
+                return :activity;
             }
         }
         return null;

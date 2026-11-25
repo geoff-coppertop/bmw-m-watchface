@@ -8,13 +8,17 @@ An analog BMW M Motorsport watch face for Garmin Connect IQ. Target device:
 ![Watch face wireframe](docs/wireframe.png)
 
 Tap zones: yellow opens weather, red opens heart rate, blue opens the
-activity rings page.
+Activity page.
 
 ![Tap zones](docs/tap-zones.png)
 
-Tap pages (activity rings, a metric page, weather):
+Tap pages (Activity, a metric page, weather):
 
 ![Tap pages](docs/pages.png)
+
+Graph pages (the second page behind each detail page):
+
+![Graph pages](docs/graphs.png)
 
 These are mock-ups with example values and the time set to 10:08:35. They are not
 simulator screenshots. They are generated from `source/Theme.mc` by
@@ -28,11 +32,20 @@ simulator screenshots. They are generated from `source/Theme.mc` by
 - Three activity rings inside the lower dial, in the badge colours:
   steps (blue), weekly active minutes (navy) and body battery (red).
 - Top row with date, current temperature and watch battery.
-- Tap pages (full screen, tap again or wait 20 s to return):
-  - ring band: steps, active minutes and body battery together
+- Tap pages. Tap a zone on the dial to open a full-screen page:
+  - ring band: the **Activity** page, with steps, active minutes and body battery
+    as rows. Tap a row to open that metric's page.
   - roundel: heart rate (resting, today's low and high)
   - top row: weather (conditions, feels-like, high/low, rain chance, wind,
     humidity, next four hours)
+- Graph pages. Every metric page has a graph page behind it: steps and active
+  minutes for the last 7 days (bars, with the goal line), body battery over 24 hours,
+  heart rate over the last 4 hours, and a 12 hour temperature forecast for weather.
+- Navigation uses taps only, because a watch face does not receive swipes. Tap the
+  right side of a page to go forward (detail, then graph) and the left side to go
+  back. Chevrons at the edges and page dots at the bottom show what is possible.
+  Tap the top strip to close. A page also closes after 20 seconds of no taps, or when
+  the watch dims.
 
 ## Layout
 
@@ -42,7 +55,7 @@ monkey.jungle         build configuration
 source/
   BmwMWatchApp.mc       app entry
   BmwMWatchView.mc      dial, rings, hands, roundel, tap hit-testing
-  BmwMDetail.mc         tap detail pages
+  BmwMDetail.mc         Activity, detail and graph pages, and their navigation cues
   Theme.mc              colours, spacing and font roles used everywhere
   BmwMWatchDelegate.mc  forwards taps to the view
 resources/            strings and launcher icon
@@ -144,6 +157,10 @@ Written without access to the Connect IQ SDK, so **it has not been compiled or
 run yet**. Expect a few compile fixes on the first build. In particular:
 
 - `WatchFaceDelegate.onPress` is used for taps; confirm it fires on the Venu X1.
+- Graph data: `ActivityMonitor.getHistory()` is assumed to be newest-first and to exclude
+  today (today is added from `getInfo()`). Daily active minutes in the history is
+  assumed to be `history.activeMinutes.total`. Body battery and heart rate history
+  length depends on the watch.
 - Weather `CONDITION_*` names in `BmwMDetail.mc` should be checked against the SDK.
 - Layout positions come from a wireframe, not the simulator.
 

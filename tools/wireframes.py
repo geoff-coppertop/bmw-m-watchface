@@ -57,6 +57,10 @@ Y_STRIPES, Y_TITLE, Y_GLYPH, GLYPH_BIG = num("Y_STRIPES"), num("Y_TITLE"), num("
 Y_TITLE_UNDER_GLYPH, Y_HERO, Y_SUB, Y_BAR = (num("Y_TITLE_UNDER_GLYPH"), num("Y_HERO"),
                                               num("Y_SUB"), num("Y_BAR"))
 Y_ROWS, Y_WEATHER_ROWS = num("Y_ROWS"), num("Y_WEATHER_ROWS")
+CHART_X, CHART_TOP, CHART_BOTTOM = num("CHART_X"), num("CHART_TOP"), num("CHART_BOTTOM")
+Y_XLABELS, Y_STATS, Y_DOTS, DOT_R = num("Y_XLABELS"), num("Y_STATS"), num("Y_DOTS"), num("DOT_R")
+ACTIVITY_ROW_TOP, ACTIVITY_ROW_PITCH = num("ACTIVITY_ROW_TOP"), num("ACTIVITY_ROW_PITCH")
+BAR_COLS_W, BAR_COLS_GAP = num("BAR_COLS_W"), num("BAR_COLS_GAP")
 DIM = {BLUE: BLUE_DIM, NAVY: NAVY_DIM, RED: RED_DIM}
 
 # approximate pixel heights of the Garmin system fonts, per Theme font role
@@ -111,9 +115,9 @@ class Svg:
                 % (vb, width, height, "".join(self.o)))
 
 
-def screen(s, ox=0):
-    s.add('<g transform="translate(%d,0)"><rect width="%d" height="%d" rx="70" fill="%s" '
-          'stroke="%s" stroke-width="3"/>' % (ox, W, H, BLACK, GREY_MID))
+def screen(s, ox=0, oy=0):
+    s.add('<g transform="translate(%d,%d)"><rect width="%d" height="%d" rx="70" fill="%s" '
+          'stroke="%s" stroke-width="3"/>' % (ox, oy, W, H, BLACK, GREY_MID))
 
 
 # ---------------------------------------------------------------- shared geometry
@@ -252,21 +256,36 @@ def row(s, ox, y, label, value):
     s.text(ox + W - MARGIN, y, value, "value", WHITE, "end")
 
 
+def chevron(s, x, y, right):
+    d = -6 if right else 6
+    s.add('<polyline points="%.1f,%.1f %.1f,%.1f %.1f,%.1f" fill="none" stroke="%s" stroke-width="3"/>'
+          % (x + d, y - 12, x - d, y, x + d, y + 12, GREY_MID))
+
+
+def nav(s, sub, from_activity):
+    """Edge chevrons and page dots, as drawNav() in BmwMDetail.mc."""
+    if sub == 0:
+        chevron(s, W - 24, H / 2, True)
+    if sub == 1 or from_activity:
+        chevron(s, 24, H / 2, False)
+    for i in range(2):
+        s.circle(CX - 10 + i * 20, Y_DOTS, DOT_R, WHITE if i == sub else GREY_MID)
+
+
 def pages():
     s = Svg()
     total = W * 3 + 80
     s.add('<rect x="-20" y="-20" width="%d" height="%d" fill="#1b1b1b"/>' % (total + 40, H + 40))
 
-    # 1: activity rings page
-    ox = 0
-    screen(s, ox)
+    # 1: Activity page (tap the ring zone). Each row opens that metric.
+    screen(s, 0)
     stripes(s, 0)
-    s.text(CX, Y_TITLE, "ACTIVITY RINGS", "title", GREY_LIGHT)
+    s.text(CX, Y_TITLE, "ACTIVITY", "title", GREY_LIGHT)
     items = [("Steps", "6214 / 10000", .62, BLUE, "walker"),
              ("Active minutes (week)", "68 / 150 min", .45, NAVY, "bolt"),
              ("Body battery", "78 / 100", .78, RED, "body")]
     for i, (name, val, frac, c, g) in enumerate(items):
-        y = 150 + i * 100
+        y = ACTIVITY_ROW_TOP + 50 + i * ACTIVITY_ROW_PITCH
         gx = MARGIN + 14
         if g == "walker":
             g_walker(s, gx, y, 24, BLUE)
@@ -277,11 +296,11 @@ def pages():
         s.text(MARGIN + 46, y - 14, name, "label", GREY_LIGHT, "start")
         s.text(MARGIN + 46, y + 10, val, "value", WHITE, "start")
         bar(s, 0, y + 40, frac, c)
+        chevron(s, W - 36, y + 8, True)
     s.add("</g>")
 
-    # 2: a metric page (steps)
-    ox = W + 40
-    screen(s, ox)
+    # 2: a metric page (steps), opened from Activity, so it has a back chevron
+    screen(s, W + 40)
     stripes(s, 0)
     g_walker(s, CX, Y_GLYPH, GLYPH_BIG, BLUE)
     s.text(CX, Y_TITLE_UNDER_GLYPH, "STEPS", "title", GREY_LIGHT)
@@ -290,11 +309,11 @@ def pages():
     bar(s, 0, Y_BAR, .62, BLUE)
     for i, (l, v) in enumerate([("Distance", "4.7 km"), ("Calories", "312 kcal"), ("Floors", "6 / 10")]):
         row(s, 0, Y_ROWS + i * ROW_PITCH, l, v)
+    nav(s, 0, True)
     s.add("</g>")
 
-    # 3: weather page
-    ox = (W + 40) * 2
-    screen(s, ox)
+    # 3: weather page, opened from the dial
+    screen(s, (W + 40) * 2)
     stripes(s, 0)
     s.text(CX, Y_TITLE, "WEATHER", "title", GREY_LIGHT)
     s.text(CX, 142, "18", "hero", WHITE)
@@ -308,8 +327,96 @@ def pages():
         x = W * (.2 + .2 * i)
         s.text(x, 410, t, "label", GREY_LIGHT)
         s.text(x, 438, v, "value", WHITE)
+    nav(s, 0, False)
     s.add("</g>")
     return s.doc(total * 1, (H + 40), "-20 -20 %d %d" % (total + 40, H + 40))
+
+
+# ---------------------------------------------------------------- graph pages
+def bar_chart(s, vals, goal, color, labels):
+    n = len(vals)
+    total = n * BAR_COLS_W + (n - 1) * BAR_COLS_GAP
+    x0 = W / 2 - total / 2
+    maxv = max([goal or 0] + [v for v in vals if v is not None]) or 1
+    for i, v in enumerate(vals):
+        x = x0 + i * (BAR_COLS_W + BAR_COLS_GAP)
+        if v is not None:
+            hgt = v * (CHART_BOTTOM - CHART_TOP) / maxv
+            s.add('<rect x="%.1f" y="%.1f" width="%d" height="%.1f" fill="%s"/>'
+                  % (x, CHART_BOTTOM - hgt, BAR_COLS_W, hgt, color))
+        s.text(x + BAR_COLS_W / 2, Y_XLABELS, labels[i], "label", WHITE if i == n - 1 else GREY_LIGHT)
+    s.line((x0, CHART_BOTTOM), (x0 + total, CHART_BOTTOM), GREY_DARK, 2)
+    if goal:
+        gy = CHART_BOTTOM - goal * (CHART_BOTTOM - CHART_TOP) / maxv
+        gx = x0
+        while gx < x0 + total:
+            s.line((gx, gy), (gx + 7, gy), GREY_LIGHT, 2)
+            gx += 12
+
+
+def line_chart(s, vals, color, xlabels):
+    x0, x1 = CHART_X, W - CHART_X
+    s.line((x0, CHART_BOTTOM), (x1, CHART_BOTTOM), GREY_DARK, 2)
+    s.line((x0, CHART_TOP), (x1, CHART_TOP), GREY_DARK, 2)
+    good = [v for v in vals if v is not None]
+    lo, hi = min(good), max(good)
+    if hi == lo:
+        hi = lo + 1
+    s.text(x1 + 6, CHART_TOP, str(max(good)), "label", GREY_LIGHT, "start")
+    s.text(x1 + 6, CHART_BOTTOM, str(min(good)), "label", GREY_LIGHT, "start")
+    n = len(vals)
+    prev = None
+    for i, v in enumerate(vals):
+        if v is None:
+            prev = None
+            continue
+        x = x0 + (x1 - x0) * i / (n - 1)
+        y = CHART_BOTTOM - (v - lo) * (CHART_BOTTOM - CHART_TOP) / (hi - lo)
+        if prev:
+            s.line(prev, (x, y), color, 3)
+        prev = (x, y)
+    if prev:
+        s.circle(prev[0], prev[1], 4, color)
+    for x, anchor, t in zip((x0, CX, x1), ("start", "middle", "end"), xlabels):
+        s.text(x, Y_XLABELS, t, "label", GREY_LIGHT, anchor)
+
+
+def graph_page(s, ox, oy, title, stats, draw):
+    screen(s, ox, oy)
+    stripes(s, 0)
+    s.text(CX, Y_TITLE, title, "title", GREY_LIGHT)
+    draw()
+    s.text(CX, Y_STATS, stats, "label", GREY_LIGHT)
+    nav(s, 1, False)
+    s.add("</g>")
+
+
+def graphs():
+    s = Svg()
+    cols, rows = 3, 2
+    tw, th = cols * W + (cols - 1) * 40, rows * H + (rows - 1) * 40
+    s.add('<rect x="-20" y="-20" width="%d" height="%d" fill="#1b1b1b"/>' % (tw + 40, th + 40))
+    px, py = W + 40, H + 40
+
+    steps = [4210, 8032, 6120, 9400, 3100, 7012, 6214]
+    days = ["T", "F", "S", "S", "M", "T", "W"]
+    active = [22, 35, 12, 0, 28, 41, 18]
+    body = [max(5, int(35 + i / 13 * 50) if i < 14 else int(85 - (i - 14) * 1.2) if i < 22 else int(75 - (i - 22) * 1.6))
+            for i in range(48)]
+    hr = [int(74 + 16 * math.sin(i / 6.0) + 8 * math.sin(i / 2.3) + (14 if 30 < i < 38 else 0)) for i in range(48)]
+    temp = [18, 19, 20, 20, 19, 18, 17, 15, 14, 13, 12, 11]
+
+    graph_page(s, 0, 0, "STEPS · 7 DAYS", "Avg 6284   Best 9400   Goal 10000",
+               lambda: bar_chart(s, steps, 10000, BLUE, days))
+    graph_page(s, px, 0, "ACTIVE MIN · 7 DAYS", "Avg 22   Best 41   Daily target 21",
+               lambda: bar_chart(s, active, 21, NAVY, days))
+    graph_page(s, px * 2, 0, "BODY BATTERY · 24 H", "Low %d   High %d" % (min(body), max(body)),
+               lambda: line_chart(s, body, RED, ["24h ago", "12h", "now"]))
+    graph_page(s, 0, py, "HEART RATE · 4 H", "Min %d   Max %d" % (min(hr), max(hr)),
+               lambda: line_chart(s, hr, RED, ["4h ago", "2h", "now"]))
+    graph_page(s, px, py, "TEMPERATURE · 12 H", "Low 11&#176;   High 20&#176;",
+               lambda: line_chart(s, temp, WHITE, ["14:00", "20:00", "01:00"]))
+    return s.doc(tw + 40, th + 40, "-20 -20 %d %d" % (tw + 40, th + 40))
 
 
 # ---------------------------------------------------------------- rendering
@@ -317,6 +424,7 @@ OUTPUTS = {          # name -> (svg generator, png file name)
     "dial": (lambda: dial(), "wireframe.png"),
     "tap-zones": (lambda: dial(zones=True), "tap-zones.png"),
     "pages": (lambda: pages(), "pages.png"),
+    "graphs": (lambda: graphs(), "graphs.png"),
 }
 
 
