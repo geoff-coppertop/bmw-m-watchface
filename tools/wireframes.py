@@ -60,6 +60,7 @@ Y_ROWS, Y_WEATHER_ROWS = num("Y_ROWS"), num("Y_WEATHER_ROWS")
 CHART_X, CHART_TOP, CHART_BOTTOM = num("CHART_X"), num("CHART_TOP"), num("CHART_BOTTOM")
 Y_XLABELS, Y_STATS, Y_DOTS, DOT_R = num("Y_XLABELS"), num("Y_STATS"), num("Y_DOTS"), num("DOT_R")
 Y_CAPTION = num("Y_CAPTION")
+DIAL_SIDE_X, WINDOW_LABEL_DY, WINDOW_VALUE_DY = num("DIAL_SIDE_X"), num("WINDOW_LABEL_DY"), num("WINDOW_VALUE_DY")
 STRIPE_X0, STRIPE_PITCH, STRIPE_W = num("STRIPE_X0"), num("STRIPE_PITCH"), num("STRIPE_W")
 STRIPE_SLANT, STRIPE_HALF_H = num("STRIPE_SLANT"), num("STRIPE_HALF_H")
 NAV_CHEVRON_X, CHEVRON_HALF_W, CHEVRON_HALF_H, DOT_PITCH = (num("NAV_CHEVRON_X"), num("CHEVRON_HALF_W"),
@@ -198,7 +199,10 @@ def dial(zones=False):
         s.line(pt(inner, 90 - i * 6), pt(outer, 90 - i * 6),
                WHITE if major else GREY, 4 if major else 2)
     draw_badge(s, CY - R * .4)
-    s.text(CX, CY - R * .58, "WED 25 &#160;&#183;&#160; 18&#176;C &#160;&#183;&#160; 82%", "label", GREY)
+    s.text(CX, CY - R * .58, "18&#176;C", "value", WHITE)                       # the weather tap target
+    for sx, label, value in [(CX + R * DIAL_SIDE_X, "WED", "25"), (CX - R * DIAL_SIDE_X, "BATT", "82%")]:
+        s.text(sx, CY + WINDOW_LABEL_DY, label, "label", GREY)
+        s.text(sx, CY + WINDOW_VALUE_DY, value, "value", WHITE)
     draw_hand(s, (10 + 8 / 60) * 30, R * .56, R * .07, R * .1)
     draw_hand(s, (8 + 35 / 60) * 6, R * .88, R * .05, R * .12)
     a = math.radians(35 * 6)

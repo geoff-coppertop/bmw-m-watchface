@@ -31,12 +31,13 @@ simulator screenshots. They are generated from `source/Theme.mc` by
 - M badge at 12 o'clock, drawn from the flat M logo's geometry.
 - Three activity rings inside the lower dial, in the badge colours:
   steps (blue), weekly active minutes (navy) and body battery (red).
-- Top row with date, current temperature and watch battery.
+- Date window at 3 o'clock and watch battery window (BATT) at 9 o'clock; the current
+  temperature sits alone above the badge.
 - Tap pages. Tap a zone on the dial to open a full-screen page:
   - ring band: the **Activity** page, with steps, active minutes and body battery
     as rows. Tap a row to open that metric's page.
   - roundel: heart rate (resting, today's low and high)
-  - top row: weather (conditions, feels-like, high/low, rain chance, wind,
+  - the temperature above the badge: weather (conditions, feels-like, high/low, rain chance, wind,
     humidity, next four hours)
 - Recovery on the Body Battery pages: its detail page also shows stress (current score
   and band: resting, low, medium, high) and sleep score. Behind it are four pages in

@@ -61,7 +61,10 @@ class BmwMWatchView extends WatchUi.WatchFace {
 
         drawBezel(dc, cx, cy, r);
         drawMMark(dc, cx, cy - r * 0.4, r);
-        drawInfoRow(dc, cx, cy - r * 0.58);
+        drawTemperature(dc, cx, cy - r * 0.58);
+        var info = Gregorian.info(Time.now(), Time.FORMAT_MEDIUM);
+        drawWindow(dc, cx + r * Theme.DIAL_SIDE_X, cy, info.day_of_week.toString().toUpper(), info.day.toString());
+        drawWindow(dc, cx - r * Theme.DIAL_SIDE_X, cy, "BATT", System.getSystemStats().battery.toNumber().toString() + "%");
 
         drawHands(dc, cx, cy, r);
     }
@@ -250,14 +253,21 @@ class BmwMWatchView extends WatchUi.WatchFace {
         dc.fillPolygon(pts);
     }
 
-    // Date, weather and watch battery in one quiet line above the badge.
-    private function drawInfoRow(dc as Dc, cx as Numeric, y as Numeric) as Void {
-        var info = Gregorian.info(Time.now(), Time.FORMAT_MEDIUM);
-        var bat = System.getSystemStats().battery.toNumber();
-        var txt = info.day_of_week.toString().toUpper() + " " + info.day.toString()
-            + "  ·  " + weatherText() + "  ·  " + bat.toString() + "%";
+    // The temperature alone above the badge; it is also the weather tap target.
+    private function drawTemperature(dc as Dc, cx as Numeric, y as Numeric) as Void {
+        dc.setColor(_asleep ? Theme.GREY : Theme.WHITE, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(cx, y, Theme.FONT_VALUE, weatherText(),
+            Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+    }
+
+    // A dial window: a small grey label over a white value. The date sits at 3 o'clock and
+    // the watch battery at 9 o'clock (labelled BATT so it is not mistaken for body battery).
+    private function drawWindow(dc as Dc, x as Numeric, y as Numeric, label as String, value as String) as Void {
         dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, y, Theme.FONT_LABEL, txt,
+        dc.drawText(x, y + Theme.WINDOW_LABEL_DY, Theme.FONT_LABEL, label,
+            Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+        dc.setColor(_asleep ? Theme.GREY : Theme.WHITE, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(x, y + Theme.WINDOW_VALUE_DY, Theme.FONT_VALUE, value,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
     }
 
