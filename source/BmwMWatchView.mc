@@ -202,7 +202,7 @@ class BmwMWatchView extends WatchUi.WatchFace {
     // Badge stripe width measured square-on: 36 of 99 logo units across a badge
     // 0.2 r tall, leaning 57 units over 99 (cos of that lean is about 0.87).
     private function ringWidth(r as Number) as Number {
-        return (r * 0.2 / 99.0 * 36 * 0.866).toNumber();
+        return (r * 0.2 / 99.0 * 36 * 0.866 + 0.5).toNumber();   // rounded, not truncated
     }
 
     // Centre radius of the outer ring: 2 px inside the major ticks.

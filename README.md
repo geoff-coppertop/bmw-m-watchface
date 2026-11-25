@@ -12,8 +12,22 @@ activity rings page.
 
 ![Tap zones](docs/tap-zones.png)
 
-These are mock-ups rendered from the same geometry the code uses, with example
-values and the time set to 10:08:35. They are not simulator screenshots.
+Tap pages (activity rings, a metric page, weather):
+
+![Tap pages](docs/pages.png)
+
+These are mock-ups with example values and the time set to 10:08:35. They are not
+simulator screenshots. They are generated from `source/Theme.mc` by
+`docs/wireframes.py`, so they follow the theme. Layout that lives in the Monkey C
+files is mirrored in the script and has to be kept in sync by hand. Regenerate
+with:
+
+```sh
+python3 docs/wireframes.py /tmp/wf   # writes dial.svg, tap-zones.svg, pages.svg
+```
+
+then convert the SVGs to PNG with any renderer (these were done with headless
+Chromium).
 
 ## Features
 
