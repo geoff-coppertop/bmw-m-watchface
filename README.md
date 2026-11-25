@@ -41,16 +41,51 @@ source/
   BmwMWatchDelegate.mc  forwards taps to the view
 resources/            strings and launcher icon
 build.sh              compile to bin/bmw-m-watchface.prg
+.devcontainer/        devcontainer + post-create (SDK from a shared feature)
+.vscode/tasks.json    build task
 ```
 
 ## Build
 
-Needs the Connect IQ SDK (9.x), device files for `venux1`, and a developer
-key. `build.sh` prints the `openssl` commands if `developer_key.der` is missing.
+### In the devcontainer (recommended)
+
+Open the repo in VS Code ("Reopen in Container") or a Codespace. The container
+installs the Connect IQ SDK 9.2.0 and generates a local signing key
+(`developer_key.der`, git-ignored). Downloading the Venu X1 device files needs a
+Garmin account, so export these on the host before opening the container (or
+set them as Codespaces/repo secrets):
 
 ```sh
-./build.sh            # builds for venux1
+export GARMIN_USERNAME="you@example.com"
+export GARMIN_PASSWORD="..."
 ```
+
+Accounts with two-factor auth may not work non-interactively. If login fails,
+run `connect-iq-sdk-manager login` once inside the container, then
+`connect-iq-sdk-manager device download --manifest manifest.xml`.
+
+Then build:
+
+```sh
+./build.sh            # builds bin/bmw-m-watchface.prg for venux1
+./build.sh <device>   # another product id listed in manifest.xml
+```
+
+or run the **Build (venux1)** task in VS Code (`Ctrl/Cmd+Shift+B`).
+
+The container's `runArgs` has `--userns=keep-id` for rootless Podman. Docker
+rejects that flag, so remove it (or use `--userns=host`) if you use Docker.
+
+### Without the devcontainer
+
+Install the Connect IQ SDK 9.x and the `venux1` device files yourself, generate a
+developer key (`build.sh` prints the `openssl` commands), then run `./build.sh`.
+
+### Running it
+
+`build.sh` only compiles. To see the face you need the Connect IQ simulator
+(`connectiq` + `monkeydo`), a GUI tool that isn't available in a headless
+container. Use it on a desktop SDK install, or sideload the `.prg` to the watch.
 
 ## Status
 

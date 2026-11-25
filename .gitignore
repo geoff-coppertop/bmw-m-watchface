@@ -1,4 +1,13 @@
-bin/
-developer_key.*
-*.iq
+# Build output
+/bin/
 *.prg
+*.iq
+
+# Connect IQ developer signing keys: private, never commit
+developer_key.der
+developer_key.pem
+*.der
+*.pem
+
+# Claude Code: keep shared project config but ignore personal overrides
+.claude/settings.local.json
