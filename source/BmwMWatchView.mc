@@ -11,23 +11,9 @@ import Toybox.Time.Gregorian;
 import Toybox.Weather;
 import Toybox.WatchUi;
 
-// Analog chronograph watchface in BMW M Motorsport colours.
+// Analog chronograph watchface in BMW M Motorsport colours. All colours,
+// spacing constants and font roles come from the Theme module.
 class BmwMWatchView extends WatchUi.WatchFace {
-
-    // M Motorsport tricolour
-    const M_LIGHT_BLUE = 0x0066B1;   // = logo blue
-    const M_DARK_BLUE  = 0x003C78;   // = logo navy
-    const M_RED        = 0xE32618;   // = logo red
-    const TRACK_GREY   = 0x2A2A2A;
-    // M badge colours (current flat logo: blue, navy, red + white M)
-    const BADGE_BLUE   = 0x0066B1;
-    const BADGE_NAVY   = 0x003C78;
-    const BADGE_RED    = 0xE32618;
-    const BADGE_M      = 0xFFFFFF;
-    // dark tints for empty ring tracks
-    const DIM_LIGHT_BLUE = 0x00203A;
-    const DIM_DARK_BLUE  = 0x00101F;
-    const DIM_RED        = 0x3A0C08;
 
     private var _asleep as Boolean = false;
 
@@ -70,7 +56,7 @@ class BmwMWatchView extends WatchUi.WatchFace {
             return;
         }
 
-        dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_BLACK);
+        dc.setColor(Theme.WHITE, Theme.BLACK);
         dc.clear();
 
         drawBezel(dc, cx, cy, r);
@@ -136,7 +122,7 @@ class BmwMWatchView extends WatchUi.WatchFace {
             var d = Math.sqrt(dx * dx + dy * dy);
             var ringR = ringOuterR(r);
             var ang = Math.atan2(dx.abs(), dy) * 180.0 / Math.PI;   // from straight down
-            if (ang < 42 && d <= ringR + 14 && d >= ringR - 2 * (ringWidth(r) + 2) - 20) {
+            if (ang < 42 && d <= ringR + 14 && d >= ringR - 2 * (ringWidth(r) + Theme.GAP) - 20) {
                 return :rings;
             }
         }
@@ -152,14 +138,14 @@ class BmwMWatchView extends WatchUi.WatchFace {
     // Glyph used by the detail pages.
     function drawGlyph(dc as Dc, kind as Symbol, x as Numeric, y as Numeric, s as Numeric) as Void {
         if (kind == :hr) {
-            drawHeart(dc, x, y, s, M_RED);
+            drawHeart(dc, x, y, s, Theme.RED);
         } else if (kind == :steps) {
-            drawShoe(dc, x, y, s, M_LIGHT_BLUE);
+            drawShoe(dc, x, y, s, Theme.BLUE);
         } else if (kind == :active) {
-            drawBolt(dc, x, y, s, 0x4A90D9);
+            drawBolt(dc, x, y, s, Theme.NAVY_LIGHT);
         } else if (kind == :body) {
             var bb = bodyBatFrac();
-            drawBodyBattery(dc, x, y, s, M_RED, bb);
+            drawBodyBattery(dc, x, y, s, Theme.RED, bb);
         }
     }
 
@@ -175,20 +161,20 @@ class BmwMWatchView extends WatchUi.WatchFace {
         // Ring bars are as wide as the M badge stripes, with the same 2 px gap
         // between bars and between the outer ring and the major ticks.
         var w = ringWidth(r);
-        var pitch = w + 2;
+        var pitch = w + Theme.GAP;
         var ringR = ringOuterR(r);
-        drawRing(dc, cx, cy, ringR,             w, stepsFrac(),   M_LIGHT_BLUE, DIM_LIGHT_BLUE);
-        drawRing(dc, cx, cy, ringR - pitch,     w, activeFrac(),  M_DARK_BLUE,  DIM_DARK_BLUE);
-        drawRing(dc, cx, cy, ringR - 2 * pitch, w, bodyBatFrac(), M_RED,        DIM_RED);
+        drawRing(dc, cx, cy, ringR,             w, stepsFrac(),   Theme.BLUE, Theme.BLUE_DIM);
+        drawRing(dc, cx, cy, ringR - pitch,     w, activeFrac(),  Theme.NAVY,  Theme.NAVY_DIM);
+        drawRing(dc, cx, cy, ringR - 2 * pitch, w, bodyBatFrac(), Theme.RED,        Theme.RED_DIM);
 
         // minute / hour ticks
         for (var i = 0; i < 60; i++) {
             var a = rad(i * 6);
             var major = (i % 5 == 0);
-            var outer = r - 8;
-            var inner = outer - (major ? r * 0.09 : r * 0.035);
+            var outer = r - Theme.TICK_INSET;
+            var inner = outer - (major ? r * Theme.TICK_MAJOR : r * Theme.TICK_MINOR);
             dc.setPenWidth(major ? 4 : 2);
-            dc.setColor(major ? Graphics.COLOR_WHITE : Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
+            dc.setColor(major ? Theme.WHITE : Theme.GREY_LIGHT, Graphics.COLOR_TRANSPARENT);
             dc.drawLine(
                 cx + Math.sin(a) * inner, cy - Math.cos(a) * inner,
                 cx + Math.sin(a) * outer, cy - Math.cos(a) * outer);
@@ -203,7 +189,7 @@ class BmwMWatchView extends WatchUi.WatchFace {
     private function drawRing(dc as Dc, cx as Numeric, cy as Numeric, R as Numeric, pen as Number,
                               frac as Float, color as Number, dim as Number) as Void {
         dc.setPenWidth(pen);
-        dc.setColor(_asleep ? TRACK_GREY : dim, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(_asleep ? Theme.GREY_DARK : dim, Graphics.COLOR_TRANSPARENT);
         dc.drawArc(cx, cy, R, Graphics.ARC_COUNTER_CLOCKWISE, 240, 300);
         if (frac > 1.0) { frac = 1.0; }
         if (frac > 0.01 && !_asleep) {
@@ -221,8 +207,8 @@ class BmwMWatchView extends WatchUi.WatchFace {
 
     // Centre radius of the outer ring: 2 px inside the major ticks.
     private function ringOuterR(r as Number) as Float {
-        var tickInner = (r - 8) - r * 0.09;
-        return tickInner - 2 - ringWidth(r) / 2.0;
+        var tickInner = (r - Theme.TICK_INSET) - r * Theme.TICK_MAJOR;
+        return tickInner - Theme.GAP - ringWidth(r) / 2.0;
     }
 
     // M badge, traced from the flat logo. Coordinates are in logo units:
@@ -239,17 +225,17 @@ class BmwMWatchView extends WatchUi.WatchFace {
         var top = cy - mh / 2;
 
         var stripeX = [66, 107, 148];       // top-left x of each stripe
-        var colors = [BADGE_BLUE, BADGE_NAVY, BADGE_RED];
+        var colors = [Theme.BLUE, Theme.NAVY, Theme.RED];
         for (var i = 0; i < 3; i++) {
             var xt = stripeX[i];
             var pts = [[xt, 0], [xt + 36, 0], [xt + 36 - 57, 99], [xt - 57, 99]];
-            dc.setColor(_asleep ? Graphics.COLOR_DK_GRAY : colors[i], Graphics.COLOR_TRANSPARENT);
+            dc.setColor(_asleep ? Theme.GREY_MID : colors[i], Graphics.COLOR_TRANSPARENT);
             dc.fillPolygon(logoPoints(pts, left, top, k));
         }
 
         var m = [[132, 99], [189, 0], [227.5, 0], [227.5, 40], [252, 0], [290, 0], [290, 99],
                  [254.5, 99], [254.5, 58], [229.5, 99], [196.5, 99], [196.5, 58], [171.5, 99]];
-        dc.setColor(_asleep ? Graphics.COLOR_LT_GRAY : BADGE_M, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(_asleep ? Theme.GREY_LIGHT : Theme.WHITE, Graphics.COLOR_TRANSPARENT);
         dc.fillPolygon(logoPoints(m, left, top, k));
     }
 
@@ -270,21 +256,21 @@ class BmwMWatchView extends WatchUi.WatchFace {
 
         if (!_asleep) {
             dc.setPenWidth(5);
-            dc.setColor(M_LIGHT_BLUE, Graphics.COLOR_TRANSPARENT);
+            dc.setColor(Theme.BLUE, Graphics.COLOR_TRANSPARENT);
             dc.drawArc(cx, cy, R + 6, Graphics.ARC_COUNTER_CLOCKWISE, 100, 170);
-            dc.setColor(M_DARK_BLUE, Graphics.COLOR_TRANSPARENT);
+            dc.setColor(Theme.NAVY, Graphics.COLOR_TRANSPARENT);
             dc.drawArc(cx, cy, R + 6, Graphics.ARC_COUNTER_CLOCKWISE, 10, 80);
             dc.drawArc(cx, cy, R + 6, Graphics.ARC_COUNTER_CLOCKWISE, 280, 350);
-            dc.setColor(M_RED, Graphics.COLOR_TRANSPARENT);
+            dc.setColor(Theme.RED, Graphics.COLOR_TRANSPARENT);
             dc.drawArc(cx, cy, R + 6, Graphics.ARC_COUNTER_CLOCKWISE, 190, 260);
             dc.setPenWidth(1);
         }
 
-        dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(Theme.BLACK, Graphics.COLOR_TRANSPARENT);
         dc.fillCircle(cx, cy, R);
-        dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(Theme.WHITE, Graphics.COLOR_TRANSPARENT);
         dc.fillCircle(cx, cy, ri);
-        dc.setColor(_asleep ? Graphics.COLOR_DK_GRAY : M_LIGHT_BLUE, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(_asleep ? Theme.GREY_MID : Theme.BLUE, Graphics.COLOR_TRANSPARENT);
         fillSector(dc, cx, cy, ri, 90, 180);
         fillSector(dc, cx, cy, ri, 270, 360);
     }
@@ -306,8 +292,8 @@ class BmwMWatchView extends WatchUi.WatchFace {
         var bat = System.getSystemStats().battery.toNumber();
         var txt = info.day_of_week.toString().toUpper() + " " + info.day.toString()
             + "  ·  " + weatherText() + "  ·  " + bat.toString() + "%";
-        dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, y, Graphics.FONT_XTINY, txt,
+        dc.setColor(Theme.GREY_LIGHT, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(cx, y, Theme.FONT_LABEL, txt,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
     }
 
@@ -329,7 +315,7 @@ class BmwMWatchView extends WatchUi.WatchFace {
         var sole = [[-0.62, 0.22], [0.62, 0.22], [0.62, 0.38], [-0.55, 0.38]];
         dc.setColor(color, Graphics.COLOR_TRANSPARENT);
         dc.fillPolygon(localPoints(upper, x, cy, k));
-        dc.setColor(_asleep ? Graphics.COLOR_DK_GRAY : 0xBBBBBB, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(_asleep ? Theme.GREY_MID : Theme.GREY_LIGHT, Graphics.COLOR_TRANSPARENT);
         dc.fillPolygon(localPoints(sole, x, cy, k));
     }
 
@@ -357,7 +343,7 @@ class BmwMWatchView extends WatchUi.WatchFace {
                                      color as Number, frac as Float) as Void {
         var rr = s * 0.62;
         dc.setPenWidth(2);
-        dc.setColor(0x444444, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(Theme.GREY_MID, Graphics.COLOR_TRANSPARENT);
         dc.drawCircle(x, y, rr);
         if (frac > 1.0) { frac = 1.0; }
         if (frac > 0.02) {
@@ -369,7 +355,7 @@ class BmwMWatchView extends WatchUi.WatchFace {
             }
         }
         // figure: head, torso, raised arms, legs
-        dc.setColor(_asleep ? Graphics.COLOR_DK_GRAY : 0xBBBBBB, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(_asleep ? Theme.GREY_MID : Theme.GREY_LIGHT, Graphics.COLOR_TRANSPARENT);
         dc.fillCircle(x, y - s * 0.24, s * 0.1);
         dc.drawLine(x, y - s * 0.1, x, y + s * 0.15);
         dc.drawLine(x, y - s * 0.02, x - s * 0.22, y - s * 0.17);
@@ -386,15 +372,15 @@ class BmwMWatchView extends WatchUi.WatchFace {
         var hourDeg = ((t.hour % 12) + t.min / 60.0) * 30.0;
         var minDeg = (t.min + t.sec / 60.0) * 6.0;
 
-        drawHand(dc, cx, cy, hourDeg, r * 0.56, r * 0.07, r * 0.1, Graphics.COLOR_WHITE, M_LIGHT_BLUE);
-        drawHand(dc, cx, cy, minDeg, r * 0.88, r * 0.05, r * 0.12, Graphics.COLOR_WHITE, M_LIGHT_BLUE);
+        drawHand(dc, cx, cy, hourDeg, r * 0.56, r * 0.07, r * 0.1, Theme.WHITE, Theme.BLUE);
+        drawHand(dc, cx, cy, minDeg, r * 0.88, r * 0.05, r * 0.12, Theme.WHITE, Theme.BLUE);
 
         if (!_asleep) {
             var a = rad(t.sec * 6.0);
             var tail = r * 0.18;
             var len = r * 0.94;
             dc.setPenWidth(3);
-            dc.setColor(M_RED, Graphics.COLOR_TRANSPARENT);
+            dc.setColor(Theme.RED, Graphics.COLOR_TRANSPARENT);
             dc.drawLine(
                 cx - Math.sin(a) * tail, cy + Math.cos(a) * tail,
                 cx + Math.sin(a) * len, cy - Math.cos(a) * len);
@@ -411,7 +397,7 @@ class BmwMWatchView extends WatchUi.WatchFace {
         var a = rad(deg);
         dc.setColor(body, Graphics.COLOR_TRANSPARENT);
         dc.fillPolygon(handPoints(cx, cy, a, len, wid / 2, tail));
-        dc.setColor(_asleep ? Graphics.COLOR_BLACK : lume, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(_asleep ? Theme.BLACK : lume, Graphics.COLOR_TRANSPARENT);
         dc.fillPolygon(handPoints(cx, cy, a, len * 0.92, wid / 5, -len * 0.18));
     }
 

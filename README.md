@@ -38,12 +38,31 @@ source/
   BmwMWatchApp.mc       app entry
   BmwMWatchView.mc      dial, rings, hands, roundel, tap hit-testing
   BmwMDetail.mc         tap detail pages
+  Theme.mc              colours, spacing and font roles used everywhere
   BmwMWatchDelegate.mc  forwards taps to the view
 resources/            strings and launcher icon
 build.sh              compile to bin/bmw-m-watchface.prg
 .devcontainer/        devcontainer + post-create (SDK from a shared feature)
 .vscode/tasks.json    build task
 ```
+
+## Design tokens
+
+Everything visual comes from `source/Theme.mc`, so a change there changes the
+whole face.
+
+- **Colours:** the logo's blue `0066B1`, navy `003C78` and red `E32618`, a dark
+  tint of each for empty tracks, white, and three greys (light, mid, dark). One
+  deliberate exception: `NAVY_LIGHT` `4A90D9`, a lighter blue for the
+  active-minutes bolt, because navy is nearly invisible as a small glyph on black.
+- **Spacing:** one 2 px gap is used between the badge stripes, between ring bars
+  and between the outer ring and the ticks. Ring bars are as wide as the badge
+  stripes. Detail pages share a 70 px margin, a 32 px row pitch and one bar size.
+- **Fonts:** four roles mapped to Garmin system fonts: label, value, title and
+  hero number.
+
+The weather page's headline and hourly strip use a few one-off vertical
+positions of their own. They are not in `Theme.mc`.
 
 ## Build
 

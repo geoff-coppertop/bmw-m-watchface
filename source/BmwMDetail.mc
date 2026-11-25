@@ -24,9 +24,9 @@ class DetailPage {
         var h = dc.getHeight();
         var cx = w / 2;
 
-        dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_BLACK);
+        dc.setColor(Theme.WHITE, Theme.BLACK);
         dc.clear();
-        drawStripes(dc, cx, 34);
+        drawStripes(dc, cx, Theme.Y_STRIPES);
 
         if (kind == :weather) {
             drawWeather(dc, w, h);
@@ -41,7 +41,7 @@ class DetailPage {
         var big = "--";
         var sub = "";
         var frac = -1.0;
-        var barColor = Graphics.COLOR_WHITE;
+        var barColor = Theme.WHITE;
         var labels = [] as Array<String>;
         var values = [] as Array<String>;
 
@@ -69,7 +69,7 @@ class DetailPage {
 
         } else if (kind == :steps) {
             title = "STEPS";
-            barColor = 0x0066B1;
+            barColor = Theme.BLUE;
             var info = ActivityMonitor.getInfo();
             if (info.steps != null) {
                 big = info.steps.toString();
@@ -95,7 +95,7 @@ class DetailPage {
 
         } else if (kind == :active) {
             title = "ACTIVE MINUTES";
-            barColor = 0x003C78;
+            barColor = Theme.NAVY;
             var info = ActivityMonitor.getInfo();
             var wk = info.activeMinutesWeek;
             var day = info.activeMinutesDay;
@@ -131,7 +131,7 @@ class DetailPage {
             if (bb != null) {
                 big = bb.toString();
                 frac = bb / 100.0;
-                barColor = 0xE32618;
+                barColor = Theme.RED;
                 if (bb >= 76) { sub = "High energy"; }
                 else if (bb >= 51) { sub = "Good"; }
                 else if (bb >= 26) { sub = "Moderate"; }
@@ -142,22 +142,22 @@ class DetailPage {
                       hi == null ? "--" : hi.toNumber().toString()];
         }
 
-        _face.drawGlyph(dc, kind, cx, 100, 62);
+        _face.drawGlyph(dc, kind, cx, Theme.Y_GLYPH, Theme.GLYPH_BIG);
 
-        dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, 168, Graphics.FONT_SMALL, title,
+        dc.setColor(Theme.GREY_LIGHT, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(cx, Theme.Y_TITLE_UNDER_GLYPH, Theme.FONT_TITLE, title,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-        dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, 240, Graphics.FONT_NUMBER_HOT, big,
+        dc.setColor(Theme.WHITE, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(cx, Theme.Y_HERO, Theme.FONT_HERO, big,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-        dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, 298, Graphics.FONT_XTINY, sub,
+        dc.setColor(Theme.GREY_LIGHT, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(cx, Theme.Y_SUB, Theme.FONT_LABEL, sub,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
         if (frac >= 0.0) {
-            drawBar(dc, cx, 326, frac, barColor);
+            drawBar(dc, cx, Theme.Y_BAR, frac, barColor);
         }
         for (var i = 0; i < labels.size(); i++) {
-            drawRow(dc, w, 366 + i * 34, labels[i], values[i]);
+            drawRow(dc, w, Theme.Y_ROWS + i * Theme.ROW_PITCH, labels[i], values[i]);
         }
     }
 
@@ -165,8 +165,8 @@ class DetailPage {
 
     private function drawRings(dc as Dc, w as Number, h as Number) as Void {
         var cx = w / 2;
-        dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, 76, Graphics.FONT_SMALL, "ACTIVITY RINGS",
+        dc.setColor(Theme.GREY_LIGHT, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(cx, Theme.Y_TITLE, Theme.FONT_TITLE, "ACTIVITY RINGS",
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
 
         var info = ActivityMonitor.getInfo();
@@ -207,16 +207,16 @@ class DetailPage {
         var names = ["Steps", "Active minutes (week)", "Body battery"];
         var vals = [stepsTxt, actTxt, bbTxt];
         var fracs = [stepsFrac, actFrac, bbFrac];
-        var colors = [0x0066B1, 0x003C78, 0xE32618];
+        var colors = [Theme.BLUE, Theme.NAVY, Theme.RED];
 
         for (var i = 0; i < 3; i++) {
             var y = 150 + i * 100;
-            _face.drawGlyph(dc, kinds[i], 84, y, 24);
-            dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(116, y - 14, Graphics.FONT_XTINY, names[i],
+            _face.drawGlyph(dc, kinds[i], Theme.MARGIN + 14, y, 24);
+            dc.setColor(Theme.GREY_LIGHT, Graphics.COLOR_TRANSPARENT);
+            dc.drawText(Theme.MARGIN + 46, y - 14, Theme.FONT_LABEL, names[i],
                 Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
-            dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(116, y + 10, Graphics.FONT_TINY, vals[i],
+            dc.setColor(Theme.WHITE, Graphics.COLOR_TRANSPARENT);
+            dc.drawText(Theme.MARGIN + 46, y + 10, Theme.FONT_VALUE, vals[i],
                 Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
             drawBar(dc, cx, y + 40, fracs[i], colors[i]);
         }
@@ -231,36 +231,36 @@ class DetailPage {
             cond = Weather.getCurrentConditions();
         }
 
-        dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, 76, Graphics.FONT_SMALL, "WEATHER",
+        dc.setColor(Theme.GREY_LIGHT, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(cx, Theme.Y_TITLE, Theme.FONT_TITLE, "WEATHER",
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
 
         if (cond == null || cond.temperature == null) {
-            dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(cx, h / 2, Graphics.FONT_SMALL, "No weather data",
+            dc.setColor(Theme.WHITE, Graphics.COLOR_TRANSPARENT);
+            dc.drawText(cx, h / 2, Theme.FONT_TITLE, "No weather data",
                 Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-            dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(cx, h / 2 + 34, Graphics.FONT_XTINY, "Sync with Garmin Connect",
+            dc.setColor(Theme.GREY_LIGHT, Graphics.COLOR_TRANSPARENT);
+            dc.drawText(cx, h / 2 + 34, Theme.FONT_LABEL, "Sync with Garmin Connect",
                 Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
             return;
         }
 
         // big temperature, unit drawn small to its right
         var big = tempNum(cond.temperature).toString();
-        var bw = dc.getTextWidthInPixels(big, Graphics.FONT_NUMBER_HOT);
-        dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, 142, Graphics.FONT_NUMBER_HOT, big,
+        var bw = dc.getTextWidthInPixels(big, Theme.FONT_HERO);
+        dc.setColor(Theme.WHITE, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(cx, 142, Theme.FONT_HERO, big,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-        dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx + bw / 2 + 8, 120, Graphics.FONT_SMALL, tempUnit(),
+        dc.setColor(Theme.GREY_LIGHT, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(cx + bw / 2 + 8, 120, Theme.FONT_TITLE, tempUnit(),
             Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
 
-        dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, 204, Graphics.FONT_SMALL, conditionText(cond.condition),
+        dc.setColor(Theme.WHITE, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(cx, 204, Theme.FONT_TITLE, conditionText(cond.condition),
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
         if (cond.feelsLikeTemperature != null) {
-            dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(cx, 234, Graphics.FONT_XTINY,
+            dc.setColor(Theme.GREY_LIGHT, Graphics.COLOR_TRANSPARENT);
+            dc.drawText(cx, 234, Theme.FONT_LABEL,
                 "Feels like " + tempNum(cond.feelsLikeTemperature).toString() + "°",
                 Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
         }
@@ -269,22 +269,22 @@ class DetailPage {
         if (cond.highTemperature != null && cond.lowTemperature != null) {
             hl = tempNum(cond.highTemperature).toString() + "° / " + tempNum(cond.lowTemperature).toString() + "°";
         }
-        drawRow(dc, w, 274, "High / low", hl);
-        drawRow(dc, w, 304, "Rain chance", numStr(cond.precipitationChance, "%"));
-        drawRow(dc, w, 334, "Wind", windText(cond));
-        drawRow(dc, w, 364, "Humidity", numStr(cond.relativeHumidity, "%"));
+        drawRow(dc, w, Theme.Y_WEATHER_ROWS, "High / low", hl);
+        drawRow(dc, w, Theme.Y_WEATHER_ROWS + Theme.ROW_PITCH, "Rain chance", numStr(cond.precipitationChance, "%"));
+        drawRow(dc, w, Theme.Y_WEATHER_ROWS + 2 * Theme.ROW_PITCH, "Wind", windText(cond));
+        drawRow(dc, w, Theme.Y_WEATHER_ROWS + 3 * Theme.ROW_PITCH, "Humidity", numStr(cond.relativeHumidity, "%"));
 
         // next few hours
         var fc = Weather.getHourlyForecast();
         if (fc != null) {
             for (var i = 0; i < 4 && i < fc.size(); i++) {
                 var x = w * (0.2 + 0.2 * i);
-                dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
-                dc.drawText(x, 410, Graphics.FONT_XTINY, hourLabel(fc[i].forecastTime),
+                dc.setColor(Theme.GREY_LIGHT, Graphics.COLOR_TRANSPARENT);
+                dc.drawText(x, 410, Theme.FONT_LABEL, hourLabel(fc[i].forecastTime),
                     Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
                 if (fc[i].temperature != null) {
-                    dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
-                    dc.drawText(x, 438, Graphics.FONT_TINY, tempNum(fc[i].temperature).toString() + "°",
+                    dc.setColor(Theme.WHITE, Graphics.COLOR_TRANSPARENT);
+                    dc.drawText(x, 438, Theme.FONT_VALUE, tempNum(fc[i].temperature).toString() + "°",
                         Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
                 }
             }
@@ -348,7 +348,7 @@ class DetailPage {
 
     // Three small slanted M stripes as an accent at the top of every page.
     private function drawStripes(dc as Dc, cx as Numeric, y as Numeric) as Void {
-        var colors = [0x0066B1, 0x003C78, 0xE32618];
+        var colors = [Theme.BLUE, Theme.NAVY, Theme.RED];
         for (var i = 0; i < 3; i++) {
             var x = cx - 40 + i * 28;
             dc.setColor(colors[i], Graphics.COLOR_TRANSPARENT);
@@ -357,28 +357,25 @@ class DetailPage {
     }
 
     private function drawBar(dc as Dc, cx as Numeric, y as Numeric, frac as Float, color as Number) as Void {
-        var bw = 280;
-        var bh = 10;
+        var bw = Theme.BAR_W;
+        var bh = Theme.BAR_H;
         if (frac > 1.0) { frac = 1.0; }
         // empty track = dark tint of the bar colour, same as the rings on the dial
-        var track = 0x2A2A2A;
-        if (color == 0x0066B1) { track = 0x00203A; }
-        else if (color == 0x003C78) { track = 0x00101F; }
-        else if (color == 0xE32618) { track = 0x3A0C08; }
+        var track = Theme.dimOf(color);
         dc.setColor(track, Graphics.COLOR_TRANSPARENT);
-        dc.fillRoundedRectangle(cx - bw / 2, y - bh / 2, bw, bh, 5);
+        dc.fillRoundedRectangle(cx - bw / 2, y - bh / 2, bw, bh, Theme.BAR_R);
         if (frac > 0.01) {
             dc.setColor(color, Graphics.COLOR_TRANSPARENT);
-            dc.fillRoundedRectangle(cx - bw / 2, y - bh / 2, bw * frac, bh, 5);
+            dc.fillRoundedRectangle(cx - bw / 2, y - bh / 2, bw * frac, bh, Theme.BAR_R);
         }
     }
 
     private function drawRow(dc as Dc, w as Number, y as Numeric, label as String, value as String) as Void {
-        dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(70, y, Graphics.FONT_XTINY, label,
+        dc.setColor(Theme.GREY_LIGHT, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(Theme.MARGIN, y, Theme.FONT_LABEL, label,
             Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
-        dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(w - 70, y, Graphics.FONT_TINY, value,
+        dc.setColor(Theme.WHITE, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(w - Theme.MARGIN, y, Theme.FONT_VALUE, value,
             Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER);
     }
 
