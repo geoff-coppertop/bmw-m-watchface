@@ -213,6 +213,8 @@ class BmwMWatchView extends WatchUi.WatchFace {
     // the badge is 99 units tall and spans x = 9..290. Stripes and M share one
     // slant on the left; the M has a vertical right edge, a top valley with a
     // vertical left side, and two right-angled notches along the bottom.
+    // Stripes are 36 wide with an even 5 unit gap, and the M's left edge runs
+    // parallel to them, so every gap is the same top to bottom.
     // (Stylised redraw, not the registered logo artwork.)
     private function drawMMark(dc as Dc, cx as Numeric, cy as Numeric, r as Numeric) as Void {
         var mh = r * 0.2;                   // badge height in pixels
@@ -220,7 +222,7 @@ class BmwMWatchView extends WatchUi.WatchFace {
         var left = cx - (281 * k) / 2;      // logo is 281 units wide
         var top = cy - mh / 2;
 
-        var stripeX = [66, 106, 150];       // top-left x of each stripe
+        var stripeX = [66, 107, 148];       // top-left x of each stripe
         var colors = [BADGE_BLUE, BADGE_NAVY, BADGE_RED];
         for (var i = 0; i < 3; i++) {
             var xt = stripeX[i];
@@ -229,7 +231,7 @@ class BmwMWatchView extends WatchUi.WatchFace {
             dc.fillPolygon(logoPoints(pts, left, top, k));
         }
 
-        var m = [[136, 99], [191, 0], [227.5, 0], [227.5, 40], [252, 0], [290, 0], [290, 99],
+        var m = [[132, 99], [189, 0], [227.5, 0], [227.5, 40], [252, 0], [290, 0], [290, 99],
                  [254.5, 99], [254.5, 58], [229.5, 99], [196.5, 99], [196.5, 58], [171.5, 99]];
         dc.setColor(_asleep ? Graphics.COLOR_LT_GRAY : BADGE_M, Graphics.COLOR_TRANSPARENT);
         dc.fillPolygon(logoPoints(m, left, top, k));
