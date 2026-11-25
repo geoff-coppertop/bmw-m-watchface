@@ -11,3 +11,7 @@ developer_key.pem
 
 # Claude Code: keep shared project config but ignore personal overrides
 .claude/settings.local.json
+
+# Python bytecode from tools/wireframes.py
+__pycache__/
+*.pyc
