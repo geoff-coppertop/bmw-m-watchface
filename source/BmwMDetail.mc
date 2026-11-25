@@ -1,4 +1,5 @@
 import Toybox.Activity;
+import Toybox.Complications;
 import Toybox.ActivityMonitor;
 import Toybox.Graphics;
 import Toybox.Lang;
@@ -61,13 +62,19 @@ class DetailPage {
             return;
         }
         if (sub >= 1) {
-            drawGraph(dc, w, h, (kind == :body && sub == 2) ? :temp : kind);
+            drawGraph(dc, w, h, graphKind(kind, sub));
         } else if (kind == :weather) {
             drawWeather(dc, w, h);
         } else {
             drawMetric(dc, w, h, kind);
         }
         drawNav(dc, w, h, sub, fromActivity, PageNav.subCount(kind));
+    }
+
+    // Body Battery has more pages than the others: sub 1 is its own graph, 2 stress, 3 temperature.
+    private function graphKind(kind as Symbol, sub as Number) as Symbol {
+        if (kind != :body) { return kind; }
+        return sub == 2 ? :stress : (sub == 3 ? :temp : :body);
     }
 
     // ---- metric detail page (steps, active minutes, body battery, heart rate) ----
@@ -175,9 +182,12 @@ class DetailPage {
                 else if (bb >= 26) { sub = "Moderate"; }
                 else { sub = "Low"; }
             }
-            labels = ["24 h low", "24 h high"];
-            values = [lo == null ? "--" : lo.toNumber().toString(),
-                      hi == null ? "--" : hi.toNumber().toString()];
+            var st = ActivityMonitor.getInfo().stressScore;
+            var stText = (st == null) ? "--" : st.toString() + " · " + Stats.stressBand(st);
+            var ss = sleepScore();
+            labels = ["24 h low / high", "Stress", "Sleep score"];
+            values = [(lo == null || hi == null) ? "--" : lo.toNumber().toString() + " / " + hi.toNumber().toString(),
+                      stText, ss == null ? "--" : ss.toString()];
         }
 
         _face.drawGlyph(dc, kind, cx, Theme.Y_GLYPH, Theme.GLYPH_BIG);
@@ -197,6 +207,24 @@ class DetailPage {
         for (var i = 0; i < labels.size(); i++) {
             drawRow(dc, w, Theme.Y_ROWS + i * Theme.ROW_PITCH, labels[i], values[i]);
         }
+    }
+
+    // Complications.COMPLICATION_TYPE_SLEEP_SCORE: the SDK documents it as id 42, API 6.0.2.
+    // A number rather than the constant so the file still builds if the SDK's API level
+    // is older; null means not available (older firmware, no score yet, or no permission).
+    const COMPLICATION_SLEEP_SCORE = 42;
+
+    private function sleepScore() as Number or Null {
+        if (!(Toybox has :Complications)) { return null; }
+        try {
+            var comp = Complications.getComplication(new Complications.Id(COMPLICATION_SLEEP_SCORE));
+            if (comp != null && comp.value != null && comp.value instanceof Number) {
+                return comp.value;
+            }
+        } catch (e) {
+            // ComplicationNotFoundException: this watch does not provide it
+        }
+        return null;
     }
 
     // ---- Activity page (tap the ring zone on the dial) ---------------------
@@ -490,6 +518,14 @@ class DetailPage {
             _gXl = ["24h ago", "12h", "now"];
             _gStats = "Low " + Stats.fmt(Stats.minOf(vals)) + "   High " + Stats.fmt(Stats.maxOf(vals));
 
+        } else if (kind == :stress) {
+            _gTitle = "STRESS · 24 H";
+            _gColor = Theme.metricColor(kind);
+            vals = bucketSeries(86400, :stress);
+            findSleep(bucketSeries(86400, :hr), bucketSeries(86400, :body));
+            _gXl = ["24h ago", "12h", "now"];
+            _gStats = "Avg " + Stats.fmt(Stats.avgOf(vals)) + "   Max " + Stats.fmt(Stats.maxOf(vals));
+
         } else if (kind == :temp) {
             // The temperature sensor behind SensorHistory.getTemperatureHistory. The docs
             // only call it "temperature"; whether it is skin temperature on the Venu X1
@@ -532,8 +568,8 @@ class DetailPage {
         _gVals = vals;
     }
 
-    // Reads the last span seconds of body battery, heart rate or sensor temperature
-    // (which is :body, :hr or :temp) into 48 time buckets, averaging the samples in
+    // Reads the last span seconds of body battery, heart rate, stress or sensor temperature
+    // (which is :body, :hr, :stress or :temp) into 48 time buckets, averaging the samples in
     // each. All three come from SensorHistory. The docs say heart rate and temperature
     // history only go back to the last power cycle, so a freshly restarted watch will
     // show gaps at the left. Temperature is held in tenths of a degree, in the
@@ -547,6 +583,8 @@ class DetailPage {
         var opts = { :period => new Time.Duration(span), :order => SensorHistory.ORDER_OLDEST_FIRST };
         if (which == :body) {
             if (SensorHistory has :getBodyBatteryHistory) { it = SensorHistory.getBodyBatteryHistory(opts); }
+        } else if (which == :stress) {
+            if (SensorHistory has :getStressHistory) { it = SensorHistory.getStressHistory(opts); }
         } else if (which == :temp) {
             if (SensorHistory has :getTemperatureHistory) { it = SensorHistory.getTemperatureHistory(opts); }
         } else {
@@ -565,7 +603,8 @@ class DetailPage {
         var smp = it.next();
         while (smp != null) {
             var v = smp.data;
-            if (v != null && smp.when != null && (which != :hr || v != ActivityMonitor.INVALID_HR_SAMPLE)) {
+            if (v != null && smp.when != null && (which != :hr || v != ActivityMonitor.INVALID_HR_SAMPLE)
+                && (which != :stress || (v >= 0 && v <= 100))) {
                 var idx = Stats.bucketIndex(smp.when.value(), t0, step, buckets);
                 if (idx >= 0) {
                     sums[idx] += sampleValue(v, which);

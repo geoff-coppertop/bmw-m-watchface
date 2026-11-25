@@ -82,7 +82,8 @@ module Theme {
     function metricColor(kind as Symbol) as Number {
         if (kind == :steps) { return BLUE; }
         if (kind == :active) { return NAVY; }
-        if (kind == :body || kind == :hr || kind == :weather || kind == :temp) { return RED; }
+        if (kind == :body || kind == :hr || kind == :weather || kind == :temp
+            || kind == :stress) { return RED; }
         return WHITE;
     }
 

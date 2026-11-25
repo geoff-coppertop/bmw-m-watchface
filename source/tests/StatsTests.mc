@@ -84,3 +84,16 @@ function statsTenthsText(logger as Test.Logger) as Boolean {
     Test.assertEqual(Stats.tenthsText(95), "9.5");
     return true;
 }
+
+(:test)
+function statsStressBands(logger as Test.Logger) as Boolean {
+    Test.assertEqual(Stats.stressBand(0), "Resting");
+    Test.assertEqual(Stats.stressBand(25), "Resting");
+    Test.assertEqual(Stats.stressBand(26), "Low");
+    Test.assertEqual(Stats.stressBand(50), "Low");
+    Test.assertEqual(Stats.stressBand(51), "Medium");
+    Test.assertEqual(Stats.stressBand(75), "Medium");
+    Test.assertEqual(Stats.stressBand(76), "High");
+    Test.assertEqual(Stats.stressBand(100), "High");
+    return true;
+}

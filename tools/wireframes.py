@@ -64,7 +64,7 @@ ACTIVITY_ROW_TOP, ACTIVITY_ROW_PITCH = num("ACTIVITY_ROW_TOP"), num("ACTIVITY_RO
 BAR_COLS_W, BAR_COLS_GAP = num("BAR_COLS_W"), num("BAR_COLS_GAP")
 DIM = {BLUE: BLUE_DIM, NAVY: NAVY_DIM, RED: RED_DIM}
 # Theme.metricColor(): one colour per metric everywhere
-METRIC = {"steps": BLUE, "active": NAVY, "body": RED, "hr": RED, "weather": RED, "temp": RED}
+METRIC = {"steps": BLUE, "active": NAVY, "body": RED, "hr": RED, "weather": RED, "temp": RED, "stress": RED}
 
 # approximate pixel heights of the Garmin system fonts, per Theme font role
 FONT_PX = {"label": 18, "value": 22, "title": 24, "hero": 96}
@@ -277,7 +277,7 @@ def nav(s, sub, from_activity, count=2):
 
 def pages():
     s = Svg()
-    total = W * 3 + 80
+    total = W * 4 + 120
     s.add('<rect x="-20" y="-20" width="%d" height="%d" fill="#1b1b1b"/>' % (total + 40, H + 40))
 
     # 1: Activity page (tap the ring zone). Each row opens that metric.
@@ -331,6 +331,18 @@ def pages():
         s.text(x, 410, t, "label", GREY_LIGHT)
         s.text(x, 438, v, "value", WHITE)
     nav(s, 0, False)
+    s.add("</g>")
+    # 4: Body Battery detail, opened from Activity, with four pages in all
+    screen(s, (W + 40) * 3)
+    stripes(s, 0)
+    g_body(s, CX, Y_GLYPH, GLYPH_BIG, RED, .78)
+    s.text(CX, Y_TITLE_UNDER_GLYPH, "BODY BATTERY", "title", GREY_LIGHT)
+    s.text(CX, Y_HERO, "78", "hero", WHITE)
+    s.text(CX, Y_SUB, "High energy", "label", GREY_LIGHT)
+    bar(s, 0, Y_BAR, .78, METRIC["body"])
+    for i, (l, v) in enumerate([("24 h low / high", "34 / 88"), ("Stress", "34 &#183; Low"), ("Sleep score", "82")]):
+        row(s, 0, Y_ROWS + i * ROW_PITCH, l, v)
+    nav(s, 0, True, 4)
     s.add("</g>")
     return s.doc(total * 1, (H + 40), "-20 -20 %d %d" % (total + 40, H + 40))
 
@@ -479,7 +491,7 @@ def graph_page(s, ox, oy, title, stats, draw, caption=None, sub=1, count=2):
 
 def graphs():
     s = Svg()
-    cols, rows = 3, 2
+    cols, rows = 3, 3
     tw, th = cols * W + (cols - 1) * 40, rows * H + (rows - 1) * 40
     s.add('<rect x="-20" y="-20" width="%d" height="%d" fill="#1b1b1b"/>' % (tw + 40, th + 40))
     px, py = W + 40, H + 40
@@ -507,7 +519,7 @@ def graphs():
     graph_page(s, px, 0, "ACTIVE MIN · 7 DAYS", "Avg 22   Best 41   Daily target 21",
                lambda: bar_chart(s, active, 21, METRIC["active"], days))
     graph_page(s, px * 2, 0, "BODY BATTERY · 24 H", "Low %d   High %d" % (min(body), max(body)),
-               lambda: line_chart(s, body, METRIC["body"], ["24h ago", "12h", "now"], sleep), note, 1, 3)
+               lambda: line_chart(s, body, METRIC["body"], ["24h ago", "12h", "now"], sleep), note, 1, 4)
     graph_page(s, 0, py, "HEART RATE · 24 H", "Min %d   Max %d" % (min(hr), max(hr)),
                lambda: line_chart(s, hr, METRIC["hr"], ["24h ago", "12h", "now"], sleep), note)
     rain = [0, 10, 30, 60, 70, 60, 50, 60, 80, 70, 50, 30]
@@ -516,10 +528,15 @@ def graphs():
     graph_page(s, px, py, "TEMPERATURE · 12 H", "Low %d&#176;   High %d&#176;" % (min(temp), max(temp)),
                lambda: line_chart(s, temp, METRIC["weather"], ["14:00", "20:00", "01:00"], None, rain, cloud, frozen),
                "Bars: precipitation · Strip: cloud cover")
+    # Stress: low overnight, bumps through the day
+    stress = [max(5, int((14 if 30 <= i < 44 else 38) + 16 * math.sin(i / 3.0) + (20 if 14 < i < 18 else 0)))
+              for i in range(48)]
+    graph_page(s, 0, py * 2, "STRESS · 24 H", "Avg %d   Max %d" % (sum(stress) // len(stress), max(stress)),
+               lambda: line_chart(s, stress, METRIC["stress"], ["24h ago", "12h", "now"], sleep), note, 2, 4)
     # Sensor temperature, in tenths of a degree: it typically climbs a little during sleep
     skin = [int(332 + 6 * math.sin(i / 4.0) + (10 if 30 <= i < 44 else 0)) for i in range(48)]
     graph_page(s, px * 2, py, "SENSOR TEMP · 24 H", "Low %.1f&#176;   High %.1f&#176;" % (min(skin) / 10, max(skin) / 10),
-               lambda: line_chart(s, skin, METRIC["temp"], ["24h ago", "12h", "now"], sleep, tenths=True), note, 2, 3)
+               lambda: line_chart(s, skin, METRIC["temp"], ["24h ago", "12h", "now"], sleep, tenths=True), note, 3, 4)
     return s.doc(tw + 40, th + 40, "-20 -20 %d %d" % (tw + 40, th + 40))
 
 

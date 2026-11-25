@@ -4,18 +4,19 @@ import Toybox.Lang;
 // APIs, so the navigation rules can be unit tested (source/tests/PageNavTests.mc).
 //
 //   page: null (the dial), :activity, :steps, :active, :body, :hr or :weather
-//   sub:  0 = the detail page, 1 = the graph page behind it, 2 = a third page (Body only)
+//   sub:  0 = the detail page, 1 = the graph page behind it, 2 and 3 = more graph pages (Body only)
 //   from: the page to go back to when a metric was opened from Activity
 class PageNav {
     var page as Symbol or Null = null;
     var sub as Number = 0;
     var from as Symbol or Null = null;
 
-    // How many pages a page has: detail then graph, with a third (sensor temperature)
-    // behind Body Battery. The Activity page is a single page.
+    // How many pages a page has: detail then graph, except Body Battery, which has
+    // four (detail, body battery graph, stress graph, sensor temperature). The
+    // Activity page is a single page.
     static function subCount(kind as Symbol) as Number {
         if (kind == :activity) { return 1; }
-        return kind == :body ? 3 : 2;
+        return kind == :body ? 4 : 2;
     }
 
     function isOpen() as Boolean {

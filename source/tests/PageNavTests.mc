@@ -106,22 +106,22 @@ function navPageCounts(logger as Test.Logger) as Boolean {
     Test.assertEqual(PageNav.subCount(:steps), 2);
     Test.assertEqual(PageNav.subCount(:hr), 2);
     Test.assertEqual(PageNav.subCount(:weather), 2);
-    Test.assertEqual(PageNav.subCount(:body), 3);       // the sensor temperature page
+    Test.assertEqual(PageNav.subCount(:body), 4);       // detail, battery graph, stress graph, sensor temp
     return true;
 }
 
 (:test)
-function navBodyHasAThirdPage(logger as Test.Logger) as Boolean {
+function navBodyHasFourPages(logger as Test.Logger) as Boolean {
     var nav = new PageNav();
     nav.open(:body);
-    nav.tap(400, 240, 448);
-    Test.assertEqual(nav.sub, 1);
-    nav.tap(400, 240, 448);
-    Test.assertEqual(nav.sub, 2);
-    nav.tap(400, 240, 448);               // no fourth page
-    Test.assertEqual(nav.sub, 2);
+    for (var i = 1; i <= 3; i++) {
+        nav.tap(400, 240, 448);
+        Test.assertEqual(nav.sub, i);
+    }
+    nav.tap(400, 240, 448);               // no fifth page
+    Test.assertEqual(nav.sub, 3);
     nav.tap(20, 240, 448);
-    Test.assertEqual(nav.sub, 1);
+    Test.assertEqual(nav.sub, 2);
     return true;
 }
 

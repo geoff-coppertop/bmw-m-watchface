@@ -55,6 +55,15 @@ module Stats {
         return out;
     }
 
+    // The scale ActivityMonitor.Info.stressScore documents: 0-25 resting, 26-50 low,
+    // 51-75 medium, 76-100 high.
+    function stressBand(score as Number) as String {
+        if (score <= 25) { return "Resting"; }
+        if (score <= 50) { return "Low"; }
+        if (score <= 75) { return "Medium"; }
+        return "High";
+    }
+
     // A value held in tenths as text with one decimal: 341 -> "34.1", -12 -> "-1.2".
     function tenthsText(t as Number) as String {
         var a = t < 0 ? -t : t;

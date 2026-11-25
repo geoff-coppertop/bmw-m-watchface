@@ -38,12 +38,16 @@ simulator screenshots. They are generated from `source/Theme.mc` by
   - roundel: heart rate (resting, today's low and high)
   - top row: weather (conditions, feels-like, high/low, rain chance, wind,
     humidity, next four hours)
+- Recovery on the Body Battery pages: its detail page also shows stress (current score
+  and band: resting, low, medium, high) and sleep score. Behind it are four pages in
+  all: detail, body battery over 24 hours, stress over 24 hours, and the watch's
+  temperature sensor over 24 hours (labelled "sensor temp", because the docs don't say
+  whether it is skin temperature on the Venu X1; check on the watch). HRV is not
+  available to a watch face. The SDK has no HRV history or status.
 - Graph pages. Every metric page has a graph page behind it: steps and active
   minutes for the last 7 days (each day is a small gauge: dark track up to the goal,
   bright fill to the value, in the same colours as the dial rings), body battery over 24 hours,
-  heart rate over 24 hours, a third page behind Body Battery with the watch's temperature
-  sensor over 24 hours (labelled "sensor temp" because the docs don't say whether it is
-  skin temperature on the Venu X1; check on the watch), and a 12 hour temperature forecast for weather, with precipitation bars behind the line (blue for rain, white for snow and other frozen
+  heart rate over 24 hours, and a 12 hour temperature forecast for weather, with precipitation bars behind the line (blue for rain, white for snow and other frozen
   precipitation)
   and a cloud-cover strip above it (both are forecast values, like the temperature).
 - Sleep on the body battery and heart rate graphs: a faint band with a moon at
@@ -115,7 +119,7 @@ Different renderers use different fonts, so text widths vary slightly.
 
 The logic that does not need the watch is split into small modules (`Geometry`,
 `PageNav`, `SleepInference`, `Stats`, `Theme`) and covered by Connect IQ unit tests in
-`source/tests/`: 41 tests for the sleep inference and schedule fallback, page
+`source/tests/`: 42 tests for the sleep inference and schedule fallback, page
 navigation, tap hit-testing, the statistics and bucketing helpers, and the theme
 mappings. Drawing code and anything that reads live watch data is not tested.
 
@@ -199,6 +203,10 @@ Written without access to the Connect IQ SDK, so **it has not been compiled or
 run yet**. Expect a few compile fixes on the first build. In particular:
 
 - `WatchFaceDelegate.onPress` is used for taps; confirm it fires on the Venu X1.
+- Sleep score comes from `Complications` (type 42, API 6.0.2), which needs the
+  `ComplicationSubscriber` permission in the manifest. Garmin's docs name that permission,
+  but some forum posts report it being rejected for watch faces: if the build complains,
+  remove that line from `manifest.xml` and the sleep score row will show "--".
 - Sleep: real sleep isn't available, as above, so the band is a guess. The inference
   is mirrored in `tools/wireframes.py` (`find_sleep`) and was checked on made-up data
   only; it has not seen real watch data. If it picks the wrong stretch, the thresholds
