@@ -18,9 +18,7 @@ class BmwMWatchView extends WatchUi.WatchFace {
     private var _asleep as Boolean = false;
 
     // tap detail pages
-    private var _page as Symbol or Null = null;
-    private var _sub as Number = 0;               // 0 = detail page, 1 = graph page
-    private var _from as Symbol or Null = null;   // page to go back to (set when opened from Activity)
+    private var _nav as PageNav = new PageNav();
     private var _detail as DetailPage or Null = null;
     private var _timer as Timer.Timer or Null = null;
     private var _w as Number = 0;
@@ -53,8 +51,8 @@ class BmwMWatchView extends WatchUi.WatchFace {
         _h = h;
         _r = r;
 
-        if (_page != null && !_asleep && _detail != null) {
-            _detail.draw(dc, _page, _sub, _from != null);
+        if (_nav.isOpen() && !_asleep && _detail != null) {
+            _detail.draw(dc, _nav.page, _nav.sub, _nav.from != null);
             return;
         }
 
@@ -72,65 +70,27 @@ class BmwMWatchView extends WatchUi.WatchFace {
 
     // ---- taps -------------------------------------------------------------
 
-    // Returns true if the tap was used.
-    //   Dial:        a tap on a zone opens that page (see hitTest).
-    //   Open page:   top strip closes. On the Activity page a row opens that metric.
-    //                On other pages the right side goes forward (detail -> graph)
-    //                and the left side goes back (graph -> detail -> Activity/dial).
+    // Returns true if the tap was used. On the dial a tap on a zone opens a page; while
+    // a page is open the navigation rules live in PageNav.
     function handleTap(x as Number, y as Number) as Boolean {
-        if (_page == null) {
-            var hit = hitTest(x, y);
+        if (!_nav.isOpen()) {
+            var hit = Geometry.hitTest(x, y, _w, _h, _r);
             if (hit == null) {
                 return false;
             }
-            _page = hit;
-            _sub = 0;
-            _from = null;
+            _nav.open(hit);
             restartTimer();
             WatchUi.requestUpdate();
             return true;
         }
-
         restartTimer();
-        if (y < Theme.CLOSE_Y) {
+        _nav.tap(x, y, _w);
+        if (!_nav.isOpen()) {
             closePage();
-            return true;
-        }
-
-        if (_page == :activity) {
-            var idx = (y - Theme.ACTIVITY_ROW_TOP) / Theme.ACTIVITY_ROW_PITCH;
-            if (y >= Theme.ACTIVITY_ROW_TOP && idx < 3) {
-                var kinds = [:steps, :active, :body];
-                _page = kinds[idx];
-                _from = :activity;
-                _sub = 0;
-            } else {
-                closePage();
-                return true;
-            }
-        } else if (x > _w * (1.0 - Theme.NAV_ZONE)) {
-            if (_sub == 0) {
-                _sub = 1;
-            }
-        } else if (x < _w * Theme.NAV_ZONE) {
-            goBack();
-            return true;
-        }
-        WatchUi.requestUpdate();
-        return true;
-    }
-
-    private function goBack() as Void {
-        if (_sub == 1) {
-            _sub = 0;
-        } else if (_from != null) {
-            _page = _from;
-            _from = null;
         } else {
-            closePage();
-            return;
+            WatchUi.requestUpdate();
         }
-        WatchUi.requestUpdate();
+        return true;
     }
 
     private function restartTimer() as Void {
@@ -141,9 +101,7 @@ class BmwMWatchView extends WatchUi.WatchFace {
     }
 
     function closePage() as Void {
-        _page = null;
-        _sub = 0;
-        _from = null;
+        _nav.close();
         if (_timer != null) {
             _timer.stop();
         }
@@ -151,44 +109,6 @@ class BmwMWatchView extends WatchUi.WatchFace {
             _detail.reset();      // drop cached graph data
         }
         WatchUi.requestUpdate();
-    }
-
-    // Which element was tapped. Three big, non-overlapping targets:
-    //   top row -> weather, roundel area -> heart rate, ring band -> Activity page.
-    private function hitTest(x as Number, y as Number) as Symbol or Null {
-        if (_w == 0) { return null; }
-        var cx = _w / 2;
-        var cy = _h / 2;
-        var r = _r;
-
-        // date / weather / battery row (checked first: it sits above the roundel zone)
-        if ((y - (cy - r * 0.58)).abs() < 24 && (x - cx).abs() < 140) {
-            return :weather;
-        }
-
-        // roundel: generous circle, stops well short of the rings
-        if (near(x, y, cx, cy, r * 0.36)) {
-            return :hr;
-        }
-
-        // ring band, with margin
-        var dx = x - cx;
-        var dy = y - cy;
-        if (dy > 0) {
-            var d = Math.sqrt(dx * dx + dy * dy);
-            var ringR = ringOuterR(r);
-            var ang = Math.atan2(dx.abs(), dy) * 180.0 / Math.PI;   // from straight down
-            if (ang < 42 && d <= ringR + 14 && d >= ringR - 2 * (ringWidth(r) + Theme.GAP) - 20) {
-                return :activity;
-            }
-        }
-        return null;
-    }
-
-    private function near(x as Numeric, y as Numeric, px as Numeric, py as Numeric, reach as Numeric) as Boolean {
-        var ddx = x - px;
-        var ddy = y - py;
-        return Math.sqrt(ddx * ddx + ddy * ddy) < reach;
     }
 
     // Glyph used by the detail pages.
@@ -216,9 +136,9 @@ class BmwMWatchView extends WatchUi.WatchFace {
     private function drawBezel(dc as Dc, cx as Numeric, cy as Numeric, r as Numeric) as Void {
         // Ring bars are as wide as the M badge stripes, with the same 2 px gap
         // between bars and between the outer ring and the major ticks.
-        var w = ringWidth(r);
+        var w = Geometry.ringWidth(r);
         var pitch = w + Theme.GAP;
-        var ringR = ringOuterR(r);
+        var ringR = Geometry.ringOuterR(r);
         drawRing(dc, cx, cy, ringR,             w, stepsFrac(),   Theme.metricColor(:steps));
         drawRing(dc, cx, cy, ringR - pitch,     w, activeFrac(),  Theme.metricColor(:active));
         drawRing(dc, cx, cy, ringR - 2 * pitch, w, bodyBatFrac(), Theme.metricColor(:body));
@@ -253,18 +173,6 @@ class BmwMWatchView extends WatchUi.WatchFace {
             dc.drawArc(cx, cy, R, Graphics.ARC_COUNTER_CLOCKWISE, 240, 240 + 60 * frac);
         }
         dc.setPenWidth(1);
-    }
-
-    // Badge stripe width measured square-on: 36 of 99 logo units across a badge
-    // 0.2 r tall, leaning 57 units over 99 (cos of that lean is about 0.87).
-    private function ringWidth(r as Number) as Number {
-        return (r * 0.2 / 99.0 * 36 * 0.866 + 0.5).toNumber();   // rounded, not truncated
-    }
-
-    // Centre radius of the outer ring: 2 px inside the major ticks.
-    private function ringOuterR(r as Number) as Float {
-        var tickInner = (r - Theme.TICK_INSET) - r * Theme.TICK_MAJOR;
-        return tickInner - Theme.GAP - ringWidth(r) / 2.0;
     }
 
     // M badge, traced from the flat logo. Coordinates are in logo units:

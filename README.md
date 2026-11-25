@@ -66,10 +66,16 @@ source/
   BmwMWatchView.mc      dial, rings, hands, roundel, tap hit-testing
   BmwMDetail.mc         Activity, detail and graph pages, and their navigation cues
   Theme.mc              colours, spacing and font roles used everywhere
+  Geometry.mc           ring sizes and tap hit-testing (pure, tested)
+  PageNav.mc            which page is open and how taps move between pages (pure, tested)
+  SleepInference.mc     estimated sleep window from heart rate and body battery (pure, tested)
+  Stats.mc              min/max/average, time buckets, clock text (pure, tested)
+  tests/                unit tests, run with ./tools/test.sh
   BmwMWatchDelegate.mc  forwards taps to the view
 resources/            strings and launcher icon
 build.sh              compile to bin/bmw-m-watchface.prg
 tools/wireframes.py   regenerates the README wireframes from Theme.mc
+tools/test.sh         builds with unit tests and runs them in the simulator
 docs/                 README images
 .devcontainer/        devcontainer + post-create (SDK from a shared feature)
 .vscode/tasks.json    build task
@@ -99,6 +105,28 @@ layout in `BmwMWatchView.mc` and `BmwMDetail.mc` (positions as fractions of the 
 radius, the logo geometry, hand lengths) is mirrored inside the script, so if you
 change that layout, update the matching function in `tools/wireframes.py` too.
 Different renderers use different fonts, so text widths vary slightly.
+
+## Tests
+
+The logic that does not need the watch is split into small modules (`Geometry`,
+`PageNav`, `SleepInference`, `Stats`, `Theme`) and covered by Connect IQ unit tests in
+`source/tests/`: 34 tests for the sleep inference and schedule fallback, page
+navigation, tap hit-testing, the statistics and bucketing helpers, and the theme
+mappings. Drawing code and anything that reads live watch data is not tested.
+
+```sh
+./tools/test.sh      # builds with --unit-test and runs monkeydo -t in the simulator
+```
+
+or run **Run unit tests (venux1)** in VS Code. The tests are `(:test)` functions, which
+a normal build ignores, so they do not affect the watch face. Running them needs the
+Connect IQ simulator (a GUI tool). On a headless machine the script uses `xvfb-run` if
+it is installed.
+
+**These tests have not been run.** They were written without the Connect IQ SDK, and I
+checked their expected values by computing them independently in Python. The sleep
+inference was also checked in `tools/wireframes.py` (`find_sleep`, a Python mirror of
+the Monkey C code). Treat the first simulator run as the real test.
 
 ## Design tokens
 

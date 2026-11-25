@@ -464,7 +464,7 @@ class DetailPage {
                 if (info.activeMinutesWeekGoal != null) { _gGoal = info.activeMinutesWeekGoal / 7; }
             }
             _gXl = dayLabels(vals.size());
-            _gStats = "Avg " + fmt(avgOf(vals)) + "   Best " + fmt(maxOf(vals))
+            _gStats = "Avg " + Stats.fmt(Stats.avgOf(vals)) + "   Best " + Stats.fmt(Stats.maxOf(vals))
                 + (_gGoal == null ? "" : (kind == :steps ? "   Goal " : "   Daily target ") + _gGoal.toString());
 
         } else if (kind == :body) {
@@ -473,7 +473,7 @@ class DetailPage {
             vals = bucketSeries(86400, true);
             findSleep(bucketSeries(86400, false), vals);
             _gXl = ["24h ago", "12h", "now"];
-            _gStats = "Low " + fmt(minOf(vals)) + "   High " + fmt(maxOf(vals));
+            _gStats = "Low " + Stats.fmt(Stats.minOf(vals)) + "   High " + Stats.fmt(Stats.maxOf(vals));
 
         } else if (kind == :hr) {
             _gTitle = "HEART RATE · 24 H";
@@ -481,7 +481,7 @@ class DetailPage {
             vals = bucketSeries(86400, false);
             findSleep(vals, bucketSeries(86400, true));
             _gXl = ["24h ago", "12h", "now"];
-            _gStats = "Min " + fmt(minOf(vals)) + "   Max " + fmt(maxOf(vals));
+            _gStats = "Min " + Stats.fmt(Stats.minOf(vals)) + "   Max " + Stats.fmt(Stats.maxOf(vals));
 
         } else {
             _gTitle = "TEMPERATURE · 12 H";
@@ -496,7 +496,7 @@ class DetailPage {
             if (n > 0) {
                 _gXl = [hourLabel(fc[0].forecastTime), hourLabel(fc[n / 2].forecastTime), hourLabel(fc[n - 1].forecastTime)];
             }
-            _gStats = "Low " + fmt(minOf(vals)) + "°   High " + fmt(maxOf(vals)) + "°";
+            _gStats = "Low " + Stats.fmt(Stats.minOf(vals)) + "°   High " + Stats.fmt(Stats.maxOf(vals)) + "°";
         }
         _gVals = vals;
     }
@@ -531,18 +531,15 @@ class DetailPage {
         while (smp != null) {
             var v = smp.data;
             if (v != null && smp.when != null && v != ActivityMonitor.INVALID_HR_SAMPLE) {
-                var idx = (smp.when.value() - t0) / step;
-                if (idx >= 0 && idx < buckets) {
+                var idx = Stats.bucketIndex(smp.when.value(), t0, step, buckets);
+                if (idx >= 0) {
                     sums[idx] += v.toNumber();
                     cnts[idx] += 1;
                 }
             }
             smp = it.next();
         }
-        for (var i = 0; i < buckets; i++) {
-            if (cnts[i] > 0) { out[i] = sums[i] / cnts[i]; }
-        }
-        return out;
+        return Stats.bucketAverages(sums, cnts);
     }
 
     private function drawBarChart(dc as Dc, w as Number) as Void {
@@ -593,8 +590,8 @@ class DetailPage {
         var top = Theme.CHART_TOP;
         var bot = Theme.CHART_BOTTOM;
 
-        var lo = minOf(_gVals);
-        var hi = maxOf(_gVals);
+        var lo = Stats.minOf(_gVals);
+        var hi = Stats.maxOf(_gVals);
         dc.setPenWidth(2);
         dc.setColor(Theme.GREY_DARK, Graphics.COLOR_TRANSPARENT);
         dc.drawLine(x0, bot, x1, bot);
@@ -654,35 +651,6 @@ class DetailPage {
         return out;
     }
 
-    private function fmt(v as Numeric or Null) as String {
-        return v == null ? "--" : v.toString();
-    }
-
-    private function minOf(vals as Array<Numeric or Null>) as Numeric or Null {
-        var r = null;
-        for (var i = 0; i < vals.size(); i++) {
-            if (vals[i] != null && (r == null || vals[i] < r)) { r = vals[i]; }
-        }
-        return r;
-    }
-
-    private function maxOf(vals as Array<Numeric or Null>) as Numeric or Null {
-        var r = null;
-        for (var i = 0; i < vals.size(); i++) {
-            if (vals[i] != null && (r == null || vals[i] > r)) { r = vals[i]; }
-        }
-        return r;
-    }
-
-    private function avgOf(vals as Array<Numeric or Null>) as Numeric {
-        var sum = 0;
-        var cnt = 0;
-        for (var i = 0; i < vals.size(); i++) {
-            if (vals[i] != null) { sum += vals[i]; cnt++; }
-        }
-        return cnt == 0 ? 0 : (sum / cnt).toNumber();
-    }
-
     // ---- sleep band ---------------------------------------------------------
     // Connect IQ does not expose measured sleep (only the schedule set in Garmin
     // Connect), so the band is a guess: first from the data, then from the schedule.
@@ -696,98 +664,29 @@ class DetailPage {
         var t0 = now - 86400;
         var step = 86400 / n;
 
-        // 1. Inferred: the longest stretch of low heart rate, at least 4 h, while body
-        //    battery rises. Needs 12 h of heart rate samples to judge "low".
-        var vals = [] as Array<Number>;
-        for (var i = 0; i < n; i++) {
-            if (hr[i] != null) { vals.add(hr[i].toNumber()); }
-        }
-        if (vals.size() >= 24) {
-            for (var i = 1; i < vals.size(); i++) {            // insertion sort
-                var key = vals[i];
-                var j = i - 1;
-                while (j >= 0 && vals[j] > key) {
-                    vals[j + 1] = vals[j];
-                    j--;
-                }
-                vals[j + 1] = key;
-            }
-            var lo = vals[vals.size() / 10];
-            var med = vals[vals.size() / 2];
-            var thr = lo + (med - lo) * 0.4;
-
-            var bestS = -1;
-            var bestE = -1;
-            var runS = -1;
-            var lastLow = -1;
-            var gap = 0;
-            for (var i = 0; i <= n; i++) {
-                var low = (i < n) && (hr[i] != null) && (hr[i] <= thr);
-                if (low) {
-                    if (runS < 0) { runS = i; }
-                    lastLow = i;
-                    gap = 0;
-                } else if (runS >= 0) {
-                    gap += 1;
-                    if (gap > 1 || i == n) {                 // a single missing bucket is tolerated
-                        if (bestS < 0 || lastLow - runS > bestE - bestS) {
-                            bestS = runS;
-                            bestE = lastLow;
-                        }
-                        runS = -1;
-                        gap = 0;
-                    }
-                }
-            }
-            if (bestS >= 0 && bestE - bestS + 1 >= 8 && risesDuring(bb, bestS, bestE)) {
-                _gSleepA = bestS;
-                _gSleepB = bestE + 1;
-                _gSleepNote = "Sleep " + clock(t0 + bestS * step) + "–" + clock(t0 + (bestE + 1) * step) + " · estimated";
-                return;
-            }
+        var inferred = SleepInference.infer(hr, bb);
+        if (inferred != null) {
+            _gSleepA = inferred[0];
+            _gSleepB = inferred[1];
+            _gSleepNote = "Sleep " + clock(t0 + inferred[0] * step) + "–" + clock(t0 + inferred[1] * step)
+                + " · estimated";
+            return;
         }
 
-        // 2. Fallback: the typical sleep and wake time set in Garmin Connect.
+        // Fallback: the typical sleep and wake time set in Garmin Connect.
         var prof = UserProfile.getProfile();
         if (prof == null || prof.sleepTime == null || prof.wakeTime == null) { return; }
-        var start = Time.today().value() + prof.sleepTime.value();
-        if (start > now) { start -= 86400; }
-        var end = Time.today().value() + prof.wakeTime.value();
-        while (end <= start) { end += 86400; }
-        if (end > now) { end = now; }                         // not awake yet by schedule
-        var a = (start - t0) / step;
-        var b = (end - t0 + step - 1) / step;
-        if (a < 0) { a = 0; }
-        if (b > n) { b = n; }
-        if (b - a < 2) { return; }
-        _gSleepA = a;
-        _gSleepB = b;
-        _gSleepNote = "Sleep " + clock(start) + "–" + clock(end) + " · schedule";
-    }
-
-    // True if body battery rises by at least 8 points across buckets s..e (or if
-    // there is too little body battery data to say it doesn't).
-    private function risesDuring(bb as Array<Numeric or Null>, s as Number, e as Number) as Boolean {
-        var first = null;
-        var last = null;
-        for (var i = s; i <= e && i < s + 4 && first == null; i++) {
-            if (bb[i] != null) { first = bb[i]; }
-        }
-        for (var i = e; i >= s && i > e - 4 && last == null; i--) {
-            if (bb[i] != null) { last = bb[i]; }
-        }
-        if (first == null || last == null) { return true; }
-        return last - first >= 8;
+        var sched = SleepInference.fromSchedule(prof.sleepTime.value(), prof.wakeTime.value(),
+                                                Time.today().value(), now, n);
+        if (sched == null) { return; }
+        _gSleepA = sched[0];
+        _gSleepB = sched[1];
+        _gSleepNote = "Sleep " + clock(sched[2]) + "–" + clock(sched[3]) + " · schedule";
     }
 
     private function clock(seconds as Number) as String {
         var info = Gregorian.info(new Time.Moment(seconds), Time.FORMAT_SHORT);
-        if (System.getDeviceSettings().is24Hour) {
-            return info.hour.format("%02d") + ":" + info.min.format("%02d");
-        }
-        var h12 = info.hour % 12;
-        if (h12 == 0) { h12 = 12; }
-        return h12.toString() + ":" + info.min.format("%02d") + (info.hour >= 12 ? "p" : "a");
+        return Stats.clockText(info.hour, info.min, System.getDeviceSettings().is24Hour);
     }
 
     private function drawMoon(dc as Dc, x as Numeric, y as Numeric) as Void {

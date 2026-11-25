@@ -64,7 +64,7 @@ ACTIVITY_ROW_TOP, ACTIVITY_ROW_PITCH = num("ACTIVITY_ROW_TOP"), num("ACTIVITY_RO
 BAR_COLS_W, BAR_COLS_GAP = num("BAR_COLS_W"), num("BAR_COLS_GAP")
 DIM = {BLUE: BLUE_DIM, NAVY: NAVY_DIM, RED: RED_DIM}
 # Theme.metricColor(): one colour per metric everywhere
-METRIC = {"steps": BLUE, "active": NAVY, "body": RED, "hr": RED}
+METRIC = {"steps": BLUE, "active": NAVY, "body": RED, "hr": RED, "weather": RED}
 
 # approximate pixel heights of the Garmin system fonts, per Theme font role
 FONT_PX = {"label": 18, "value": 22, "title": 24, "hero": 96}
@@ -363,6 +363,8 @@ def find_sleep(hr, bb):
     if len(vals) < 24:
         return None
     lo, med = vals[len(vals) // 10], vals[len(vals) // 2]
+    if med - lo < 8:                  # no real night/day difference (SleepInference.MIN_CONTRAST)
+        return None
     thr = lo + (med - lo) * 0.4
     best_s = best_e = -1
     run_s = last_low = -1
@@ -485,7 +487,7 @@ def graphs():
     graph_page(s, 0, py, "HEART RATE · 24 H", "Min %d   Max %d" % (min(hr), max(hr)),
                lambda: line_chart(s, hr, METRIC["hr"], ["24h ago", "12h", "now"], sleep), note)
     graph_page(s, px, py, "TEMPERATURE · 12 H", "Low 11&#176;   High 20&#176;",
-               lambda: line_chart(s, temp, WHITE, ["14:00", "20:00", "01:00"]))
+               lambda: line_chart(s, temp, METRIC["weather"], ["14:00", "20:00", "01:00"]))
     return s.doc(tw + 40, th + 40, "-20 -20 %d %d" % (tw + 40, th + 40))
 
 
