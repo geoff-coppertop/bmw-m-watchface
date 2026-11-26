@@ -32,10 +32,12 @@ while true; do
     SIM=$!
     APP=0
 
-    # The simulator listens on localhost:1234 once it is ready.
+    # The simulator listens on port 1234 once it is ready.
     ready=0
     for _ in $(seq 1 60); do
-        if (exec 3<>/dev/tcp/127.0.0.1/1234) 2>/dev/null; then ready=1; break; fi
+        # Look at the listening sockets instead of connecting: a connect-and-close from here
+        # looks like an empty debugger session to the simulator.
+        if ss -ltn 2>/dev/null | grep -q ":1234 "; then ready=1; break; fi
         kill -0 "$SIM" 2>/dev/null || break
         sleep 0.5
     done
