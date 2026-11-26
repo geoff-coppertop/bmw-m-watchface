@@ -76,7 +76,7 @@ module Geometry {
         return null;
     }
 
-    private function near(x as Number, y as Number, px as Numeric, py as Numeric, reach as Numeric) as Boolean {
+    function near(x as Number, y as Number, px as Numeric, py as Numeric, reach as Numeric) as Boolean {
         var dx = x - px;
         var dy = y - py;
         return Math.sqrt(dx * dx + dy * dy) < reach;
