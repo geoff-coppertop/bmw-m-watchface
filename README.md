@@ -245,6 +245,9 @@ run yet**. Expect a few compile fixes on the first build. In particular:
 - The Units setting uses `Application.Properties` and the `resources/settings` and
   `resources/properties` files; check it appears in Garmin Connect after sideloading, and that
   changing it redraws the face (`onSettingsChanged`).
+- A watch face may not use `Toybox.Timer` (the first run on a watch failed with "Symbol 'start' not
+  available to 'Watch Face'"), so cards and pages expire by timestamp, checked in `onUpdate`.
+  If a card or page lingers, that is where to look.
 - Touch input uses `WatchFaceDelegate`: `onTap` for taps (quick cards) and `onPress`, which the SDK docs
   describe as a touch and hold, for the pages. An earlier version used `onPress` for taps,
   which was wrong. On the first real run a hold was delivered and drew its card; tap delivery is still to be confirmed.

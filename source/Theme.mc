@@ -92,6 +92,7 @@ module Theme {
     const CARD_ROW_Y = 62;
     const CARD_ROW_PITCH = 36;
     const CARD_MS = 4000;         // how long a card stays up
+    const PAGE_MS = 20000;        // a page closes after this long with no touch
 
     // ---- touch targets on the dial (Geometry.hitTest and the touch-targets wireframe) --
     const TOUCH_R = 0.36;         // radius of the roundel, date and battery circles, as a fraction of the dial radius

@@ -5,7 +5,6 @@ import Toybox.Lang;
 import Toybox.Math;
 import Toybox.SensorHistory;
 import Toybox.System;
-import Toybox.Timer;
 import Toybox.Time;
 import Toybox.Time.Gregorian;
 import Toybox.Weather;
@@ -20,9 +19,9 @@ class BmwMWatchView extends WatchUi.WatchFace {
     // tap detail pages
     private var _nav as PageNav = new PageNav();
     private var _card as Symbol or Null = null;       // the quick card showing, if any
-    private var _cardTimer as Timer.Timer or Null = null;
+    private var _cardAt as Number = 0;                // System.getTimer() when the card went up
     private var _detail as DetailPage or Null = null;
-    private var _timer as Timer.Timer or Null = null;
+    private var _touchAt as Number = 0;               // System.getTimer() at the last touch on a page
     private var _w as Number = 0;
     private var _h as Number = 0;
     private var _r as Number = 0;
@@ -30,8 +29,6 @@ class BmwMWatchView extends WatchUi.WatchFace {
     function initialize() {
         WatchFace.initialize();
         _detail = new DetailPage(self);
-        _timer = new Timer.Timer();
-        _cardTimer = new Timer.Timer();
     }
 
     function onEnterSleep() as Void {
@@ -53,6 +50,18 @@ class BmwMWatchView extends WatchUi.WatchFace {
         _w = w;
         _h = h;
         _r = r;
+
+        // A watch face may not use Timer (Garmin refuses it: "Symbol 'start' not available to
+        // 'Watch Face'"), so cards and pages expire here instead. The watch redraws every second
+        // while the screen is awake, and onEnterSleep closes everything when it dims.
+        var now = System.getTimer();
+        if (_card != null && now - _cardAt >= Theme.CARD_MS) {
+            _card = null;
+        }
+        if (_nav.isOpen() && now - _touchAt >= Theme.PAGE_MS) {
+            _nav.close();
+            if (_detail != null) { _detail.reset(); }
+        }
 
         if (_nav.isOpen() && !_asleep && _detail != null) {
             _detail.draw(dc, _nav.page, _nav.sub, _nav.from != null);
@@ -89,7 +98,7 @@ class BmwMWatchView extends WatchUi.WatchFace {
             return true;
         }
         if (_nav.isOpen()) {
-            restartTimer();
+            markTouch();
             _nav.tap(x, y, _w);
             if (!_nav.isOpen()) {
                 closePage();
@@ -118,44 +127,29 @@ class BmwMWatchView extends WatchUi.WatchFace {
         }
         closeCard();
         _nav.open(hit);
-        restartTimer();
+        markTouch();
         WatchUi.requestUpdate();
         return true;
     }
 
     private function showCard(kind as Symbol) as Void {
         _card = kind;
-        if (_cardTimer != null) {
-            _cardTimer.stop();
-            _cardTimer.start(method(:closeCard), Theme.CARD_MS, false);
-        }
+        _cardAt = System.getTimer();
         WatchUi.requestUpdate();
     }
 
     function closeCard() as Void {
         _card = null;
-        if (_cardTimer != null) {
-            _cardTimer.stop();
-        }
         WatchUi.requestUpdate();
     }
 
-    private function restartTimer() as Void {
-        if (_timer != null) {
-            _timer.stop();
-            _timer.start(method(:closePage), 20000, false);   // auto-return after 20 s
-        }
+    private function markTouch() as Void {
+        _touchAt = System.getTimer();      // the 20 s auto-return counts from the last touch
     }
 
     function closePage() as Void {
         _nav.close();
         _card = null;
-        if (_cardTimer != null) {
-            _cardTimer.stop();
-        }
-        if (_timer != null) {
-            _timer.stop();
-        }
         if (_detail != null) {
             _detail.reset();      // drop cached graph data
         }
