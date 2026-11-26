@@ -21,21 +21,33 @@ if [ -z "${SIM_ISOLATED:-}" ]; then
 fi
 ip link set lo up
 
-connectiq &
-SIM=$!
-trap 'kill "$SIM" 2>/dev/null' EXIT
+cleanup() { kill "$SIM" "$APP" 2>/dev/null; }
+trap 'cleanup; exit 0' INT TERM
+trap cleanup EXIT
 
-# The simulator listens on localhost:1234 once it is ready.
-for _ in $(seq 1 60); do
-    if (exec 3<>/dev/tcp/127.0.0.1/1234) 2>/dev/null; then break; fi
-    if ! kill -0 "$SIM" 2>/dev/null; then echo "Simulator exited before it was ready." >&2; exit 1; fi
-    sleep 0.5
+# The 9.2.0 Linux simulator crashes unpredictably (segfault in a worker thread), so keep
+# restarting it and reloading the face until you press Ctrl-C.
+while true; do
+    connectiq &
+    SIM=$!
+    APP=0
+
+    # The simulator listens on localhost:1234 once it is ready.
+    ready=0
+    for _ in $(seq 1 60); do
+        if (exec 3<>/dev/tcp/127.0.0.1/1234) 2>/dev/null; then ready=1; break; fi
+        kill -0 "$SIM" 2>/dev/null || break
+        sleep 0.5
+    done
+
+    START=$SECONDS
+    if [ "$ready" = 1 ]; then
+        monkeydo "$PRG" "$DEVICE" &
+        APP=$!
+    fi
+
+    wait "$SIM"
+    echo "Simulator exited after $((SECONDS - START)) s. Restarting (Ctrl-C to stop)..." >&2
+    kill "$APP" 2>/dev/null || true
+    sleep 1
 done
-
-START=$SECONDS
-monkeydo "$PRG" "$DEVICE" &
-APP=$!
-
-wait "$SIM"
-echo "Simulator exited after $((SECONDS - START)) s with the app loaded." >&2
-kill "$APP" 2>/dev/null || true
