@@ -29,12 +29,15 @@ function navRightGoesToGraphLeftComesBack(logger as Test.Logger) as Boolean {
 }
 
 (:test)
-function navCentreTapDoesNothing(logger as Test.Logger) as Boolean {
+function navCentrePressCloses(logger as Test.Logger) as Boolean {
     var nav = new PageNav();
     nav.open(:weather);
     nav.tap(224, 240, 448);
-    Test.assertEqual(nav.page, :weather);
-    Test.assertEqual(nav.sub, 0);
+    Test.assert(!nav.isOpen());
+    nav.open(:body);
+    nav.tap(400, 240, 448);               // on a graph page the middle closes too
+    nav.tap(224, 240, 448);
+    Test.assert(!nav.isOpen());
     return true;
 }
 

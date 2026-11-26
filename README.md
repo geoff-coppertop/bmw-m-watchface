@@ -75,7 +75,7 @@ simulator screenshots. They are generated from `source/Theme.mc` by
 - Inside a page, navigation uses presses only, because a watch face receives neither taps nor swipes. Press the
   right side of a page to go forward (detail, then graph) and the left side to go
   back. Chevrons at the edges and page dots at the bottom show what is possible.
-  Press the top strip to close. A page also closes after 20 seconds of no presses, or when
+  Press the middle of a page, or the top strip, to close. A page also closes after 20 seconds of no presses, or when
   the watch dims.
 
 ## Running on Windows or macOS (no container)

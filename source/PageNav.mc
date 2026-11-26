@@ -61,8 +61,9 @@ class PageNav {
     }
 
     // A press at (x, y) on a screen w pixels wide, while a page is open. The top strip
-    // closes. On Activity a tap on a row opens that metric (anywhere else closes).
-    // Elsewhere the right edge goes forward (detail -> graph) and the left edge back.
+    // closes. On Activity a press on a row opens that metric (anywhere else closes).
+    // Elsewhere the right edge goes forward (detail -> graph), the left edge back, and the
+    // middle closes the page, so there is always an obvious way out.
     function tap(x as Number, y as Number, w as Number) as Void {
         if (page == null) { return; }
         if (y < Theme.CLOSE_Y) {
@@ -85,6 +86,8 @@ class PageNav {
             if (sub < subCount(page) - 1) { sub += 1; }
         } else if (x < w * Theme.NAV_ZONE) {
             back();
+        } else {
+            close();
         }
     }
 }
