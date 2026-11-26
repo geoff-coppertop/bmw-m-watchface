@@ -80,7 +80,7 @@ module Theme {
     const BATT_TERM_H = 8;
     const BATT_PAD = 2;           // gap between the outline and the fill
 
-    // ---- quick cards (touch and hold) -------------------------------------------
+    // ---- quick cards (tap) -------------------------------------------
     const CARD_W = 300;
     const CARD_H = 124;           // one big value: title, value, detail
     const CARD_H_ROWS = 164;      // the Activity card: title and three rows

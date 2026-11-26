@@ -80,47 +80,46 @@ class BmwMWatchView extends WatchUi.WatchFace {
 
     // ---- taps -------------------------------------------------------------
 
-    // A tap goes deeper (see PageNav.tapOpens): on the dial it opens that zone's page, if it
-    // has one, and while a page is open it moves between pages. A tap never shows a card. If a
-    // card is up, any touch dismisses it first and the tap then does what it normally does, so
-    // a tap behaves the same whether or not a card was showing. Returns true if it was used.
+    // A tap peeks (see PageNav.tapShowsCard): on the dial it shows a quick card for the zone
+    // touched. A tap anywhere dismisses a card that is up, and does nothing else. While a page is
+    // open a tap moves between pages. Returns true if it was used.
     function handleTap(x as Number, y as Number) as Boolean {
-        var dismissed = false;
         if (_card != null) {
             closeCard();
-            dismissed = true;
-        }
-        if (!_nav.isOpen()) {
-            var hit = Geometry.hitTest(x, y, _w, _h, _r);
-            if (hit == null || !PageNav.tapOpens(hit)) {
-                return dismissed;       // the date and battery have no page: a tap does nothing
-            }
-            _nav.open(hit);
-            restartTimer();
-            WatchUi.requestUpdate();
             return true;
         }
-        restartTimer();
-        _nav.tap(x, y, _w);
-        if (!_nav.isOpen()) {
-            closePage();
-        } else {
-            WatchUi.requestUpdate();
+        if (_nav.isOpen()) {
+            restartTimer();
+            _nav.tap(x, y, _w);
+            if (!_nav.isOpen()) {
+                closePage();
+            } else {
+                WatchUi.requestUpdate();
+            }
+            return true;
         }
+        var hit = Geometry.hitTest(x, y, _w, _h, _r);
+        if (hit == null || !PageNav.tapShowsCard(hit)) {
+            return false;
+        }
+        showCard(hit);
         return true;
     }
 
-    // A hold peeks (see PageNav.holdShowsCard): a quick card for the element held, never a page.
-    // Not used while a page is open.
+    // A hold goes deeper (see PageNav.holdOpens): it opens the page for the zone held, if it
+    // has one (the date and battery do not). Not used while a page is open.
     function handleHold(x as Number, y as Number) as Boolean {
         if (_nav.isOpen()) {
             return false;
         }
         var hit = Geometry.hitTest(x, y, _w, _h, _r);
-        if (hit == null || !PageNav.holdShowsCard(hit)) {
+        if (hit == null || !PageNav.holdOpens(hit)) {
             return false;
         }
-        showCard(hit);
+        closeCard();
+        _nav.open(hit);
+        restartTimer();
+        WatchUi.requestUpdate();
         return true;
     }
 

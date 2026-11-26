@@ -11,11 +11,11 @@ Touch targets on the dial, numbered, with what a tap and a hold do on each:
 
 ![Tap zones](docs/tap-zones.png)
 
-Tap pages (Activity, a metric page, weather):
+Pages, opened by a hold (Activity, a metric page, weather):
 
 ![Tap pages](docs/pages.png)
 
-Quick cards, shown on touch and hold (battery, weather and the three activity figures):
+Quick cards, shown on a tap (battery, weather and the three activity figures):
 
 ![Quick cards](docs/cards.png)
 
@@ -37,15 +37,15 @@ simulator screenshots. They are generated from `source/Theme.mc` by
 - Three readouts on one arc, the same distance from the centre as the middle ring: the
   temperature at 12 o'clock, the date at 3 o'clock, and the watch battery at 9 o'clock as a
   simple icon that empties as the battery drains (red below 20%).
-- One touch rule. A **tap goes deeper**: it opens a page (only for the temperature, roundel and
-  rings, which have one) and moves between pages. A **hold peeks**: it shows a quick card for any
-  of the five dial zones and never opens a page. A tap behaves the same whether or not a card is
-  showing: the card is dismissed and the tap then does its normal job.
-- Quick cards on touch and hold: hold the temperature, date, battery, roundel or rings and a
-  small card appears over the dial with more detail (weather and feels-like, the date in full,
-  battery percentage and days left, heart rate with resting rate and stress, the three activity
-  figures). It disappears after four seconds or on the next tap. It is not a page.
-- Tap pages. Tap a zone on the dial to open a full-screen page:
+- One touch rule. A **tap peeks**: it shows a quick card for any of the five dial zones, and a
+  tap anywhere dismisses it (and does nothing else). A **hold goes deeper**: it opens the zone's
+  page (only the temperature, roundel and rings have one; the date and battery do not). Inside a
+  page, taps move between pages.
+- Quick cards on a tap: tap the temperature, date, battery, roundel or rings and a small card
+  appears over the dial with more detail (weather and feels-like, the date in full, battery
+  percentage and days left, heart rate with resting rate and stress, the three activity
+  figures). It disappears after four seconds or on a tap anywhere. It is not a page.
+- Pages. Hold a zone on the dial to open a full-screen page:
   - ring band: the **Activity** page, with steps, active minutes and body battery
     as rows. Tap a row to open that metric's page.
   - roundel: heart rate (resting, today's low and high)
@@ -71,7 +71,7 @@ simulator screenshots. They are generated from `source/Theme.mc` by
   heart rate is lowest while body battery rises (caption "estimated"). If the data
   isn't clear, it falls back to your configured sleep and wake times (caption
   "schedule"). With neither, no band is shown.
-- Navigation uses taps only, because a watch face does not receive swipes. Tap the
+- Inside a page, navigation uses taps only, because a watch face does not receive swipes. Tap the
   right side of a page to go forward (detail, then graph) and the left side to go
   back. Chevrons at the edges and page dots at the bottom show what is possible.
   Tap the top strip to close. A page also closes after 20 seconds of no taps, or when
@@ -245,9 +245,9 @@ run yet**. Expect a few compile fixes on the first build. In particular:
 - The Units setting uses `Application.Properties` and the `resources/settings` and
   `resources/properties` files; check it appears in Garmin Connect after sideloading, and that
   changing it redraws the face (`onSettingsChanged`).
-- Touch input uses `WatchFaceDelegate`: `onTap` for taps (pages) and `onPress`, which the SDK docs
-  describe as a touch and hold, for the quick cards. An earlier version used `onPress` for taps,
-  which was wrong. Confirm both fire on the Venu X1.
+- Touch input uses `WatchFaceDelegate`: `onTap` for taps (quick cards) and `onPress`, which the SDK docs
+  describe as a touch and hold, for the pages. An earlier version used `onPress` for taps,
+  which was wrong. On the first real run a hold was delivered and drew its card; tap delivery is still to be confirmed.
 - Sleep score comes from `Complications` (type 42, API 6.0.2), which needs the
   `ComplicationSubscriber` permission in the manifest. Garmin's docs name that permission,
   but some forum posts report it being rejected for watch faces: if the build complains,

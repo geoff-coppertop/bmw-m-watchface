@@ -299,19 +299,19 @@ def tap_zones():
     dial_into(s, 0, 0, True)
     x0 = W + 40
     s.text(x0, 40, "Touch targets", "title", WHITE, "start")
-    rows = [("1", ZONE_COLORS[1], "Temperature (12 o'clock)", "tap: Weather page", "hold: weather card"),
-            ("2", ZONE_COLORS[2], "Date (3 o'clock)", "tap: nothing", "hold: date card"),
-            ("3", ZONE_COLORS[3], "Battery (9 o'clock)", "tap: nothing", "hold: battery card"),
-            ("4", ZONE_COLORS[4], "Roundel (centre)", "tap: Heart rate page", "hold: heart rate card"),
-            ("5", ZONE_COLORS[5], "Rings (bottom)", "tap: Activity page", "hold: activity card")]
+    rows = [("1", ZONE_COLORS[1], "Temperature (12 o'clock)", "tap: weather card", "hold: Weather page"),
+            ("2", ZONE_COLORS[2], "Date (3 o'clock)", "tap: date card", "hold: nothing"),
+            ("3", ZONE_COLORS[3], "Battery (9 o'clock)", "tap: battery card", "hold: nothing"),
+            ("4", ZONE_COLORS[4], "Roundel (centre)", "tap: heart rate card", "hold: Heart rate page"),
+            ("5", ZONE_COLORS[5], "Rings (bottom)", "tap: activity card", "hold: Activity page")]
     for i, (n, c, name, tap, hold) in enumerate(rows):
         y = 90 + i * 70
         s.circle(x0 + 12, y, 12, c)
         s.text(x0 + 12, y, n, "label", BLACK)
         s.text(x0 + 36, y, name, "value", WHITE, "start")
         s.text(x0 + 36, y + 28, tap + "   &#183;   " + hold, "label", GREY, "start")
-    s.text(x0, 90 + 5 * 70 + 6, "A tap goes deeper: it opens a page, where there is one.", "label", GREY, "start")
-    s.text(x0, 90 + 5 * 70 + 32, "A hold peeks: a quick card, never a page.", "label", GREY, "start")
+    s.text(x0, 90 + 5 * 70 + 6, "A tap peeks: a quick card; tap anywhere to dismiss it.", "label", GREY, "start")
+    s.text(x0, 90 + 5 * 70 + 32, "A hold goes deeper: it opens the page, where there is one.", "label", GREY, "start")
     return s.doc((W + 60 + lw) * 1.6, (H + 60) * 1.6, "-30 -30 %d %d" % (W + 60 + lw, H + 60))
 
 
@@ -323,7 +323,7 @@ def dial(zones=False):
 
 
 def cards():
-    """The quick cards shown on a touch and hold, over the dial."""
+    """The quick cards shown on a tap, over the dial."""
     s = Svg()
     kinds = ["battery", "weather", "activity"]
     total = len(kinds) * W + (len(kinds) - 1) * 40
@@ -412,7 +412,7 @@ def pages():
     total = W * 4 + 120
     s.add('<rect x="-20" y="-20" width="%d" height="%d" fill="#1b1b1b"/>' % (total + 40, H + 40))
 
-    # 1: Activity page (tap the ring zone). Each row opens that metric.
+    # 1: Activity page (hold the ring zone). Each row opens that metric.
     screen(s, 0)
     stripes(s, 0)
     s.text(CX, Y_TITLE, "ACTIVITY", "title", GREY)

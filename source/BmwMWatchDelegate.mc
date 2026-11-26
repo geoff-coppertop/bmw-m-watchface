@@ -2,8 +2,8 @@ import Toybox.Lang;
 import Toybox.WatchUi;
 
 // Forwards touches on the watch face to the view, which decides what was hit.
-//   onTap   - a screen tap goes deeper: opens a page and moves between pages
-//   onPress - a touch and hold (per the SDK docs) peeks: shows a quick card, never a page
+//   onTap   - a screen tap peeks: shows a quick card, or dismisses it, and moves between pages
+//   onPress - a touch and hold (per the SDK docs) goes deeper: opens the zone's page
 class BmwMWatchDelegate extends WatchUi.WatchFaceDelegate {
 
     private var _view as BmwMWatchView;

@@ -222,9 +222,9 @@ class DetailPage {
         return null;
     }
 
-    // ---- quick cards (touch and hold on the dial) ------------------------------
+    // ---- quick cards (tap on the dial) ------------------------------
     // A small card over the dial with a little more detail than the face shows. It is
-    // not a page: it disappears by itself after a few seconds, or on the next tap.
+    // not a page: it disappears by itself after a few seconds, or on a tap anywhere.
 
     function drawCard(dc as Dc, kind as Symbol) as Void {
         var w = dc.getWidth();
@@ -322,7 +322,7 @@ class DetailPage {
         return null;
     }
 
-    // ---- Activity page (tap the ring zone on the dial) ---------------------
+    // ---- Activity page (hold the ring zone on the dial) ---------------------
     // Each row opens that metric's page; the chevrons show that they are tappable.
 
     private function drawActivity(dc as Dc, w as Number, h as Number) as Void {
