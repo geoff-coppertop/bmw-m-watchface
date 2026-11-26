@@ -1,10 +1,14 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.8"
+# dependencies = ["pillow"]
+# ///
 """Write resources/drawables/launcher_icon.png: the face badge's three stripes and the M on black.
 
-    python3 tools/launcher_icon.py [size]     # default 65, the Venu X1's launcher icon size
+    uv run tools/launcher_icon.py [size]     # default 65, the Venu X1's launcher icon size
 
 Colours come from source/Theme.mc and the geometry matches source/Logo.mc and the badge on the dial.
-Needs Pillow (pip install pillow).
+Pillow is installed by uv on first run.
 """
 import re
 import sys

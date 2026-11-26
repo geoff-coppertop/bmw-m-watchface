@@ -17,8 +17,9 @@
         {
             "label": "Regenerate wireframes",
             "type": "shell",
-            "command": "python3",
+            "command": "uv",
             "args": [
+                "run",
                 "tools/wireframes.py"
             ],
             "problemMatcher": []

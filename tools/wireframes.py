@@ -1,19 +1,23 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.8"
+# dependencies = ["cairosvg"]
+# ///
 """Generate the README wireframes from source/Theme.mc.
 
-    python3 tools/wireframes.py              # render PNGs into docs/
-    python3 tools/wireframes.py --svg-only   # write SVGs instead (no renderer needed)
-    python3 tools/wireframes.py --out DIR    # write somewhere else
+    uv run tools/wireframes.py              # render PNGs into docs/
+    uv run tools/wireframes.py --svg-only   # write SVGs instead (no renderer needed)
+    uv run tools/wireframes.py --out DIR    # write somewhere else
 
 Colours, spacing and font-size roles are read from Theme.mc, so the mock-ups follow
 the theme. Layout that lives in BmwMWatchView.mc and BmwMDetail.mc (positions as
 fractions of the dial radius, logo geometry, hand lengths) is mirrored in this
 script and must be kept in sync by hand.
 
-PNG output needs one SVG renderer, tried in this order: rsvg-convert,
-inkscape, the cairosvg Python package, Google Chrome / Chromium. Install any one
-(for example `sudo apt install librsvg2-bin` or `pip install cairosvg`). Set
-CHROME_PATH to point at a specific Chrome binary.
+uv installs the one Python dependency (cairosvg) into a throwaway environment, so there is
+nothing to set up. PNG output needs one SVG renderer, tried in this order: rsvg-convert,
+inkscape, the cairosvg package (needs the system cairo library, `libcairo2`), Google Chrome /
+Chromium. Set CHROME_PATH to point at a specific Chrome binary.
 
 The mock-ups use example values and the time 10:08:35. They are not simulator
 screenshots.
@@ -702,7 +706,7 @@ def renderer():
     try:
         import cairosvg
         return lambda a, b: cairosvg.svg2png(url=a, write_to=b, output_width=svg_size(a)[0])
-    except ImportError:
+    except Exception:      # not installed, or its cairo system library is missing
         pass
     chrome = _chrome()
     if chrome:
@@ -734,7 +738,7 @@ def main():
     render = renderer()
     if render is None:
         sys.exit("No SVG renderer found. Install one of: rsvg-convert (librsvg2-bin), inkscape, "
-                 "the cairosvg Python package, or Google Chrome / Chromium (or set CHROME_PATH).\n"
+                 "the cairosvg package (via uv), or Google Chrome / Chromium (or set CHROME_PATH).\n"
                  "Or run with --svg-only to write the SVGs.")
     with tempfile.TemporaryDirectory() as tmp:
         for name, (gen, png) in OUTPUTS.items():

@@ -121,16 +121,18 @@ including rounding to the nearest degree. The setting is defined in `resources/p
 `tools/wireframes.py` draws the dial, the tap zones and the detail pages from the
 same colours, spacing and logo geometry the watch face uses. It reads
 `source/Theme.mc`, so after changing the theme you can rerun it and see the result
-without a simulator. Python 3 only, no packages needed to write SVGs.
+without a simulator. It is a [uv](https://docs.astral.sh/uv/) script: its one dependency is
+declared at the top of the file and uv installs it on the fly, so there is no `pip install`
+and no virtualenv to manage (the devcontainer has uv).
 
 ```sh
-python3 tools/wireframes.py              # render PNGs into docs/
-python3 tools/wireframes.py --svg-only   # write SVGs instead
-python3 tools/wireframes.py --out /tmp/wf
+uv run tools/wireframes.py              # render PNGs into docs/
+uv run tools/wireframes.py --svg-only   # write SVGs instead
+uv run tools/wireframes.py --out /tmp/wf
 ```
 
 PNG output needs one SVG renderer: `rsvg-convert` (`sudo apt install librsvg2-bin`),
-Inkscape, the `cairosvg` package (`pip install cairosvg`), or Google Chrome /
+Inkscape, the `cairosvg` package (which uv installs for you), or Google Chrome /
 Chromium (set `CHROME_PATH` if it isn't on your `PATH`). The tool tries them in that
 order and tells you what to install if it finds none. There is also a **Regenerate
 wireframes** task in VS Code.
