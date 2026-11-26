@@ -212,7 +212,7 @@ class DetailPage {
     private function sleepScore() as Number or Null {
         if (!(Toybox has :Complications)) { return null; }
         try {
-            var comp = Complications.getComplication(new Complications.Id(COMPLICATION_SLEEP_SCORE));
+            var comp = Complications.getComplication(new Complications.Id(COMPLICATION_SLEEP_SCORE as Complications.Type));
             if (comp != null && comp.value != null && comp.value instanceof Number) {
                 return comp.value;
             }
@@ -835,8 +835,8 @@ class DetailPage {
 
         dc.setPenWidth(3);
         dc.setColor(_gColor, Graphics.COLOR_TRANSPARENT);
-        var px = null;
-        var py = null;
+        var px as Numeric or Null = null;       // the previous point, if there is one
+        var py as Numeric or Null = null;
         for (var i = 0; i < n; i++) {
             var v = _gVals[i];
             if (v == null) {
@@ -845,11 +845,11 @@ class DetailPage {
             }
             var x = x0 + (x1 - x0) * i / (n - 1);
             var y = bot - (v - lo).toFloat() * (bot - top) / (hi - lo);
-            if (px != null) { dc.drawLine(px, py, x, y); }
+            if (px != null && py != null) { dc.drawLine(px as Numeric, py as Numeric, x, y); }
             px = x;
             py = y;
         }
-        if (px != null) { dc.fillCircle(px, py, Theme.LINE_END_R); }      // marks the latest value
+        if (px != null && py != null) { dc.fillCircle(px as Numeric, py as Numeric, Theme.LINE_END_R); }      // marks the latest value
         dc.setPenWidth(1);
     }
 
