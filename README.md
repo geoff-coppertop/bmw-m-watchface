@@ -7,21 +7,13 @@ An analog BMW M Motorsport watch face for Garmin Connect IQ. Target device:
 
 ![Watch face wireframe](docs/wireframe.png)
 
-Touch targets on the dial, numbered, with what a press does on each:
+Touch targets on the dial, numbered, with the card each one shows:
 
 ![Tap zones](docs/tap-zones.png)
 
-Pages, opened by pressing a zone and then its card (Activity, a metric page, weather):
-
-![Tap pages](docs/pages.png)
-
-Quick cards, shown when a zone is pressed (battery, weather and the three activity figures):
+Quick cards (battery, weather and the three activity figures):
 
 ![Quick cards](docs/cards.png)
-
-Graph pages (the second page behind each detail page):
-
-![Graph pages](docs/graphs.png)
 
 These are mock-ups with example values and the time set to 10:08:35. They are not
 simulator screenshots. They are generated from `source/Theme.mc` by
@@ -37,47 +29,18 @@ simulator screenshots. They are generated from `source/Theme.mc` by
 - Three readouts on one arc, the same distance from the centre as the middle ring: the
   temperature at 12 o'clock, the date at 3 o'clock, and the watch battery at 9 o'clock as a
   simple icon that empties as the battery drains (red below 20%).
-- One touch rule. Garmin's `WatchFaceDelegate` documents only `onPress` (touch and hold) and no
-  tap, and the simulator sends no taps, so the face must work with holds alone. **Hold a zone** on
-  the dial and its quick card appears (all five zones have one). **Hold the card, or the same zone
-  again,** to open its page (only the temperature, roundel and rings have one). **Touch anywhere
-  else** and the card is dismissed. If a device does send a tap, a **tap** also shows the card and
-  a tap anywhere dismisses it. Inside a page, touches move between pages or close it.
-- Quick cards: press the temperature, date, battery, roundel or rings and a small card appears
-  over the dial with more detail (weather and feels-like, the date in full, battery percentage and
-  days left, heart rate with resting rate and stress, the three activity figures). It disappears
-  after four seconds, or when you press elsewhere. It is not a page.
-- Pages. Press a zone, then press its card, to open a full-screen page:
-  - ring band: the **Activity** page, with steps, active minutes and body battery
-    as rows. Press a row to open that metric's page.
-  - roundel: heart rate (resting, today's low and high)
-  - the temperature above the badge: weather (conditions, feels-like, high/low, rain chance, wind,
-    humidity, and the temperature every three hours over the next twelve)
-- Recovery on the Body Battery pages: its detail page also shows stress (current score
-  and band: resting, low, medium, high) and sleep score. Behind it are four pages in
-  all: detail, body battery over 24 hours, stress over 24 hours, and the watch's
-  temperature sensor over 24 hours (labelled "sensor temp", because the docs don't say
-  whether it is skin temperature on the Venu X1; check on the watch). HRV is not
-  available to a watch face. The SDK has no HRV history or status.
-- Graph pages. Every metric page has a graph page behind it: steps and active
-  minutes for the last 7 days (each day is a small gauge: dark track up to the goal,
-  bright fill to the value, in the same colours as the dial rings), body battery over 24 hours,
-  heart rate over 24 hours, and a 12 hour temperature forecast for weather, with precipitation bars behind the line (blue for rain, white for snow and other frozen
-  precipitation)
-  and a cloud-cover strip above it (both are forecast values, like the temperature).
-- Sleep on the body battery and heart rate graphs: a faint band with a moon at
-  bedtime and a sun at wake time, and a caption saying where it came from. **This is
-  not measured sleep.** Connect IQ does not expose sleep data to a watch face; the only
-  sleep fields in the SDK are the typical sleep and wake time you set in Garmin
-  Connect. So the band is inferred first: the longest stretch of at least 4 hours where
-  heart rate is lowest while body battery rises (caption "estimated"). If the data
-  isn't clear, it falls back to your configured sleep and wake times (caption
-  "schedule"). With neither, no band is shown.
-- Inside a page, navigation uses presses only, because a watch face receives neither taps nor swipes. Press the
-  right side of a page to go forward (detail, then graph) and the left side to go
-  back. Chevrons at the edges and page dots at the bottom show what is possible.
-  Press the middle of a page, or the top strip, to close. A page also closes after 20 seconds of no presses, or when
-  the watch dims.
+- Quick cards. Hold the temperature, date, battery, roundel or rings and a small card appears
+  over the dial with a little more detail: weather and feels-like, the date in full, battery
+  percentage and days left, heart rate with resting rate and stress, steps / active minutes /
+  body battery. Touch anywhere to dismiss it; it also goes after four seconds.
+
+**Why a hold, and why no pages.** Garmin's `WatchFaceDelegate` documents only `onPress` (touch and
+hold). A plain tap and a swipe are never delivered to a watch face, and the simulator sends only
+holds. An earlier version had full-screen detail pages and graphs (Activity, steps, active minutes,
+body battery, heart rate, weather, with sleep bands), reached by holding a zone then holding its
+card, and navigated by holds at the screen edges. That was clunky, and the watch's own software
+already provides those screens, so the pages were removed. They are still in git history: the last
+commit that has them is `0dbd5eb` (`git show 0dbd5eb:source/BmwMDetail.mc`).
 
 ## Running on Windows or macOS (no container)
 
@@ -89,13 +52,14 @@ The project is plain Monkey C, so it builds with the Garmin tooling directly. Th
    not "Reopen in Container".
 3. Run **Monkey C: Verify Installation**, then **Monkey C: Generate a Developer Key** (once).
 4. **Run face in simulator** (F5, or Run > Start Debugging) builds, starts the simulator and loads
-   the face. **Run unit tests** does the same with the 62 tests. Both are in `.vscode/launch.json`.
+   the face. **Run unit tests** does the same with the tests. Both are in `.vscode/launch.json`.
+   `System.println` output (the `FONTS` and `TOUCH` lines) is in the Debug Console.
 5. To put it on the watch: **Monkey C: Build for Device**, then copy the `.prg` into the watch's
-   `GARMIN/APPS` folder.
+   `GARMIN/APPS` folder (the watch appears as an MTP device in Explorer).
 6. `uv run tools/wireframes.py` works on any platform with [uv](https://docs.astral.sh/uv/).
 
-The simulator on Linux crashes in this container (see below); Garmin's bug tracker also has crash
-reports for the 9.2.0 simulator on Windows, so if it misbehaves try 9.1.0 or 9.3.0.
+The Linux simulator crashes in the devcontainer (see Build below); Garmin's bug tracker also has
+crash reports for the 9.2.0 simulator on Windows, so if it misbehaves try 9.1.0 or 9.3.0.
 
 ## Layout
 
@@ -104,46 +68,44 @@ manifest.xml          app id, target product, permissions
 monkey.jungle         build configuration
 source/
   BmwMWatchApp.mc       app entry
-  BmwMWatchView.mc      dial, rings, hands, roundel, tap hit-testing
-  BmwMDetail.mc         Activity, detail and graph pages, and their navigation cues
-  Theme.mc              colours, spacing and font roles used everywhere
-  Geometry.mc           ring sizes and tap hit-testing (pure, tested)
-  Logo.mc               the M badge's stripe geometry, shared by the face and the page headers (tested)
-  PageNav.mc            which page is open and how presses move between pages (pure, tested)
-  SleepInference.mc     estimated sleep window from heart rate and body battery (pure, tested)
-  Stats.mc              min/max/average, time buckets, clock text (pure, tested)
-  Precip.mc             rain vs snow from the forecast condition (tested)
+  BmwMWatchView.mc      dial, rings, hands, roundel, the card's show / expire logic
+  BmwMWatchDelegate.mc  forwards touches to the view
+  Cards.mc              the quick card drawn over the dial
+  Fonts.mc              the three font roles as vector fonts (falls back to system fonts)
+  Theme.mc              colours, spacing, font sizes and touch targets used everywhere
+  Geometry.mc           ring sizes and touch hit-testing (pure, tested)
+  Logo.mc               the M badge's stripe geometry (pure, tested)
+  Stats.mc              battery threshold and number formatting (pure, tested)
+  Units.mc              the temperature unit setting (pure, tested)
   tests/                unit tests, run with ./tools/test.sh
-  BmwMWatchDelegate.mc  forwards presses to the view
-resources/            strings and launcher icon
-build.sh              compile to bin/bmw-m-watchface.prg
+resources/            strings, settings and launcher icon
+build.sh              compile to bin/bmw-m-watchface.prg (devcontainer)
 tools/wireframes.py   regenerates the README wireframes from Theme.mc
-tools/test.sh         builds with unit tests and runs them in the simulator
+tools/launcher_icon.py  regenerates the launcher icon
+tools/test.sh         builds with unit tests and runs them in the simulator (devcontainer)
+tools/sim.sh          starts the simulator and loads the face (devcontainer)
 docs/                 README images
-.devcontainer/        devcontainer + post-create (SDK from a shared feature)
-.vscode/tasks.json    build task
+.devcontainer/        devcontainer (Ubuntu 22.04, SDK from a shared feature, uv, Go)
+.vscode/              tasks and launch configurations
 ```
 
 ## Settings
 
 One setting, **Units**, in the Garmin Connect app (the watch face's settings):
 
-- **Follow watch** (default): each quantity follows the watch's own unit settings, as before.
-- **Metric** or **Imperial**: override them. Temperature (°C or °F), distance (km or mi) and wind
-  speed (km/h or mph) change together. The 12/24 hour clock always follows the watch.
+- **Follow watch** (default): the temperature uses the watch's own temperature unit.
+- **Metric (°C)** or **Imperial (°F)**: override it.
 
-All the unit conversions live in `source/Units.mc` and are covered by tests (`UnitsTests.mc`),
-including rounding to the nearest degree. The setting is defined in `resources/properties/` and
-`resources/settings/`.
+The conversion and rounding live in `source/Units.mc` and are covered by tests (`UnitsTests.mc`).
+The setting is defined in `resources/properties/` and `resources/settings/`.
 
 ## Wireframe tool
 
-`tools/wireframes.py` draws the dial, the tap zones and the detail pages from the
-same colours, spacing and logo geometry the watch face uses. It reads
-`source/Theme.mc`, so after changing the theme you can rerun it and see the result
-without a simulator. It is a [uv](https://docs.astral.sh/uv/) script: its one dependency is
-declared at the top of the file and uv installs it on the fly, so there is no `pip install`
-and no virtualenv to manage (the devcontainer has uv).
+`tools/wireframes.py` draws the dial, the touch targets and the cards from the same colours,
+spacing, font sizes and logo geometry the watch face uses. It reads `source/Theme.mc`, so after
+changing the theme you can rerun it and see the result without a simulator. It is a
+[uv](https://docs.astral.sh/uv/) script: its one dependency is declared at the top of the file and
+uv installs it on the fly, so there is no `pip install` and no virtualenv to manage.
 
 ```sh
 uv run tools/wireframes.py              # render PNGs into docs/
@@ -154,137 +116,100 @@ uv run tools/wireframes.py --out /tmp/wf
 PNG output needs one SVG renderer: `rsvg-convert` (`sudo apt install librsvg2-bin`),
 Inkscape, the `cairosvg` package (which uv installs for you), or Google Chrome /
 Chromium (set `CHROME_PATH` if it isn't on your `PATH`). The tool tries them in that
-order and tells you what to install if it finds none. There is also a **Regenerate
-wireframes** task in VS Code.
+order. There is also a **Regenerate wireframes** task in VS Code.
 
-Only colours, font-size roles and the spacing tokens are read from `Theme.mc`. The
-layout in `BmwMWatchView.mc` and `BmwMDetail.mc` (positions as fractions of the dial
-radius, the logo geometry, hand lengths) is mirrored inside the script, so if you
-change that layout, update the matching function in `tools/wireframes.py` too.
-Different renderers use different fonts, so text widths vary slightly.
+Only colours, font sizes and the spacing tokens are read from `Theme.mc`. The layout in
+`BmwMWatchView.mc` and `Cards.mc` (positions as fractions of the dial radius, the logo geometry,
+hand lengths) is mirrored inside the script, so if you change that layout, update the matching
+function in `tools/wireframes.py` too. Different renderers use different fonts, so text widths
+vary slightly.
 
 ## Tests
 
-The logic that does not need the watch is split into small modules (`Geometry`,
-`PageNav`, `SleepInference`, `Stats`, `Theme`) and covered by Connect IQ unit tests in
-`source/tests/`: 62 tests for the sleep inference and schedule fallback, page
-navigation, tap hit-testing, the statistics and bucketing helpers, and the theme
-mappings. Drawing code and anything that reads live watch data is not tested.
+The logic that does not need the watch is split into small modules (`Geometry`, `Logo`, `Stats`,
+`Units`, `Theme`) and covered by Connect IQ unit tests in `source/tests/`: 21 tests for the touch
+hit-testing, the badge geometry, number formatting, the unit conversion and the theme mappings.
+Drawing code and anything that reads live watch data is not tested.
 
 ```sh
 ./tools/test.sh      # builds with --unit-test and runs monkeydo -t in the simulator
 ```
 
-or run **Run unit tests (venux1)** in VS Code. The tests are `(:test)` functions, which
-a normal build ignores, so they do not affect the watch face. Running them needs the
-Connect IQ simulator (a GUI tool). On a headless machine the script uses `xvfb-run` if
-it is installed.
-
-**These tests have not been run.** They were written without the Connect IQ SDK, and I
-checked their expected values by computing them independently in Python. The sleep
-inference was also checked in `tools/wireframes.py` (`find_sleep`, a Python mirror of
-the Monkey C code). Treat the first simulator run as the real test.
+or run **Run unit tests** from VS Code. The tests are `(:test)` functions, which a normal build
+ignores, so they do not affect the watch face.
 
 ## Design tokens
 
-Everything visual comes from `source/Theme.mc`, so a change there changes the
-whole face.
+Everything visual comes from `source/Theme.mc`, so a change there changes the whole face.
 
 - **Colours:** exactly eight, plus black for the background. The three BMW M logo
   colours (blue `0066B1`, navy `003C78`, red `E32618`), a muted tint of each for empty
-  tracks, the sleep band and axes, white, and one grey `999999` for secondary text, glyph
-  strokes, chevrons and inactive dots. The cloud strip shades between black and the grey,
-  which is a ramp of that one grey, not another colour.
-- **Spacing:** one 2 px gap is used between the badge stripes and between ring bars;
-  the outer ring sits 6 px inside the major ticks (`RING_TICK_GAP`) so the two never touch. Ring bars are as wide as the badge
-  stripes. Detail pages share a 70 px margin, a 32 px row pitch and one bar size.
-- **Fonts:** four roles (label, value, title, hero number), drawn as vector fonts at the pixel
-  sizes `FONT_PX_*` in `Theme.mc` (`Fonts.mc` loads them, falling back to the system fonts).
+  tracks, white, and one grey `999999` for secondary text.
+- **Spacing:** one 2 px gap between the badge stripes and between ring bars; the outer ring sits
+  6 px inside the major ticks (`RING_TICK_GAP`) so the two never touch. Ring bars are as wide as the
+  badge stripes.
+- **Fonts:** three roles (label, value, title), drawn as vector fonts at the pixel sizes
+  `FONT_PX_*` in `Theme.mc` (`Fonts.mc` loads them, falling back to the system fonts). The
+  date's two lines are stacked from the real font heights (`Dc.getFontHeight`), so they cannot
+  overlap whatever the device's fonts are.
 
 The touch targets' sizes (the shared radius of the roundel, date and battery circles, the
-temperature and rings arcs) are tokens too, read by both the app and the wireframe
-tool, so the touch-targets image follows the code.
-
-The stripes at the top of every page are the face badge's stripes scaled down: both draw from one
-set of logo geometry (`source/Logo.mc`), so they cannot drift apart. Metric pages have no icon,
-matching the weather page: title, big number, a sub-line, then rows, all on the same grid.
-
-Page furniture (the M stripe accent, edge chevrons, page dots, the moon and sun marks, the
-cloud strip) and the Activity and Weather page positions are tokens too. The Weather
-page's detail rows and hourly strip sit on the same row grid as the metric pages.
-The dial's own layout (badge, hands, roundel, tick lengths) is written as fractions of
-the dial radius in `BmwMWatchView.mc` rather than tokens.
+temperature and rings arcs) are tokens too, read by both the app and the wireframe tool, so the
+touch-targets image follows the code. The dial's own layout (badge, hands, roundel, tick lengths)
+is written as fractions of the dial radius in `BmwMWatchView.mc` rather than tokens.
 
 ## Build
 
-### In the devcontainer (recommended)
+### In the devcontainer
 
-Open the repo in VS Code ("Reopen in Container") or a Codespace. The container
-installs the Connect IQ SDK 9.1.0 and generates a local signing key
-(`developer_key.der`, git-ignored). Downloading the Venu X1 device files needs a
-Garmin account, so export these on the host before opening the container (or
-set them as Codespaces/repo secrets):
+Open the repo in VS Code ("Reopen in Container") or a Codespace. The container (Ubuntu 22.04)
+installs the Connect IQ SDK (version in `.devcontainer/devcontainer.json`) and generates a local
+signing key (`developer_key.der`, git-ignored). Downloading the Venu X1 device files needs a
+Garmin account, so export these on the host before opening the container:
 
 ```sh
 export GARMIN_USERNAME="you@example.com"
 export GARMIN_PASSWORD="..."
 ```
 
-Accounts with two-factor auth may not work non-interactively. If login fails,
-run `connect-iq-sdk-manager login` once inside the container, then
+Accounts with two-factor auth may not work non-interactively. If login fails, run
+`connect-iq-sdk-manager login` once inside the container, then
 `connect-iq-sdk-manager device download --manifest manifest.xml`.
-
-Then build:
 
 ```sh
 ./build.sh            # builds bin/bmw-m-watchface.prg for venux1
 ./build.sh <device>   # another product id listed in manifest.xml
+./tools/test.sh       # the unit tests
+./tools/sim.sh        # the simulator
 ```
 
-or run the **Build (venux1)** task in VS Code (`Ctrl/Cmd+Shift+B`).
+The container's `runArgs` has `--userns=keep-id` for rootless Podman. Docker rejects that flag, so
+remove it (or use `--userns=host`) if you use Docker.
 
-The container's `runArgs` has `--userns=keep-id` for rootless Podman. Docker
-rejects that flag, so remove it (or use `--userns=host`) if you use Docker.
+**The Linux simulator is unstable.** In the container, SDK 9.1.0, 9.2.0 and 9.3.0 all segfault in a
+worker thread, even running Garmin's own sample watch face; it lasts longer with no network, which
+is why `tools/sim.sh` runs it that way and restarts it. The unit tests run fine. To see the face,
+use the simulator on Windows or macOS, or sideload to the watch.
 
 ### Without the devcontainer
 
-Install the Connect IQ SDK 9.x and the `venux1` device files yourself, generate a
-developer key (`build.sh` prints the `openssl` commands), then run `./build.sh`.
-
-### Running it
-
-`build.sh` only compiles. To see the face you need the Connect IQ simulator
-(`connectiq` + `monkeydo`), a GUI tool that isn't available in a headless
-container. Use it on a desktop SDK install, or sideload the `.prg` to the watch.
+See [Running on Windows or macOS](#running-on-windows-or-macos-no-container).
 
 ## Status
 
-Written without access to the Connect IQ SDK, so **it has not been compiled or
-run yet**. Expect a few compile fixes on the first build. In particular:
+Compiled and run on a Venu X1 and in the Windows simulator; the 21 unit tests pass.
 
-- The Units setting uses `Application.Properties` and the `resources/settings` and
-  `resources/properties` files; check it appears in Garmin Connect after sideloading, and that
-  changing it redraws the face (`onSettingsChanged`).
 - A watch face may not use `Toybox.Timer` (the first run on a watch failed with "Symbol 'start' not
-  available to 'Watch Face'"), so cards and pages expire by timestamp, checked in `onUpdate`.
-  If a card or page lingers, that is where to look.
-- Touch input uses `WatchFaceDelegate`. Garmin's docs list only `onPress` (touch and hold) for watch
-  faces; a plain tap is not delivered. This was confirmed on a Venu X1 and in its simulator: a hold
-  arrives, a tap does nothing. So the face reacts to presses only (see the touch rule above). `onTap`
-  is still wired to the same handler in case a device sends it; the view counts a touch once.
-  The face logs `TOUCH onPress x,y` / `TOUCH onTap x,y` to the console so you can see what arrives.
-- Sleep score comes from `Complications` (type 42, API 6.0.2), which needs the
-  `ComplicationSubscriber` permission in the manifest. Garmin's docs name that permission,
-  but some forum posts report it being rejected for watch faces: if the build complains,
-  remove that line from `manifest.xml` and the sleep score row will show "--".
-- Sleep: real sleep isn't available, as above, so the band is a guess. The inference
-  is mirrored in `tools/wireframes.py` (`find_sleep`) and was checked on made-up data
-  only; it has not seen real watch data. If it picks the wrong stretch, the thresholds
-  are in `findSleep()` in `BmwMDetail.mc`.
-- Graph data: today's entry is skipped if `ActivityMonitor.getHistory()` includes it
-  (the docs say it is newest first, at most 7 entries) and taken from `getInfo()`. Body
-  battery and heart rate come from `SensorHistory`; heart rate history only goes back to
-  the last power cycle, so a restarted watch shows a gap at the left of the graph.
+  available to 'Watch Face'"), so the card expires by timestamp, checked in `onUpdate`. If a card
+  lingers, that is where to look.
+- Touch input uses `WatchFaceDelegate`. Garmin documents only `onPress` (touch and hold) for watch
+  faces; a plain tap is not delivered. Confirmed in the simulator: a hold arrives, a tap does not.
+  `onTap` is wired to the same handler in case a device sends it. The face logs `TOUCH onPress
+  x,y` / `TOUCH onTap x,y` to the console.
+- Check on the watch that the Units setting appears in Garmin Connect and that changing it
+  redraws the face (`onSettingsChanged`).
+- Layout clearances (date and battery against the ticks, the ring band against the ticks) were
+  tuned from simulator screenshots; recheck on the watch.
 
 ## Trademarks
 

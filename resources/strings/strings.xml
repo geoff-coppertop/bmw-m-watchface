@@ -2,6 +2,6 @@
     <string id="AppName">M Motorsport</string>
     <string id="UnitsTitle">Units</string>
     <string id="UnitsAuto">Follow watch</string>
-    <string id="UnitsMetric">Metric (°C, km, km/h)</string>
-    <string id="UnitsImperial">Imperial (°F, mi, mph)</string>
+    <string id="UnitsMetric">Metric (°C)</string>
+    <string id="UnitsImperial">Imperial (°F)</string>
 </strings>

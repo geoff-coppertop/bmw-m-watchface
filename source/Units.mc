@@ -2,12 +2,9 @@ import Toybox.Application;
 import Toybox.Lang;
 import Toybox.System;
 
-// Temperature, distance and wind speed in the units the wearer wants. One setting, "Units"
-// (Garmin Connect app settings): Auto follows the watch, Metric or Imperial override it for
-// temperature, distance and wind together. In Auto each quantity follows its own watch setting
-// exactly as before (temperature from the temperature units, distance and wind from the
-// distance units). The 12/24 hour clock always follows the watch. Everything below the
-// "resolving" section is pure arithmetic and is covered by source/tests/UnitsTests.mc.
+// Temperature in the units the wearer wants. One setting, "Units" (Garmin Connect app settings):
+// Auto follows the watch's temperature units, Metric (°C) or Imperial (°F) override it.
+// Everything below the "pure" section is plain arithmetic, covered by source/tests/UnitsTests.mc.
 module Units {
     const AUTO = 0;
     const METRIC = 1;
@@ -27,10 +24,6 @@ module Units {
 
     function tempImperial() as Boolean {
         return resolve(choice(), System.getDeviceSettings().temperatureUnits == System.UNIT_STATUTE);
-    }
-
-    function distImperial() as Boolean {
-        return resolve(choice(), System.getDeviceSettings().distanceUnits == System.UNIT_STATUTE);
     }
 
     // ---- pure -----------------------------------------------------------------------
@@ -58,22 +51,5 @@ module Units {
 
     function tempUnit(imperial as Boolean) as String {
         return imperial ? "°F" : "°C";
-    }
-
-    // Metres per second as km/h or mph, whole numbers.
-    function windSpeed(metersPerSecond as Numeric, imperial as Boolean) as Number {
-        return round(metersPerSecond * (imperial ? 2.23694 : 3.6));
-    }
-
-    function windUnit(imperial as Boolean) as String {
-        return imperial ? "mph" : "km/h";
-    }
-
-    // Centimetres as "4.7 km" or "2.9 mi".
-    function distanceText(cm as Numeric, imperial as Boolean) as String {
-        if (imperial) {
-            return (cm / 160934.0).format("%.1f") + " mi";
-        }
-        return (cm / 100000.0).format("%.1f") + " km";
     }
 }

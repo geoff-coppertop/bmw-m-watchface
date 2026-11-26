@@ -41,20 +41,3 @@ function unitsTemperatureLabels(logger as Test.Logger) as Boolean {
     Test.assertEqual(Units.tempUnit(true), "°F");
     return true;
 }
-
-(:test)
-function unitsWindSpeed(logger as Test.Logger) as Boolean {
-    Test.assertEqual(Units.windSpeed(10, false), 36);    // 36 km/h
-    Test.assertEqual(Units.windSpeed(10, true), 22);     // 22.4 mph
-    Test.assertEqual(Units.windUnit(false), "km/h");
-    Test.assertEqual(Units.windUnit(true), "mph");
-    return true;
-}
-
-(:test)
-function unitsDistance(logger as Test.Logger) as Boolean {
-    Test.assertEqual(Units.distanceText(470000, false), "4.7 km");
-    Test.assertEqual(Units.distanceText(470000, true), "2.9 mi");
-    Test.assertEqual(Units.distanceText(0, false), "0.0 km");
-    return true;
-}

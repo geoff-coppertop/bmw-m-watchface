@@ -16,20 +16,16 @@ class BmwMWatchView extends WatchUi.WatchFace {
 
     private var _asleep as Boolean = false;
 
-    // tap detail pages
-    private var _nav as PageNav = new PageNav();
+    private var _cards as Cards = new Cards();
     private var _card as Symbol or Null = null;       // the quick card showing, if any
     private var _cardAt as Number = 0;                // System.getTimer() when the card went up
-    private var _detail as DetailPage or Null = null;
     private var _lastTouch as Number = -1000;        // System.getTimer() of the last counted touch
-    private var _touchAt as Number = 0;               // System.getTimer() at the last touch on a page
     private var _w as Number = 0;
     private var _h as Number = 0;
     private var _r as Number = 0;
 
     function initialize() {
         WatchFace.initialize();
-        _detail = new DetailPage(self);
     }
 
     function onLayout(dc as Dc) as Void {
@@ -46,7 +42,7 @@ class BmwMWatchView extends WatchUi.WatchFace {
 
     function onEnterSleep() as Void {
         _asleep = true;
-        closePage();     // always return to the dial when the watch dims
+        _card = null;    // the card goes when the watch dims
     }
 
     function onExitSleep() as Void {
@@ -65,20 +61,10 @@ class BmwMWatchView extends WatchUi.WatchFace {
         _r = r;
 
         // A watch face may not use Timer (Garmin refuses it: "Symbol 'start' not available to
-        // 'Watch Face'"), so cards and pages expire here instead. The watch redraws every second
-        // while the screen is awake, and onEnterSleep closes everything when it dims.
-        var now = System.getTimer();
-        if (_card != null && now - _cardAt >= Theme.CARD_MS) {
+        // 'Watch Face'"), so the card expires here instead. The watch redraws every second while
+        // the screen is awake, and onEnterSleep removes the card when it dims.
+        if (_card != null && System.getTimer() - _cardAt >= Theme.CARD_MS) {
             _card = null;
-        }
-        if (_nav.isOpen() && now - _touchAt >= Theme.PAGE_MS) {
-            _nav.close();
-            if (_detail != null) { _detail.reset(); }
-        }
-
-        if (_nav.isOpen() && !_asleep && _detail != null) {
-            _detail.draw(dc, _nav.page, _nav.sub, _nav.from != null);
-            return;
         }
 
         dc.setColor(Theme.WHITE, Theme.BLACK);
@@ -93,76 +79,37 @@ class BmwMWatchView extends WatchUi.WatchFace {
 
         drawHands(dc, cx, cy, r);
 
-        if (_card != null && !_asleep && _detail != null) {
-            _detail.drawCard(dc, _card);      // a quick card over the dial
+        if (_card != null && !_asleep) {
+            _cards.drawCard(dc, _card);       // the quick card over the dial
         }
     }
 
     // ---- dial -----------------------------------------------------------
 
-    // ---- taps -------------------------------------------------------------
+    // ---- touch --------------------------------------------------------------
 
-    // The two touches a device may send. A watch face is documented to receive only a press (touch
-    // and hold: WatchFaceDelegate has no tap), and the simulator sends nothing else, but if a
-    // device does send a tap it behaves as follows:
-    //   tap:  shows the card for the zone touched; a tap anywhere dismisses a card that is up
-    //   hold: shows the card too (so a hold-only device can reach everything); holding the card, or
-    //         the same zone again, opens that zone's page (if it has one)
-    // While a page is open both move between pages or close it (see PageNav.tap).
-    function handleTap(x as Number, y as Number) as Boolean {
-        return touch(x, y, false);
-    }
-
-    function handleHold(x as Number, y as Number) as Boolean {
-        return touch(x, y, true);
-    }
-
-    private function touch(x as Number, y as Number, hold as Boolean) as Boolean {
+    // A touch on a zone shows its card; a touch anywhere dismisses a card that is up. A watch face
+    // is documented to receive only a press (touch and hold: WatchFaceDelegate has no tap), and
+    // the simulator sends nothing else, so a hold is what works; a device that also sends a tap
+    // gets the same behaviour. Returns true if the touch was used.
+    function handleTouch(x as Number, y as Number) as Boolean {
         // One touch can be reported twice (as a tap and as a press): count it once.
         var now = System.getTimer();
         if (now - _lastTouch < 400) {
-            System.println("  -> ignored (" + (now - _lastTouch) + " ms after the last touch)");
             return true;
         }
         _lastTouch = now;
 
-        if (_nav.isOpen()) {
-            System.println("  -> in page " + _nav.page + "/" + _nav.sub);
-            markTouch();
-            _nav.tap(x, y, _w);
-            if (!_nav.isOpen()) {
-                closePage();
-            } else {
-                WatchUi.requestUpdate();
-            }
-            return true;
-        }
-
-        var hit = Geometry.hitTest(x, y, _w, _h, _r);
-        var shown = _card;
-        if (shown != null) {
+        if (_card != null) {
             closeCard();
-            System.println("  -> card " + shown + " was up; hit=" + hit + " inCard=" + inCard(x, y, shown));
-            if (hold && PageNav.hasPage(shown) && (hit == shown || inCard(x, y, shown))) {
-                System.println("  -> open page " + shown);
-                _nav.open(shown);
-                markTouch();
-                WatchUi.requestUpdate();
-            }
             return true;
         }
-        if (hit == null || !PageNav.hasCard(hit)) {
+        var hit = Geometry.hitTest(x, y, _w, _h, _r);
+        if (hit == null) {
             return false;
         }
-        System.println("  -> show card " + hit);
         showCard(hit);
         return true;
-    }
-
-    // Is (x, y) inside the card for this zone? The card is centred on the screen.
-    private function inCard(x as Number, y as Number, kind as Symbol) as Boolean {
-        var ch = (kind == :activity) ? Theme.CARD_H_ROWS : Theme.CARD_H;
-        return (x - _w / 2).abs() <= Theme.CARD_W / 2 && (y - _h / 2).abs() <= ch / 2;
     }
 
     private function showCard(kind as Symbol) as Void {
@@ -174,33 +121,6 @@ class BmwMWatchView extends WatchUi.WatchFace {
     function closeCard() as Void {
         _card = null;
         WatchUi.requestUpdate();
-    }
-
-    private function markTouch() as Void {
-        _touchAt = System.getTimer();      // the 20 s auto-return counts from the last touch
-    }
-
-    function closePage() as Void {
-        _nav.close();
-        _card = null;
-        if (_detail != null) {
-            _detail.reset();      // drop cached graph data
-        }
-        WatchUi.requestUpdate();
-    }
-
-    // Glyph used by the detail pages.
-    function drawGlyph(dc as Dc, kind as Symbol, x as Numeric, y as Numeric, s as Numeric) as Void {
-        if (kind == :hr) {
-            drawHeart(dc, x, y, s, Theme.RED);
-        } else if (kind == :steps) {
-            drawWalker(dc, x, y, s, Theme.BLUE);
-        } else if (kind == :active) {
-            drawBolt(dc, x, y, s, Theme.WHITE);
-        } else if (kind == :body) {
-            var bb = bodyBatFrac();
-            drawBodyBattery(dc, x, y, s, Theme.RED, bb);
-        }
     }
 
     private function rad(deg as Numeric) as Float {
@@ -363,68 +283,6 @@ class BmwMWatchView extends WatchUi.WatchFace {
         dc.setColor(_asleep ? Theme.GREY : Theme.WHITE, Graphics.COLOR_TRANSPARENT);
         dc.drawText(x, top + hl + hv / 2, Fonts.value, value,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-    }
-
-    // ---- glyphs (drawn on the detail pages) ------------------------------
-
-    private function drawHeart(dc as Dc, x as Numeric, y as Numeric, s as Numeric, color as Number) as Void {
-        dc.setColor(color, Graphics.COLOR_TRANSPARENT);
-        dc.fillCircle(x - s * 0.25, y - s * 0.15, s * 0.28);
-        dc.fillCircle(x + s * 0.25, y - s * 0.15, s * 0.28);
-        dc.fillPolygon([[x - s * 0.51, y - s * 0.02], [x + s * 0.51, y - s * 0.02], [x, y + s * 0.55]]);
-    }
-
-    // Walking figure facing right, in the same stroked style as the body battery
-    // person: head, leaning torso, swinging arms, and two legs with a knee bend.
-    private function drawWalker(dc as Dc, x as Numeric, y as Numeric, s as Numeric, color as Number) as Void {
-        dc.setColor(color, Graphics.COLOR_TRANSPARENT);
-        dc.setPenWidth(Theme.glyphPen(s));
-        dc.fillCircle(x + s * 0.06, y - s * 0.40, s * 0.11);
-        dc.drawLine(x + s * 0.04, y - s * 0.24, x - s * 0.02, y + s * 0.08);          // torso
-        dc.drawLine(x + s * 0.03, y - s * 0.18, x + s * 0.22, y - s * 0.02);          // front arm
-        dc.drawLine(x + s * 0.03, y - s * 0.18, x - s * 0.15, y - s * 0.04);          // back arm
-        dc.drawLine(x - s * 0.02, y + s * 0.08, x + s * 0.14, y + s * 0.26);          // front thigh
-        dc.drawLine(x + s * 0.14, y + s * 0.26, x + s * 0.20, y + s * 0.50);          // front shin
-        dc.drawLine(x - s * 0.02, y + s * 0.08, x - s * 0.16, y + s * 0.28);          // back thigh
-        dc.drawLine(x - s * 0.16, y + s * 0.28, x - s * 0.30, y + s * 0.46);          // back shin
-        dc.setPenWidth(1);
-    }
-
-    private function drawBolt(dc as Dc, x as Numeric, y as Numeric, s as Numeric, color as Number) as Void {
-        dc.setColor(color, Graphics.COLOR_TRANSPARENT);
-        dc.fillPolygon([
-            [x + s * 0.15, y - s * 0.6], [x - s * 0.35, y + s * 0.05], [x - s * 0.02, y + s * 0.05],
-            [x - s * 0.15, y + s * 0.6], [x + s * 0.35, y - s * 0.1], [x + s * 0.02, y - s * 0.1]
-        ]);
-    }
-
-    // Body Battery: a person with raised arms inside a ring. The ring fills
-    // clockwise from 12 o'clock to the current level, so it can't be mistaken
-    // for the watch's own battery.
-    private function drawBodyBattery(dc as Dc, x as Numeric, y as Numeric, s as Numeric,
-                                     color as Number, frac as Float) as Void {
-        var rr = s * 0.62;
-        dc.setPenWidth(Theme.glyphPen(s));
-        dc.setColor(Theme.dimOf(color), Graphics.COLOR_TRANSPARENT);
-        dc.drawCircle(x, y, rr);
-        if (frac > 1.0) { frac = 1.0; }
-        if (frac > 0.02) {
-            dc.setColor(color, Graphics.COLOR_TRANSPARENT);
-            if (frac > 0.98) {
-                dc.drawCircle(x, y, rr);
-            } else {
-                dc.drawArc(x, y, rr, Graphics.ARC_CLOCKWISE, 90, 90 - 360 * frac);
-            }
-        }
-        // figure: head, torso, raised arms, legs
-        dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
-        dc.fillCircle(x, y - s * 0.24, s * 0.1);
-        dc.drawLine(x, y - s * 0.1, x, y + s * 0.15);
-        dc.drawLine(x, y - s * 0.02, x - s * 0.22, y - s * 0.17);
-        dc.drawLine(x, y - s * 0.02, x + s * 0.22, y - s * 0.17);
-        dc.drawLine(x, y + s * 0.15, x - s * 0.14, y + s * 0.36);
-        dc.drawLine(x, y + s * 0.15, x + s * 0.14, y + s * 0.36);
-        dc.setPenWidth(1);
     }
 
     // ---- hands ----------------------------------------------------------

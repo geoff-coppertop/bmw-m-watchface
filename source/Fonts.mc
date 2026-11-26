@@ -1,14 +1,13 @@
 import Toybox.Graphics;
 import Toybox.Lang;
 
-// The four font roles, loaded once. label, value and title are vector fonts at the pixel sizes
-// in Theme (so they can be smaller than the smallest system font); hero is the big number.
+// The three font roles, loaded once, as vector fonts at the pixel sizes in Theme (so they can be
+// smaller than the smallest system font).
 // A device without a vector font keeps the system fonts, so the face still draws.
 class Fonts {
     static var label as Graphics.FontType = Graphics.FONT_XTINY;
     static var value as Graphics.FontType = Graphics.FONT_TINY;
     static var title as Graphics.FontType = Graphics.FONT_SMALL;
-    static var hero as Graphics.FontType = Graphics.FONT_NUMBER_HOT;
     static var vector as Boolean = false;
 
     // Faces are tried in order: RobotoCondensedBold is on the Venu X1; RobotoRegular is what its
@@ -19,8 +18,6 @@ class Fonts {
         var l = Graphics.getVectorFont({ :face => faces, :size => Theme.FONT_PX_LABEL });
         var v = Graphics.getVectorFont({ :face => faces, :size => Theme.FONT_PX_VALUE });
         var t = Graphics.getVectorFont({ :face => faces, :size => Theme.FONT_PX_TITLE });
-        var h = Graphics.getVectorFont({ :face => faces, :size => Theme.FONT_PX_HERO });
-        if (h != null) { hero = h; }
         if (l != null && v != null && t != null) {
             label = l;
             value = v;

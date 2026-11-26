@@ -10,7 +10,7 @@
     uv run tools/wireframes.py --out DIR    # write somewhere else
 
 Colours, spacing and font-size roles are read from Theme.mc, so the mock-ups follow
-the theme. Layout that lives in BmwMWatchView.mc and BmwMDetail.mc (positions as
+the theme. Layout that lives in BmwMWatchView.mc and Cards.mc (positions as
 fractions of the dial radius, logo geometry, hand lengths) is mirrored in this
 script and must be kept in sync by hand.
 
@@ -56,13 +56,6 @@ CHROME = "#555555"          # the mock watch bezel in the images; not part of th
 ZONE_COLORS = {1: "#FFD400", 2: "#E040FB", 3: "#3DDC84", 4: "#FF8A00", 5: "#00C0FF"}   # touch targets: yellow, magenta, green, orange, cyan
 GAP, TICK_INSET, RING_TICK_GAP = num("GAP"), num("TICK_INSET"), num("RING_TICK_GAP")
 TICK_MAJOR, TICK_MINOR = num("TICK_MAJOR"), num("TICK_MINOR")
-MARGIN, ROW_PITCH = num("MARGIN"), num("ROW_PITCH")
-BAR_W, BAR_H, BAR_R = num("BAR_W"), num("BAR_H"), num("BAR_R")
-Y_STRIPES, Y_TITLE, Y_HERO, Y_SUB, Y_NOTE, Y_ROWS = (num("Y_STRIPES"), num("Y_TITLE"), num("Y_HERO"), num("Y_SUB"),
-                                                     num("Y_NOTE"), num("Y_ROWS"))
-CHART_X, CHART_TOP, CHART_BOTTOM = num("CHART_X"), num("CHART_TOP"), num("CHART_BOTTOM")
-Y_XLABELS, Y_STATS, Y_DOTS, DOT_R = num("Y_XLABELS"), num("Y_STATS"), num("Y_DOTS"), num("DOT_R")
-Y_CAPTION = num("Y_CAPTION")
 BATT_W, BATT_H, BATT_R, BATT_TERM_W, BATT_TERM_H, BATT_PAD = (num("BATT_W"), num("BATT_H"), num("BATT_R"),
                                                                 num("BATT_TERM_W"), num("BATT_TERM_H"),
                                                                 num("BATT_PAD"))
@@ -74,25 +67,12 @@ CARD_TITLE_Y, CARD_BIG_Y, CARD_DETAIL_Y, CARD_ROW_Y, CARD_ROW_PITCH = (num("CARD
 WINDOW_DATE_DX = num("WINDOW_DATE_DX")
 TOUCH_R, TOUCH_TEMP_HALF_R, TOUCH_ARC_ANGLE = num("TOUCH_R"), num("TOUCH_TEMP_HALF_R"), num("TOUCH_ARC_ANGLE")
 TOUCH_RING_OUT, TOUCH_RING_IN = num("TOUCH_RING_OUT"), num("TOUCH_RING_IN")
-STRIPE_H = num("STRIPE_H")
-NAV_CHEVRON_X, CHEVRON_HALF_W, CHEVRON_HALF_H, DOT_PITCH = (num("NAV_CHEVRON_X"), num("CHEVRON_HALF_W"),
-                                                              num("CHEVRON_HALF_H"), num("DOT_PITCH"))
-MARK_DY, MOON_R, MOON_CUT_R, MOON_CUT_DX, MOON_CUT_DY = (num("MARK_DY"), num("MOON_R"), num("MOON_CUT_R"),
-                                                          num("MOON_CUT_DX"), num("MOON_CUT_DY"))
-SUN_R, SUN_RAY_IN, SUN_RAY_OUT, LINE_END_R = num("SUN_R"), num("SUN_RAY_IN"), num("SUN_RAY_OUT"), num("LINE_END_R")
-CLOUD_STRIP_DY, CLOUD_STRIP_H = num("CLOUD_STRIP_DY"), num("CLOUD_STRIP_H")
-ACT_GLYPH, ACT_GLYPH_DX, ACT_TEXT_DX = num("ACT_GLYPH"), num("ACT_GLYPH_DX"), num("ACT_TEXT_DX")
-ACT_BLOCK_DY, ACT_BAR_GAP = num("ACT_BLOCK_DY"), num("ACT_BAR_GAP")
-ACT_CHEVRON_X, ACT_CHEVRON_DY = num("ACT_CHEVRON_X"), num("ACT_CHEVRON_DY")
-WEATHER_Y_UNIT, WEATHER_UNIT_DX = num("WEATHER_Y_UNIT"), num("WEATHER_UNIT_DX")
-ACTIVITY_ROW_TOP, ACTIVITY_ROW_PITCH = num("ACTIVITY_ROW_TOP"), num("ACTIVITY_ROW_PITCH")
-BAR_COLS_W, BAR_COLS_GAP = num("BAR_COLS_W"), num("BAR_COLS_GAP")
 DIM = {BLUE: BLUE_DIM, NAVY: NAVY_DIM, RED: RED_DIM}
 # Theme.metricColor(): one colour per metric everywhere
-METRIC = {"steps": BLUE, "active": NAVY, "body": RED, "hr": RED, "weather": RED, "temp": RED, "stress": RED}
+METRIC = {"steps": BLUE, "active": NAVY, "body": RED}
 
-# pixel sizes per Theme font role: the vector font sizes the watch face uses (hero: the system numerals)
-FONT_PX = {"label": num("FONT_PX_LABEL"), "value": num("FONT_PX_VALUE"), "title": num("FONT_PX_TITLE"), "hero": num("FONT_PX_HERO")}
+# pixel sizes per Theme font role: the vector font sizes the watch face uses
+FONT_PX = {"label": num("FONT_PX_LABEL"), "value": num("FONT_PX_VALUE"), "title": num("FONT_PX_TITLE")}
 
 # ---------------------------------------------------------------- screen
 W, H = 448, 486
@@ -208,7 +188,7 @@ def draw_battery_icon(s, x, y, pct):
 
 
 def draw_card(s, kind):
-    """Mirror of DetailPage.drawCard(): a quick card over the dial, with example values."""
+    """Mirror of Cards.drawCard(): a quick card over the dial, with example values."""
     rows = kind == "activity"
     ch = CARD_H_ROWS if rows else CARD_H
     left, top = CX - CARD_W / 2, CY - ch / 2
@@ -294,26 +274,26 @@ def dial_into(s, ox, oy, zones=False, card=None):
 
 
 def tap_zones():
-    """The dial with its touch targets numbered, and a legend of what a press does."""
+    """The dial with its touch targets numbered, and a legend of the card each one shows."""
     s = Svg()
     lw = 600
     s.add('<rect x="-30" y="-30" width="%d" height="%d" fill="#1b1b1b"/>' % (W + 60 + lw, H + 60))
     dial_into(s, 0, 0, True)
     x0 = W + 40
     s.text(x0, 40, "Touch targets", "title", WHITE, "start")
-    rows = [("1", ZONE_COLORS[1], "Temperature (12 o'clock)", "tap/hold: weather card", "hold it: Weather page"),
-            ("2", ZONE_COLORS[2], "Date (3 o'clock)", "tap/hold: date card", "again: dismiss"),
-            ("3", ZONE_COLORS[3], "Battery (9 o'clock)", "tap/hold: battery card", "again: dismiss"),
-            ("4", ZONE_COLORS[4], "Roundel (centre)", "tap/hold: heart rate card", "hold it: Heart rate page"),
-            ("5", ZONE_COLORS[5], "Rings (bottom)", "tap/hold: activity card", "hold it: Activity page")]
-    for i, (n, c, name, tap, hold) in enumerate(rows):
+    rows = [("1", ZONE_COLORS[1], "Temperature (12 o'clock)", "weather card: temperature, conditions, feels like"),
+            ("2", ZONE_COLORS[2], "Date (3 o'clock)", "date card: the day and date in full"),
+            ("3", ZONE_COLORS[3], "Battery (9 o'clock)", "battery card: percentage and days left"),
+            ("4", ZONE_COLORS[4], "Roundel (centre)", "heart rate card: bpm, resting rate, stress"),
+            ("5", ZONE_COLORS[5], "Rings (bottom)", "activity card: steps, active minutes, body battery")]
+    for i, (n, c, name, what) in enumerate(rows):
         y = 90 + i * 70
         s.circle(x0 + 12, y, 12, c)
         s.text(x0 + 12, y, n, "label", BLACK)
         s.text(x0 + 36, y, name, "value", WHITE, "start")
-        s.text(x0 + 36, y + 28, tap + "   &#183;   " + hold, "label", GREY, "start")
-    s.text(x0, 90 + 5 * 70 + 6, "A tap shows the card where the device sends taps; a hold always does.", "label", GREY, "start")
-    s.text(x0, 90 + 5 * 70 + 32, "Hold the card or the zone again for its page; touch elsewhere to dismiss.", "label", GREY, "start")
+        s.text(x0 + 36, y + 28, what, "label", GREY, "start")
+    s.text(x0, 90 + 5 * 70 + 6, "Hold a zone for its card.", "label", GREY, "start")
+    s.text(x0, 90 + 5 * 70 + 32, "Touch anywhere to dismiss it, or it goes after 4 seconds.", "label", GREY, "start")
     return s.doc((W + 60 + lw) * 1.6, (H + 60) * 1.6, "-30 -30 %d %d" % (W + 60 + lw, H + 60))
 
 
@@ -335,352 +315,10 @@ def cards():
     return s.doc(total + 40, H + 40, "-20 -20 %d %d" % (total + 40, H + 40))
 
 
-# ---------------------------------------------------------------- glyphs (page mock-ups)
-def g_heart(s, x, y, sz, c):
-    s.circle(x - sz * .25, y - sz * .15, sz * .28, c)
-    s.circle(x + sz * .25, y - sz * .15, sz * .28, c)
-    s.poly([(x - sz * .51, y - sz * .02), (x + sz * .51, y - sz * .02), (x, y + sz * .55)], c)
-
-
-def glyph_pen(sz):
-    return max(2, int(sz * 0.08))
-
-
-def g_walker(s, x, y, sz, c):
-    w = glyph_pen(sz)
-    s.circle(x + sz * .06, y - sz * .40, sz * .11, c)
-    for x1, y1, x2, y2 in [(.04, -.24, -.02, .08), (.03, -.18, .22, -.02), (.03, -.18, -.15, -.04),
-                           (-.02, .08, .14, .26), (.14, .26, .20, .50),
-                           (-.02, .08, -.16, .28), (-.16, .28, -.30, .46)]:
-        s.line((x + x1 * sz, y + y1 * sz), (x + x2 * sz, y + y2 * sz), c, w)
-
-
-def g_bolt(s, x, y, sz, c):
-    s.poly([(x + sz * .15, y - sz * .6), (x - sz * .35, y + sz * .05), (x - sz * .02, y + sz * .05),
-            (x - sz * .15, y + sz * .6), (x + sz * .35, y - sz * .1), (x + sz * .02, y - sz * .1)], c)
-
-
-def g_body(s, x, y, sz, c, frac):
-    rr = sz * .62
-    s.add('<circle cx="%.1f" cy="%.1f" r="%.1f" fill="none" stroke="%s" stroke-width="%d"/>' % (x, y, rr, DIM.get(c, BLUE_DIM), glyph_pen(sz)))
-    s.arc(x, y, rr, 90, 90 - 360 * frac, c, glyph_pen(sz), cw=True)
-    s.circle(x, y - sz * .24, sz * .1, GREY)
-    for x1, y1, x2, y2 in [(0, -.1, 0, .15), (0, -.02, -.22, -.17), (0, -.02, .22, -.17),
-                           (0, .15, -.14, .36), (0, .15, .14, .36)]:
-        s.line((x + x1 * sz, y + y1 * sz), (x + x2 * sz, y + y2 * sz), GREY, glyph_pen(sz))
-
-
-# ---------------------------------------------------------------- detail pages
-def stripes(s, ox):
-    """The face badge's stripes, scaled down: the same geometry as Logo.stripePoints()."""
-    k = STRIPE_H / 99.0
-    left = ox + CX - 175 * k / 2
-    top = Y_STRIPES - STRIPE_H / 2
-    for xt, c in LOGO_STRIPES:
-        s.poly([(left + (x - 9) * k, top + y * k) for x, y in
-                [(xt, 0), (xt + 36, 0), (xt + 36 - 57, 99), (xt - 57, 99)]], c)
-
-
-def bar(s, ox, y, frac, c):
-    s.add('<rect x="%.1f" y="%.1f" width="%d" height="%d" rx="%d" fill="%s"/>'
-          % (ox + CX - BAR_W / 2, y - BAR_H / 2, BAR_W, BAR_H, BAR_R, DIM.get(c, BLUE_DIM)))
-    s.add('<rect x="%.1f" y="%.1f" width="%.1f" height="%d" rx="%d" fill="%s"/>'
-          % (ox + CX - BAR_W / 2, y - BAR_H / 2, BAR_W * frac, BAR_H, BAR_R, c))
-
-
-def row(s, ox, y, label, value):
-    s.text(ox + MARGIN, y, label, "label", GREY, "start")
-    s.text(ox + W - MARGIN, y, value, "value", WHITE, "end")
-
-
-def chevron(s, x, y, right):
-    d = -CHEVRON_HALF_W if right else CHEVRON_HALF_W
-    s.add('<polyline points="%.1f,%.1f %.1f,%.1f %.1f,%.1f" fill="none" stroke="%s" stroke-width="3"/>'
-          % (x + d, y - CHEVRON_HALF_H, x - d, y, x + d, y + CHEVRON_HALF_H, GREY))
-
-
-def nav(s, sub, from_activity, count=2):
-    """Edge chevrons and page dots, as drawNav() in BmwMDetail.mc."""
-    if sub < count - 1:
-        chevron(s, W - NAV_CHEVRON_X, H / 2, True)
-    if sub >= 1 or from_activity:
-        chevron(s, NAV_CHEVRON_X, H / 2, False)
-    for i in range(count):
-        s.circle(CX + (i - (count - 1) / 2.0) * DOT_PITCH, Y_DOTS, DOT_R, WHITE if i == sub else GREY)
-
-
-def pages():
-    s = Svg()
-    total = W * 4 + 120
-    s.add('<rect x="-20" y="-20" width="%d" height="%d" fill="#1b1b1b"/>' % (total + 40, H + 40))
-
-    # 1: Activity page (press the rings, then the card). Each row opens that metric.
-    screen(s, 0)
-    stripes(s, 0)
-    s.text(CX, Y_TITLE, "ACTIVITY", "title", GREY)
-    items = [("Steps", "6214 / 10000", .62, BLUE, "walker"),
-             ("Active minutes (week)", "68 / 150 min", .45, NAVY, "bolt"),
-             ("Body battery", "78 / 100", .78, RED, "body")]
-    for i, (name, val, frac, c, g) in enumerate(items):
-        y = ACTIVITY_ROW_TOP + 50 + i * ACTIVITY_ROW_PITCH
-        gx = MARGIN + ACT_GLYPH_DX
-        if g == "walker":
-            g_walker(s, gx, y, ACT_GLYPH, BLUE)
-        elif g == "bolt":
-            g_bolt(s, gx, y, ACT_GLYPH, WHITE)
-        else:
-            g_body(s, gx, y, ACT_GLYPH, RED, frac)
-        hl, hv = FONT_PX["label"] * 1.2, FONT_PX["value"] * 1.2     # approximate line heights
-        top = y + ACT_BLOCK_DY - (hl + hv) / 2
-        s.text(MARGIN + ACT_TEXT_DX, top + hl / 2, name, "label", GREY, "start")
-        s.text(MARGIN + ACT_TEXT_DX, top + hl + hv / 2, val, "value", WHITE, "start")
-        bar(s, 0, top + hl + hv + ACT_BAR_GAP, frac, c)
-        chevron(s, W - ACT_CHEVRON_X, y + ACT_CHEVRON_DY, True)
-    s.add("</g>")
-
-    # 2: a metric page (steps), opened from Activity, so it has a back chevron
-    screen(s, W + 40)
-    stripes(s, 0)
-    s.text(CX, Y_TITLE, "STEPS", "title", GREY)
-    s.text(CX, Y_HERO, "6214", "hero", WHITE)
-    s.text(CX, Y_SUB, "of 10000 goal", "label", GREY)
-    bar(s, 0, Y_NOTE, .62, BLUE)
-    for i, (l, v) in enumerate([("Distance", "4.7 km"), ("Calories", "312 kcal"), ("Floors", "6 / 10")]):
-        row(s, 0, Y_ROWS + i * ROW_PITCH, l, v)
-    nav(s, 0, True)
-    s.add("</g>")
-
-    # 3: weather page, opened from the dial
-    screen(s, (W + 40) * 2)
-    stripes(s, 0)
-    s.text(CX, Y_TITLE, "WEATHER", "title", GREY)
-    s.text(CX, Y_HERO, "18", "hero", WHITE)
-    s.text(CX + 61 + WEATHER_UNIT_DX - 8, WEATHER_Y_UNIT, "&#176;C", "title", GREY, "start")
-    s.text(CX, Y_SUB, "Partly cloudy", "title", WHITE)
-    s.text(CX, Y_NOTE, "Feels like 16&#176;", "label", GREY)
-    for i, (l, v) in enumerate([("High / low", "20&#176; / 9&#176;"), ("Rain chance", "30%"),
-                                ("Wind", "12 km/h NW"), ("Humidity", "65%")]):
-        row(s, 0, Y_ROWS + i * ROW_PITCH, l, v)
-    for i, (t, v) in enumerate([("14", "19&#176;"), ("17", "20&#176;"), ("20", "17&#176;"), ("23", "14&#176;")]):
-        x = W * (.2 + .2 * i)
-        s.text(x, Y_ROWS + 4 * ROW_PITCH, t, "label", GREY)
-        s.text(x, Y_ROWS + 5 * ROW_PITCH, v, "value", WHITE)
-    nav(s, 0, False)
-    s.add("</g>")
-    # 4: Body Battery detail, opened from Activity, with four pages in all
-    screen(s, (W + 40) * 3)
-    stripes(s, 0)
-    s.text(CX, Y_TITLE, "BODY BATTERY", "title", GREY)
-    s.text(CX, Y_HERO, "78", "hero", WHITE)
-    s.text(CX, Y_SUB, "High energy", "label", GREY)
-    bar(s, 0, Y_NOTE, .78, METRIC["body"])
-    for i, (l, v) in enumerate([("24 h low / high", "34 / 88"), ("Stress", "34 &#183; Low"), ("Sleep score", "82")]):
-        row(s, 0, Y_ROWS + i * ROW_PITCH, l, v)
-    nav(s, 0, True, 4)
-    s.add("</g>")
-    return s.doc(total * 1, (H + 40), "-20 -20 %d %d" % (total + 40, H + 40))
-
-
-# ---------------------------------------------------------------- graph pages
-def bar_chart(s, vals, goal, color, labels):
-    """Each day is a vertical gauge: dim track up to the goal, bright fill to the value."""
-    n = len(vals)
-    total = n * BAR_COLS_W + (n - 1) * BAR_COLS_GAP
-    x0 = W / 2 - total / 2
-    maxv = max([goal or 0] + [v for v in vals if v is not None]) or 1
-    for i, v in enumerate(vals):
-        x = x0 + i * (BAR_COLS_W + BAR_COLS_GAP)
-        if goal:
-            th = goal * (CHART_BOTTOM - CHART_TOP) / maxv
-            s.add('<rect x="%.1f" y="%.1f" width="%d" height="%.1f" fill="%s"/>'
-                  % (x, CHART_BOTTOM - th, BAR_COLS_W, th, DIM.get(color, BLUE_DIM)))
-        if v is not None:
-            hgt = v * (CHART_BOTTOM - CHART_TOP) / maxv
-            s.add('<rect x="%.1f" y="%.1f" width="%d" height="%.1f" fill="%s"/>'
-                  % (x, CHART_BOTTOM - hgt, BAR_COLS_W, hgt, color))
-        s.text(x + BAR_COLS_W / 2, Y_XLABELS, labels[i], "label", WHITE if i == n - 1 else GREY)
-    s.line((x0, CHART_BOTTOM), (x0 + total, CHART_BOTTOM), BLUE_DIM, 2)
-
-
-def find_sleep(hr, bb):
-    """Python mirror of the inference in findSleep() (BmwMDetail.mc). Keep in sync."""
-    n = len(hr)
-    vals = sorted(int(v) for v in hr if v is not None)
-    if len(vals) < 24:
-        return None
-    lo, med = vals[len(vals) // 10], vals[len(vals) // 2]
-    if med - lo < 8:                  # no real night/day difference (SleepInference.MIN_CONTRAST)
-        return None
-    thr = lo + (med - lo) * 0.4
-    best_s = best_e = -1
-    run_s = last_low = -1
-    gap = 0
-    for i in range(n + 1):
-        low = i < n and hr[i] is not None and hr[i] <= thr
-        if low:
-            if run_s < 0:
-                run_s = i
-            last_low = i
-            gap = 0
-        elif run_s >= 0:
-            gap += 1
-            if gap > 1 or i == n:
-                if best_s < 0 or last_low - run_s > best_e - best_s:
-                    best_s, best_e = run_s, last_low
-                run_s = -1
-                gap = 0
-    if best_s < 0 or best_e - best_s + 1 < 8:
-        return None
-    first = next((bb[i] for i in range(best_s, min(best_e, best_s + 3) + 1) if bb[i] is not None), None)
-    last = next((bb[i] for i in range(best_e, max(best_s, best_e - 3) - 1, -1) if bb[i] is not None), None)
-    if first is not None and last is not None and last - first < 8:
-        return None
-    return best_s, best_e + 1
-
-
-def moon(s, x, y):
-    s.circle(x, y, MOON_R, GREY)
-    s.circle(x + MOON_CUT_DX, y + MOON_CUT_DY, MOON_CUT_R, BLACK)
-
-
-def sun(s, x, y):
-    s.circle(x, y, SUN_R, WHITE)
-    for i in range(8):
-        a = i * math.pi / 4
-        s.line((x + math.cos(a) * SUN_RAY_IN, y + math.sin(a) * SUN_RAY_IN),
-               (x + math.cos(a) * SUN_RAY_OUT, y + math.sin(a) * SUN_RAY_OUT), WHITE, 2)
-
-
-def grey_level(pct):
-    """Mirror of Stats.greyLevel()."""
-    p = max(0, min(100, pct))
-    v = p * int(GREY[3:5], 16) // 100
-    return "#%02X%02X%02X" % (v, v, v)
-
-
-def line_chart(s, vals, color, xlabels, sleep=None, rain=None, cloud=None, frozen=None, tenths=False):
-    x0, x1 = CHART_X, W - CHART_X
-    s.line((x0, CHART_BOTTOM), (x1, CHART_BOTTOM), BLUE_DIM, 2)
-    s.line((x0, CHART_TOP), (x1, CHART_TOP), BLUE_DIM, 2)
-    good = [v for v in vals if v is not None]
-    lo, hi = min(good), max(good)
-    if hi == lo:
-        hi = lo + 1
-    if rain and cloud:
-        step = (x1 - x0) / (len(vals) - 1)
-        for i in range(len(vals)):
-            cx_ = x0 + step * i
-            if rain[i]:
-                rh = rain[i] * (CHART_BOTTOM - CHART_TOP) / 100.0
-                s.add('<rect x="%.1f" y="%.1f" width="%.1f" height="%.1f" fill="%s"/>'
-                      % (cx_ - step * .35, CHART_BOTTOM - rh, step * .7, rh, WHITE if frozen and frozen[i] else BLUE))
-            sx, sw = cx_ - step / 2, step
-            if sx < x0:
-                sw -= x0 - sx
-                sx = x0
-            if sx + sw > x1:
-                sw = x1 - sx
-            s.add('<rect x="%.1f" y="%d" width="%.1f" height="%d" fill="%s"/>'
-                  % (sx, CHART_TOP + CLOUD_STRIP_DY, sw, CLOUD_STRIP_H, grey_level(cloud[i])))
-    if sleep:
-        a_, b_ = sleep
-        n_ = len(vals)
-        xa = x0 + (x1 - x0) * a_ / (n_ - 1)
-        xb = x0 + (x1 - x0) * (b_ - 1) / (n_ - 1)
-        s.add('<rect x="%.1f" y="%d" width="%.1f" height="%d" fill="%s"/>' % (xa, CHART_TOP, xb - xa, CHART_BOTTOM - CHART_TOP, BLUE_DIM))
-        if a_ > 0:
-            moon(s, xa, CHART_TOP + MARK_DY)
-        if b_ < n_:
-            sun(s, xb, CHART_TOP + MARK_DY)
-    fmt = (lambda v: "%.1f" % (v / 10.0)) if tenths else str
-    s.text(x1 + 6, CHART_TOP, fmt(max(good)), "label", GREY, "start")
-    s.text(x1 + 6, CHART_BOTTOM, fmt(min(good)), "label", GREY, "start")
-    n = len(vals)
-    prev = None
-    for i, v in enumerate(vals):
-        if v is None:
-            prev = None
-            continue
-        x = x0 + (x1 - x0) * i / (n - 1)
-        y = CHART_BOTTOM - (v - lo) * (CHART_BOTTOM - CHART_TOP) / (hi - lo)
-        if prev:
-            s.line(prev, (x, y), color, 3)
-        prev = (x, y)
-    if prev:
-        s.circle(prev[0], prev[1], LINE_END_R, color)
-    for x, anchor, t in zip((x0, CX, x1), ("start", "middle", "end"), xlabels):
-        s.text(x, Y_XLABELS, t, "label", GREY, anchor)
-
-
-def graph_page(s, ox, oy, title, stats, draw, caption=None, sub=1, count=2):
-    screen(s, ox, oy)
-    stripes(s, 0)
-    s.text(CX, Y_TITLE, title, "title", GREY)
-    if caption:
-        s.text(CX, Y_CAPTION, caption, "label", GREY)
-    draw()
-    s.text(CX, Y_STATS, stats, "label", GREY)
-    nav(s, sub, False, count)
-    s.add("</g>")
-
-
-def graphs():
-    s = Svg()
-    cols, rows = 3, 3
-    tw, th = cols * W + (cols - 1) * 40, rows * H + (rows - 1) * 40
-    s.add('<rect x="-20" y="-20" width="%d" height="%d" fill="#1b1b1b"/>' % (tw + 40, th + 40))
-    px, py = W + 40, H + 40
-
-    steps = [4210, 8032, 6120, 9400, 3100, 7012, 6214]
-    days = ["T", "F", "S", "S", "M", "T", "W"]
-    active = [22, 35, 12, 0, 28, 41, 18]
-    # Mock 24 h ending at 08:00 Wed. A night at buckets 30..43 (23:00 to 06:00):
-    # heart rate drops and body battery rises, as it would for real sleep.
-    hr = [52 + int(3 * math.sin(i)) if 30 <= i < 44 else 72 + int(8 * math.sin(i / 2.3)) + (22 if 12 < i < 16 else 0)
-          for i in range(48)]
-    body = [int(85 - i * 1.7) if i < 30 else int(34 + (i - 30) * 4.0) if i < 44 else 88 for i in range(48)]
-    sleep = find_sleep(hr, body)
-    assert sleep, "mock night should be detected"
-    t0 = 8 * 60 - 24 * 60                       # minutes, relative to now = 08:00
-
-    def hhmm(idx):
-        m = (t0 + idx * 30) % (24 * 60)
-        return "%02d:%02d" % (m // 60, m % 60)
-    note = "Sleep %s–%s · estimated" % (hhmm(sleep[0]), hhmm(sleep[1]))
-    temp = [4, 4, 3, 3, 2, 1, 1, 0, 0, -1, -1, -2]       # a cold evening: rain turns to snow
-
-    graph_page(s, 0, 0, "STEPS · 7 DAYS", "Avg 6284   Best 9400   Goal 10000",
-               lambda: bar_chart(s, steps, 10000, METRIC["steps"], days))
-    graph_page(s, px, 0, "ACTIVE MIN · 7 DAYS", "Avg 22   Best 41   Daily target 21",
-               lambda: bar_chart(s, active, 21, METRIC["active"], days))
-    graph_page(s, px * 2, 0, "BODY BATTERY · 24 H", "Low %d   High %d" % (min(body), max(body)),
-               lambda: line_chart(s, body, METRIC["body"], ["24h ago", "12h", "now"], sleep), note, 1, 4)
-    graph_page(s, 0, py, "HEART RATE · 24 H", "Min %d   Max %d" % (min(hr), max(hr)),
-               lambda: line_chart(s, hr, METRIC["hr"], ["24h ago", "12h", "now"], sleep), note)
-    rain = [0, 10, 30, 60, 70, 60, 50, 60, 80, 70, 50, 30]
-    frozen = [False] * 7 + [True] * 5                       # rain first, then snow from 21:00
-    cloud = [40, 60, 80, 90, 100, 100, 90, 100, 100, 90, 80, 70]
-    graph_page(s, px, py, "TEMPERATURE · 12 H", "Low %d&#176;   High %d&#176;" % (min(temp), max(temp)),
-               lambda: line_chart(s, temp, METRIC["weather"], ["14", "20", "01"], None, rain, cloud, frozen),
-               "Bars: precipitation · Strip: cloud cover")
-    # Stress: low overnight, bumps through the day
-    stress = [max(5, int((14 if 30 <= i < 44 else 38) + 16 * math.sin(i / 3.0) + (20 if 14 < i < 18 else 0)))
-              for i in range(48)]
-    graph_page(s, 0, py * 2, "STRESS · 24 H", "Avg %d   Max %d" % (sum(stress) // len(stress), max(stress)),
-               lambda: line_chart(s, stress, METRIC["stress"], ["24h ago", "12h", "now"], sleep), note, 2, 4)
-    # Sensor temperature, in tenths of a degree: it typically climbs a little during sleep
-    skin = [int(332 + 6 * math.sin(i / 4.0) + (10 if 30 <= i < 44 else 0)) for i in range(48)]
-    graph_page(s, px * 2, py, "SENSOR TEMP · 24 H", "Low %.1f&#176;   High %.1f&#176;" % (min(skin) / 10, max(skin) / 10),
-               lambda: line_chart(s, skin, METRIC["temp"], ["24h ago", "12h", "now"], sleep, tenths=True), note, 3, 4)
-    return s.doc(tw + 40, th + 40, "-20 -20 %d %d" % (tw + 40, th + 40))
-
-
 # ---------------------------------------------------------------- rendering
 OUTPUTS = {          # name -> (svg generator, png file name)
     "dial": (lambda: dial(), "wireframe.png"),
     "tap-zones": (lambda: tap_zones(), "tap-zones.png"),
-    "pages": (lambda: pages(), "pages.png"),
-    "graphs": (lambda: graphs(), "graphs.png"),
     "cards": (lambda: cards(), "cards.png"),
 }
 
