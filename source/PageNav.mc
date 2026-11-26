@@ -19,14 +19,16 @@ class PageNav {
         return kind == :body ? 4 : 2;
     }
 
-    // The touch rule, in one place:
-    //   a TAP peeks: it shows a quick card, for every zone (and a tap anywhere dismisses it);
-    //   a HOLD goes deeper: it opens a page, and only for a zone that has a page.
-    static function holdOpens(zone as Symbol) as Boolean {
+    // The touch rule, in one place. A watch face only receives one kind of touch (a press, which
+    // Garmin documents as touch and hold: WatchFaceDelegate has no tap), so everything is a press:
+    //   press a zone: its quick card (every zone has one);
+    //   press the card, or the same zone again: its page (only some zones have one);
+    //   press anywhere else while a card is up: dismiss it.
+    static function hasPage(zone as Symbol) as Boolean {
         return zone == :weather || zone == :hr || zone == :activity;
     }
 
-    static function tapShowsCard(zone as Symbol) as Boolean {
+    static function hasCard(zone as Symbol) as Boolean {
         return zone == :weather || zone == :hr || zone == :activity || zone == :date || zone == :battery;
     }
 
@@ -58,7 +60,7 @@ class PageNav {
         }
     }
 
-    // A tap at (x, y) on a screen w pixels wide, while a page is open. The top strip
+    // A press at (x, y) on a screen w pixels wide, while a page is open. The top strip
     // closes. On Activity a tap on a row opens that metric (anywhere else closes).
     // Elsewhere the right edge goes forward (detail -> graph) and the left edge back.
     function tap(x as Number, y as Number, w as Number) as Void {

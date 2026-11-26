@@ -2,8 +2,9 @@ import Toybox.Lang;
 import Toybox.WatchUi;
 
 // Forwards touches on the watch face to the view, which decides what was hit.
-//   onTap   - a screen tap peeks: shows a quick card, or dismisses it, and moves between pages
-//   onPress - a touch and hold (per the SDK docs) goes deeper: opens the zone's page
+// A watch face is only sent onPress (Garmin documents it as touch and hold); a plain tap is not
+// delivered to a WatchFaceDelegate. onTap is kept in case a device does send it; the view counts
+// a touch reported both ways once.
 class BmwMWatchDelegate extends WatchUi.WatchFaceDelegate {
 
     private var _view as BmwMWatchView;
@@ -15,11 +16,13 @@ class BmwMWatchDelegate extends WatchUi.WatchFaceDelegate {
 
     function onTap(clickEvent as WatchUi.ClickEvent) as Boolean {
         var c = clickEvent.getCoordinates();
-        return _view.handleTap(c[0], c[1]);
+        System.println("TOUCH onTap " + c[0] + "," + c[1]);
+        return _view.handleTouch(c[0], c[1]);
     }
 
     function onPress(clickEvent as WatchUi.ClickEvent) as Boolean {
         var c = clickEvent.getCoordinates();
-        return _view.handleHold(c[0], c[1]);
+        System.println("TOUCH onPress " + c[0] + "," + c[1]);
+        return _view.handleTouch(c[0], c[1]);
     }
 }

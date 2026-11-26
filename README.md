@@ -7,15 +7,15 @@ An analog BMW M Motorsport watch face for Garmin Connect IQ. Target device:
 
 ![Watch face wireframe](docs/wireframe.png)
 
-Touch targets on the dial, numbered, with what a tap and a hold do on each:
+Touch targets on the dial, numbered, with what a press does on each:
 
 ![Tap zones](docs/tap-zones.png)
 
-Pages, opened by a hold (Activity, a metric page, weather):
+Pages, opened by pressing a zone and then its card (Activity, a metric page, weather):
 
 ![Tap pages](docs/pages.png)
 
-Quick cards, shown on a tap (battery, weather and the three activity figures):
+Quick cards, shown when a zone is pressed (battery, weather and the three activity figures):
 
 ![Quick cards](docs/cards.png)
 
@@ -37,17 +37,18 @@ simulator screenshots. They are generated from `source/Theme.mc` by
 - Three readouts on one arc, the same distance from the centre as the middle ring: the
   temperature at 12 o'clock, the date at 3 o'clock, and the watch battery at 9 o'clock as a
   simple icon that empties as the battery drains (red below 20%).
-- One touch rule. A **tap peeks**: it shows a quick card for any of the five dial zones, and a
-  tap anywhere dismisses it (and does nothing else). A **hold goes deeper**: it opens the zone's
-  page (only the temperature, roundel and rings have one; the date and battery do not). Inside a
-  page, taps move between pages.
-- Quick cards on a tap: tap the temperature, date, battery, roundel or rings and a small card
-  appears over the dial with more detail (weather and feels-like, the date in full, battery
-  percentage and days left, heart rate with resting rate and stress, the three activity
-  figures). It disappears after four seconds or on a tap anywhere. It is not a page.
-- Pages. Hold a zone on the dial to open a full-screen page:
+- One touch rule. A watch face only receives one kind of touch: Garmin's `WatchFaceDelegate` has
+  `onPress` (documented as touch and hold) and no tap, so every touch below is a press. **Press a
+  zone** on the dial and its quick card appears (all five zones have one). **Press the card, or the
+  same zone again,** to open its page (only the temperature, roundel and rings have one). **Press
+  anywhere else** and the card is dismissed. Inside a page, presses move between pages or close it.
+- Quick cards: press the temperature, date, battery, roundel or rings and a small card appears
+  over the dial with more detail (weather and feels-like, the date in full, battery percentage and
+  days left, heart rate with resting rate and stress, the three activity figures). It disappears
+  after four seconds, or when you press elsewhere. It is not a page.
+- Pages. Press a zone, then press its card, to open a full-screen page:
   - ring band: the **Activity** page, with steps, active minutes and body battery
-    as rows. Tap a row to open that metric's page.
+    as rows. Press a row to open that metric's page.
   - roundel: heart rate (resting, today's low and high)
   - the temperature above the badge: weather (conditions, feels-like, high/low, rain chance, wind,
     humidity, and the temperature every three hours over the next twelve)
@@ -71,10 +72,10 @@ simulator screenshots. They are generated from `source/Theme.mc` by
   heart rate is lowest while body battery rises (caption "estimated"). If the data
   isn't clear, it falls back to your configured sleep and wake times (caption
   "schedule"). With neither, no band is shown.
-- Inside a page, navigation uses taps only, because a watch face does not receive swipes. Tap the
+- Inside a page, navigation uses presses only, because a watch face receives neither taps nor swipes. Press the
   right side of a page to go forward (detail, then graph) and the left side to go
   back. Chevrons at the edges and page dots at the bottom show what is possible.
-  Tap the top strip to close. A page also closes after 20 seconds of no taps, or when
+  Press the top strip to close. A page also closes after 20 seconds of no presses, or when
   the watch dims.
 
 ## Running on Windows or macOS (no container)
@@ -107,12 +108,12 @@ source/
   Theme.mc              colours, spacing and font roles used everywhere
   Geometry.mc           ring sizes and tap hit-testing (pure, tested)
   Logo.mc               the M badge's stripe geometry, shared by the face and the page headers (tested)
-  PageNav.mc            which page is open and how taps move between pages (pure, tested)
+  PageNav.mc            which page is open and how presses move between pages (pure, tested)
   SleepInference.mc     estimated sleep window from heart rate and body battery (pure, tested)
   Stats.mc              min/max/average, time buckets, clock text (pure, tested)
   Precip.mc             rain vs snow from the forecast condition (tested)
   tests/                unit tests, run with ./tools/test.sh
-  BmwMWatchDelegate.mc  forwards taps to the view
+  BmwMWatchDelegate.mc  forwards presses to the view
 resources/            strings and launcher icon
 build.sh              compile to bin/bmw-m-watchface.prg
 tools/wireframes.py   regenerates the README wireframes from Theme.mc
@@ -266,9 +267,11 @@ run yet**. Expect a few compile fixes on the first build. In particular:
 - A watch face may not use `Toybox.Timer` (the first run on a watch failed with "Symbol 'start' not
   available to 'Watch Face'"), so cards and pages expire by timestamp, checked in `onUpdate`.
   If a card or page lingers, that is where to look.
-- Touch input uses `WatchFaceDelegate`: `onTap` for taps (quick cards) and `onPress`, which the SDK docs
-  describe as a touch and hold, for the pages. An earlier version used `onPress` for taps,
-  which was wrong. On the first real run a hold was delivered and drew its card; tap delivery is still to be confirmed.
+- Touch input uses `WatchFaceDelegate`. Garmin's docs list only `onPress` (touch and hold) for watch
+  faces; a plain tap is not delivered. This was confirmed on a Venu X1 and in its simulator: a hold
+  arrives, a tap does nothing. So the face reacts to presses only (see the touch rule above). `onTap`
+  is still wired to the same handler in case a device sends it; the view counts a touch once.
+  The face logs `TOUCH onPress x,y` / `TOUCH onTap x,y` to the console so you can see what arrives.
 - Sleep score comes from `Complications` (type 42, API 6.0.2), which needs the
   `ComplicationSubscriber` permission in the manifest. Garmin's docs name that permission,
   but some forum posts report it being rejected for watch faces: if the build complains,

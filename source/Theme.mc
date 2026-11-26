@@ -24,11 +24,14 @@ module Theme {
                               // inactive dots, low-power (sleep) accents
     const BLACK = 0x000000;
 
-    // ---- font roles (Garmin system fonts) ---------------------------------
-    const FONT_LABEL = Graphics.FONT_XTINY;        // labels, date row
-    const FONT_VALUE = Graphics.FONT_TINY;         // values
-    const FONT_TITLE = Graphics.FONT_SMALL;        // page titles, conditions
-    const FONT_HERO  = Graphics.FONT_NUMBER_HOT;   // headline numbers
+    // ---- font roles ---------------------------------------------------------
+    // Text is drawn with vector fonts at these pixel sizes (see Fonts.mc), so it can be smaller
+    // than the smallest system font. If the device has no vector font, Fonts falls back to the
+    // system fonts XTINY, TINY and SMALL. Change a size here and the wireframes follow.
+    const FONT_PX_LABEL = 22;      // labels, date row
+    const FONT_PX_VALUE = 28;      // values
+    const FONT_PX_TITLE = 32;      // page titles, conditions
+                                   // headline numbers: the system NUMBER_HOT font
 
     // ---- dial spacing (pixels unless noted) -------------------------------
     const GAP = 2;               // between badge stripes, ring bars, and ring and ticks
@@ -69,8 +72,10 @@ module Theme {
     // ---- dial windows ------------------------------------------------------------
     // The temperature (12 o'clock), the date (3) and the watch battery (9) all sit on one
     // arc: the middle ring's distance from the centre (Geometry.middleRingR).
-    const WINDOW_LABEL_DY = -14;  // small grey label above the value
-    const WINDOW_VALUE_DY = 8;
+    // The date's two lines are stacked from the real font heights (Dc.getFontHeight), so they
+    // never overlap whatever the device's fonts are. The date also sits a little inside the arc
+    // so it clears the 3 o'clock tick.
+    const WINDOW_DATE_DX = -6;
 
     // ---- watch battery icon (9 o'clock) ---------------------------------------
     const BATT_W = 34;            // small enough to clear the 9 o'clock tick (about 8 px)
@@ -80,7 +85,7 @@ module Theme {
     const BATT_TERM_H = 8;
     const BATT_PAD = 2;           // gap between the outline and the fill
 
-    // ---- quick cards (tap) -------------------------------------------
+    // ---- quick cards (press a zone) -------------------------------------------
     const CARD_W = 300;
     const CARD_H = 124;           // one big value: title, value, detail
     const CARD_H_ROWS = 164;      // the Activity card: title and three rows
@@ -123,9 +128,10 @@ module Theme {
     const ACT_GLYPH = 24;         // glyph size
     const ACT_GLYPH_DX = 14;      // glyph centre, from the left margin
     const ACT_TEXT_DX = 46;       // label and value, from the left margin
-    const ACT_LABEL_DY = -14;
-    const ACT_VALUE_DY = 10;
-    const ACT_BAR_DY = 40;
+    // Each row's label and value are stacked from the real font heights (Dc.getFontHeight), the
+    // block centred ACT_BLOCK_DY from the row's middle, with the bar ACT_BAR_GAP below it.
+    const ACT_BLOCK_DY = -12;
+    const ACT_BAR_GAP = 8;
     const ACT_CHEVRON_X = 36;     // row chevron, from the right edge
     const ACT_CHEVRON_DY = 8;
 

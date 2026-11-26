@@ -188,13 +188,13 @@ class DetailPage {
         }
 
         dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, Theme.Y_TITLE, Theme.FONT_TITLE, title,
+        dc.drawText(cx, Theme.Y_TITLE, Fonts.title, title,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
         dc.setColor(Theme.WHITE, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, Theme.Y_HERO, Theme.FONT_HERO, big,
+        dc.drawText(cx, Theme.Y_HERO, Fonts.hero, big,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
         dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, Theme.Y_SUB, Theme.FONT_LABEL, sub,
+        dc.drawText(cx, Theme.Y_SUB, Fonts.label, sub,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
         if (frac >= 0.0) {
             drawBar(dc, cx, Theme.Y_NOTE, frac, barColor);
@@ -222,9 +222,9 @@ class DetailPage {
         return null;
     }
 
-    // ---- quick cards (tap on the dial) ------------------------------
+    // ---- quick cards (press a zone on the dial) ------------------------------
     // A small card over the dial with a little more detail than the face shows. It is
-    // not a page: it disappears by itself after a few seconds, or on a tap anywhere.
+    // not a page: it disappears by itself after a few seconds, or when you press elsewhere.
 
     function drawCard(dc as Dc, kind as Symbol) as Void {
         var w = dc.getWidth();
@@ -295,21 +295,21 @@ class DetailPage {
             for (var i = 0; i < 3; i++) {
                 var y = top + Theme.CARD_ROW_Y + i * Theme.CARD_ROW_PITCH;
                 dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
-                dc.drawText(left + Theme.CARD_PAD, y, Theme.FONT_LABEL, names[i],
+                dc.drawText(left + Theme.CARD_PAD, y, Fonts.label, names[i],
                     Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
                 dc.setColor(Theme.WHITE, Graphics.COLOR_TRANSPARENT);
-                dc.drawText(left + Theme.CARD_W - Theme.CARD_PAD, y, Theme.FONT_VALUE, vals[i],
+                dc.drawText(left + Theme.CARD_W - Theme.CARD_PAD, y, Fonts.value, vals[i],
                     Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER);
             }
         }
 
         dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, top + Theme.CARD_TITLE_Y, Theme.FONT_LABEL, title, j);
+        dc.drawText(cx, top + Theme.CARD_TITLE_Y, Fonts.label, title, j);
         if (!rows) {
             dc.setColor(Theme.WHITE, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(cx, top + Theme.CARD_BIG_Y, Theme.FONT_TITLE, big, j);
+            dc.drawText(cx, top + Theme.CARD_BIG_Y, Fonts.title, big, j);
             dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(cx, top + Theme.CARD_DETAIL_Y, Theme.FONT_LABEL, detail, j);
+            dc.drawText(cx, top + Theme.CARD_DETAIL_Y, Fonts.label, detail, j);
         }
     }
 
@@ -322,13 +322,13 @@ class DetailPage {
         return null;
     }
 
-    // ---- Activity page (hold the ring zone on the dial) ---------------------
+    // ---- Activity page (press the rings, then the card) ---------------------
     // Each row opens that metric's page; the chevrons show that they are tappable.
 
     private function drawActivity(dc as Dc, w as Number, h as Number) as Void {
         var cx = w / 2;
         dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, Theme.Y_TITLE, Theme.FONT_TITLE, "ACTIVITY",
+        dc.drawText(cx, Theme.Y_TITLE, Fonts.title, "ACTIVITY",
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
 
         var info = ActivityMonitor.getInfo();
@@ -371,16 +371,19 @@ class DetailPage {
         var fracs = [stepsFrac, actFrac, bbFrac];
         var colors = [Theme.metricColor(:steps), Theme.metricColor(:active), Theme.metricColor(:body)];
 
+        var hl = dc.getFontHeight(Fonts.label);
+        var hv = dc.getFontHeight(Fonts.value);
         for (var i = 0; i < 3; i++) {
             var y = Theme.ACTIVITY_ROW_TOP + 50 + i * Theme.ACTIVITY_ROW_PITCH;
-            _face.drawGlyph(dc, kinds[i], Theme.MARGIN + Theme.ACT_GLYPH_DX, y, Theme.ACT_GLYPH);
+            var top = y + Theme.ACT_BLOCK_DY - (hl + hv) / 2;
+            _face.drawGlyph(dc, kinds[i], Theme.MARGIN + Theme.ACT_GLYPH_DX, top + (hl + hv) / 2, Theme.ACT_GLYPH);
             dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(Theme.MARGIN + Theme.ACT_TEXT_DX, y + Theme.ACT_LABEL_DY, Theme.FONT_LABEL, names[i],
+            dc.drawText(Theme.MARGIN + Theme.ACT_TEXT_DX, top + hl / 2, Fonts.label, names[i],
                 Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
             dc.setColor(Theme.WHITE, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(Theme.MARGIN + Theme.ACT_TEXT_DX, y + Theme.ACT_VALUE_DY, Theme.FONT_VALUE, vals[i],
+            dc.drawText(Theme.MARGIN + Theme.ACT_TEXT_DX, top + hl + hv / 2, Fonts.value, vals[i],
                 Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
-            drawBar(dc, cx, y + Theme.ACT_BAR_DY, fracs[i], colors[i]);
+            drawBar(dc, cx, top + hl + hv + Theme.ACT_BAR_GAP, fracs[i], colors[i]);
             chevron(dc, w - Theme.ACT_CHEVRON_X, y + Theme.ACT_CHEVRON_DY, true);
         }
     }
@@ -395,35 +398,35 @@ class DetailPage {
         }
 
         dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, Theme.Y_TITLE, Theme.FONT_TITLE, "WEATHER",
+        dc.drawText(cx, Theme.Y_TITLE, Fonts.title, "WEATHER",
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
 
         if (cond == null || cond.temperature == null) {
             dc.setColor(Theme.WHITE, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(cx, h / 2, Theme.FONT_TITLE, "No weather data",
+            dc.drawText(cx, h / 2, Fonts.title, "No weather data",
                 Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
             dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(cx, h / 2 + Theme.WEATHER_NODATA_DY, Theme.FONT_LABEL, "Sync with Garmin Connect",
+            dc.drawText(cx, h / 2 + Theme.WEATHER_NODATA_DY, Fonts.label, "Sync with Garmin Connect",
                 Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
             return;
         }
 
         // big temperature, unit drawn small to its right
         var big = tempNum(cond.temperature).toString();
-        var bw = dc.getTextWidthInPixels(big, Theme.FONT_HERO);
+        var bw = dc.getTextWidthInPixels(big, Fonts.hero);
         dc.setColor(Theme.WHITE, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, Theme.Y_HERO, Theme.FONT_HERO, big,
+        dc.drawText(cx, Theme.Y_HERO, Fonts.hero, big,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
         dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx + bw / 2 + Theme.WEATHER_UNIT_DX, Theme.WEATHER_Y_UNIT, Theme.FONT_TITLE, tempUnit(),
+        dc.drawText(cx + bw / 2 + Theme.WEATHER_UNIT_DX, Theme.WEATHER_Y_UNIT, Fonts.title, tempUnit(),
             Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
 
         dc.setColor(Theme.WHITE, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, Theme.Y_SUB, Theme.FONT_TITLE, conditionText(cond.condition),
+        dc.drawText(cx, Theme.Y_SUB, Fonts.title, conditionText(cond.condition),
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
         if (cond.feelsLikeTemperature != null) {
             dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(cx, Theme.Y_NOTE, Theme.FONT_LABEL,
+            dc.drawText(cx, Theme.Y_NOTE, Fonts.label,
                 "Feels like " + tempNum(cond.feelsLikeTemperature).toString() + "°",
                 Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
         }
@@ -445,11 +448,11 @@ class DetailPage {
                 if (idx >= fc.size()) { break; }
                 var x = w * (0.2 + 0.2 * i);
                 dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
-                dc.drawText(x, Theme.Y_ROWS + 4 * Theme.ROW_PITCH, Theme.FONT_LABEL, hourLabel(fc[idx].forecastTime),
+                dc.drawText(x, Theme.Y_ROWS + 4 * Theme.ROW_PITCH, Fonts.label, hourLabel(fc[idx].forecastTime),
                     Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
                 if (fc[idx].temperature != null) {
                     dc.setColor(Theme.WHITE, Graphics.COLOR_TRANSPARENT);
-                    dc.drawText(x, Theme.Y_ROWS + 5 * Theme.ROW_PITCH, Theme.FONT_VALUE, tempNum(fc[idx].temperature).toString() + "°",
+                    dc.drawText(x, Theme.Y_ROWS + 5 * Theme.ROW_PITCH, Fonts.value, tempNum(fc[idx].temperature).toString() + "°",
                         Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
                 }
             }
@@ -516,18 +519,18 @@ class DetailPage {
         }
 
         dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, Theme.Y_TITLE, Theme.FONT_TITLE, _gTitle,
+        dc.drawText(cx, Theme.Y_TITLE, Fonts.title, _gTitle,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
 
         if (_gCaption.length() > 0) {
             // measure the real text: if it does not fit, use the short form
             var cap = _gCaption;
             if (_gCaptionShort.length() > 0
-                && dc.getTextWidthInPixels(cap, Theme.FONT_LABEL) > w - 2 * Theme.CAPTION_MARGIN) {
+                && dc.getTextWidthInPixels(cap, Fonts.label) > w - 2 * Theme.CAPTION_MARGIN) {
                 cap = _gCaptionShort;
             }
             dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(cx, Theme.Y_CAPTION, Theme.FONT_LABEL, cap,
+            dc.drawText(cx, Theme.Y_CAPTION, Fonts.label, cap,
                 Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
         }
 
@@ -540,12 +543,12 @@ class DetailPage {
             var js = [Graphics.TEXT_JUSTIFY_LEFT, Graphics.TEXT_JUSTIFY_CENTER, Graphics.TEXT_JUSTIFY_RIGHT];
             dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
             for (var i = 0; i < _gXl.size() && i < 3; i++) {
-                dc.drawText(xs[i], Theme.Y_XLABELS, Theme.FONT_LABEL, _gXl[i], js[i] | Graphics.TEXT_JUSTIFY_VCENTER);
+                dc.drawText(xs[i], Theme.Y_XLABELS, Fonts.label, _gXl[i], js[i] | Graphics.TEXT_JUSTIFY_VCENTER);
             }
         }
 
         dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, Theme.Y_STATS, Theme.FONT_LABEL, _gStats,
+        dc.drawText(cx, Theme.Y_STATS, Fonts.label, _gStats,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
     }
 
@@ -759,7 +762,7 @@ class DetailPage {
             }
             dc.setColor(i == n - 1 ? Theme.WHITE : Theme.GREY, Graphics.COLOR_TRANSPARENT);
             if (i < _gXl.size()) {
-                dc.drawText(x + bw / 2, Theme.Y_XLABELS, Theme.FONT_LABEL, _gXl[i],
+                dc.drawText(x + bw / 2, Theme.Y_XLABELS, Fonts.label, _gXl[i],
                     Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
             }
         }
@@ -786,7 +789,7 @@ class DetailPage {
         dc.setPenWidth(1);
         if (n < 2 || lo == null || hi == null) {
             dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(w / 2, (top + bot) / 2, Theme.FONT_VALUE, "No data",
+            dc.drawText(w / 2, (top + bot) / 2, Fonts.value, "No data",
                 Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
             return;
         }
@@ -828,9 +831,9 @@ class DetailPage {
 
         // axis values on the right
         dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(x1 + 6, top, Theme.FONT_LABEL, _gTenths ? Stats.tenthsText(hi.toNumber()) : hi.toString(),
+        dc.drawText(x1 + 6, top, Fonts.label, _gTenths ? Stats.tenthsText(hi.toNumber()) : hi.toString(),
             Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
-        dc.drawText(x1 + 6, bot, Theme.FONT_LABEL, _gTenths ? Stats.tenthsText(lo.toNumber()) : lo.toString(),
+        dc.drawText(x1 + 6, bot, Fonts.label, _gTenths ? Stats.tenthsText(lo.toNumber()) : lo.toString(),
             Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
 
         dc.setPenWidth(3);
@@ -983,10 +986,10 @@ class DetailPage {
 
     private function drawRow(dc as Dc, w as Number, y as Numeric, label as String, value as String) as Void {
         dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(Theme.MARGIN, y, Theme.FONT_LABEL, label,
+        dc.drawText(Theme.MARGIN, y, Fonts.label, label,
             Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
         dc.setColor(Theme.WHITE, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(w - Theme.MARGIN, y, Theme.FONT_VALUE, value,
+        dc.drawText(w - Theme.MARGIN, y, Fonts.value, value,
             Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER);
     }
 

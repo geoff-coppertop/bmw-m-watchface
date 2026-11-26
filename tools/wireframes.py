@@ -71,7 +71,7 @@ CARD_W, CARD_H, CARD_H_ROWS, CARD_R, CARD_PAD = (num("CARD_W"), num("CARD_H"), n
 CARD_TITLE_Y, CARD_BIG_Y, CARD_DETAIL_Y, CARD_ROW_Y, CARD_ROW_PITCH = (num("CARD_TITLE_Y"), num("CARD_BIG_Y"),
                                                                         num("CARD_DETAIL_Y"), num("CARD_ROW_Y"),
                                                                         num("CARD_ROW_PITCH"))
-WINDOW_LABEL_DY, WINDOW_VALUE_DY = num("WINDOW_LABEL_DY"), num("WINDOW_VALUE_DY")
+WINDOW_DATE_DX = num("WINDOW_DATE_DX")
 TOUCH_R, TOUCH_TEMP_HALF_R, TOUCH_ARC_ANGLE = num("TOUCH_R"), num("TOUCH_TEMP_HALF_R"), num("TOUCH_ARC_ANGLE")
 TOUCH_RING_OUT, TOUCH_RING_IN = num("TOUCH_RING_OUT"), num("TOUCH_RING_IN")
 STRIPE_H = num("STRIPE_H")
@@ -82,7 +82,7 @@ MARK_DY, MOON_R, MOON_CUT_R, MOON_CUT_DX, MOON_CUT_DY = (num("MARK_DY"), num("MO
 SUN_R, SUN_RAY_IN, SUN_RAY_OUT, LINE_END_R = num("SUN_R"), num("SUN_RAY_IN"), num("SUN_RAY_OUT"), num("LINE_END_R")
 CLOUD_STRIP_DY, CLOUD_STRIP_H = num("CLOUD_STRIP_DY"), num("CLOUD_STRIP_H")
 ACT_GLYPH, ACT_GLYPH_DX, ACT_TEXT_DX = num("ACT_GLYPH"), num("ACT_GLYPH_DX"), num("ACT_TEXT_DX")
-ACT_LABEL_DY, ACT_VALUE_DY, ACT_BAR_DY = num("ACT_LABEL_DY"), num("ACT_VALUE_DY"), num("ACT_BAR_DY")
+ACT_BLOCK_DY, ACT_BAR_GAP = num("ACT_BLOCK_DY"), num("ACT_BAR_GAP")
 ACT_CHEVRON_X, ACT_CHEVRON_DY = num("ACT_CHEVRON_X"), num("ACT_CHEVRON_DY")
 WEATHER_Y_UNIT, WEATHER_UNIT_DX = num("WEATHER_Y_UNIT"), num("WEATHER_UNIT_DX")
 ACTIVITY_ROW_TOP, ACTIVITY_ROW_PITCH = num("ACTIVITY_ROW_TOP"), num("ACTIVITY_ROW_PITCH")
@@ -91,8 +91,8 @@ DIM = {BLUE: BLUE_DIM, NAVY: NAVY_DIM, RED: RED_DIM}
 # Theme.metricColor(): one colour per metric everywhere
 METRIC = {"steps": BLUE, "active": NAVY, "body": RED, "hr": RED, "weather": RED, "temp": RED, "stress": RED}
 
-# approximate pixel heights of the Garmin system fonts, per Theme font role
-FONT_PX = {"label": 18, "value": 22, "title": 24, "hero": 96}
+# pixel sizes per Theme font role: the vector font sizes the watch face uses (hero: the system numerals)
+FONT_PX = {"label": num("FONT_PX_LABEL"), "value": num("FONT_PX_VALUE"), "title": num("FONT_PX_TITLE"), "hero": 96}
 
 # ---------------------------------------------------------------- screen
 W, H = 448, 486
@@ -250,8 +250,10 @@ def dial_into(s, ox, oy, zones=False, card=None):
     s.text(CX, temp_y, "18&#176;C", "value", WHITE)  # the weather tap target
     arc = RING_OUT - PITCH                           # one arc: the middle ring's distance from the centre
     sx = CX + arc                                    # the date window at 3 o'clock
-    s.text(sx, CY + WINDOW_LABEL_DY, "WED", "label", GREY)
-    s.text(sx, CY + WINDOW_VALUE_DY, "25", "value", WHITE)
+    hl, hv = FONT_PX["label"] * 1.2, FONT_PX["value"] * 1.2        # approximate line heights
+    top = CY - (hl + hv) / 2
+    s.text(sx + WINDOW_DATE_DX, top + hl / 2, "WED", "label", GREY)
+    s.text(sx + WINDOW_DATE_DX, top + hl + hv / 2, "25", "value", WHITE)
     draw_battery_icon(s, CX - arc, CY, 82)   # the battery at 9 o'clock
     draw_hand(s, (10 + 8 / 60) * 30, R * .56, R * .07, R * .1)
     draw_hand(s, (8 + 35 / 60) * 6, R * .88, R * .05, R * .12)
@@ -292,26 +294,26 @@ def dial_into(s, ox, oy, zones=False, card=None):
 
 
 def tap_zones():
-    """The dial with its touch targets numbered, and a legend of what a tap and a hold do."""
+    """The dial with its touch targets numbered, and a legend of what a press does."""
     s = Svg()
     lw = 600
     s.add('<rect x="-30" y="-30" width="%d" height="%d" fill="#1b1b1b"/>' % (W + 60 + lw, H + 60))
     dial_into(s, 0, 0, True)
     x0 = W + 40
     s.text(x0, 40, "Touch targets", "title", WHITE, "start")
-    rows = [("1", ZONE_COLORS[1], "Temperature (12 o'clock)", "tap: weather card", "hold: Weather page"),
-            ("2", ZONE_COLORS[2], "Date (3 o'clock)", "tap: date card", "hold: nothing"),
-            ("3", ZONE_COLORS[3], "Battery (9 o'clock)", "tap: battery card", "hold: nothing"),
-            ("4", ZONE_COLORS[4], "Roundel (centre)", "tap: heart rate card", "hold: Heart rate page"),
-            ("5", ZONE_COLORS[5], "Rings (bottom)", "tap: activity card", "hold: Activity page")]
+    rows = [("1", ZONE_COLORS[1], "Temperature (12 o'clock)", "press: weather card", "press again: Weather page"),
+            ("2", ZONE_COLORS[2], "Date (3 o'clock)", "press: date card", "again: dismiss"),
+            ("3", ZONE_COLORS[3], "Battery (9 o'clock)", "press: battery card", "again: dismiss"),
+            ("4", ZONE_COLORS[4], "Roundel (centre)", "press: heart rate card", "press again: Heart rate page"),
+            ("5", ZONE_COLORS[5], "Rings (bottom)", "press: activity card", "press again: Activity page")]
     for i, (n, c, name, tap, hold) in enumerate(rows):
         y = 90 + i * 70
         s.circle(x0 + 12, y, 12, c)
         s.text(x0 + 12, y, n, "label", BLACK)
         s.text(x0 + 36, y, name, "value", WHITE, "start")
         s.text(x0 + 36, y + 28, tap + "   &#183;   " + hold, "label", GREY, "start")
-    s.text(x0, 90 + 5 * 70 + 6, "A tap peeks: a quick card; tap anywhere to dismiss it.", "label", GREY, "start")
-    s.text(x0, 90 + 5 * 70 + 32, "A hold goes deeper: it opens the page, where there is one.", "label", GREY, "start")
+    s.text(x0, 90 + 5 * 70 + 6, "A watch face only gets presses (touch and hold), so: press for the card,", "label", GREY, "start")
+    s.text(x0, 90 + 5 * 70 + 32, "press the card or the zone again for its page, press elsewhere to dismiss.", "label", GREY, "start")
     return s.doc((W + 60 + lw) * 1.6, (H + 60) * 1.6, "-30 -30 %d %d" % (W + 60 + lw, H + 60))
 
 
@@ -323,7 +325,7 @@ def dial(zones=False):
 
 
 def cards():
-    """The quick cards shown on a tap, over the dial."""
+    """The quick cards shown when a zone is pressed, over the dial."""
     s = Svg()
     kinds = ["battery", "weather", "activity"]
     total = len(kinds) * W + (len(kinds) - 1) * 40
@@ -412,7 +414,7 @@ def pages():
     total = W * 4 + 120
     s.add('<rect x="-20" y="-20" width="%d" height="%d" fill="#1b1b1b"/>' % (total + 40, H + 40))
 
-    # 1: Activity page (hold the ring zone). Each row opens that metric.
+    # 1: Activity page (press the rings, then the card). Each row opens that metric.
     screen(s, 0)
     stripes(s, 0)
     s.text(CX, Y_TITLE, "ACTIVITY", "title", GREY)
@@ -428,9 +430,11 @@ def pages():
             g_bolt(s, gx, y, ACT_GLYPH, WHITE)
         else:
             g_body(s, gx, y, ACT_GLYPH, RED, frac)
-        s.text(MARGIN + ACT_TEXT_DX, y + ACT_LABEL_DY, name, "label", GREY, "start")
-        s.text(MARGIN + ACT_TEXT_DX, y + ACT_VALUE_DY, val, "value", WHITE, "start")
-        bar(s, 0, y + ACT_BAR_DY, frac, c)
+        hl, hv = FONT_PX["label"] * 1.2, FONT_PX["value"] * 1.2     # approximate line heights
+        top = y + ACT_BLOCK_DY - (hl + hv) / 2
+        s.text(MARGIN + ACT_TEXT_DX, top + hl / 2, name, "label", GREY, "start")
+        s.text(MARGIN + ACT_TEXT_DX, top + hl + hv / 2, val, "value", WHITE, "start")
+        bar(s, 0, top + hl + hv + ACT_BAR_GAP, frac, c)
         chevron(s, W - ACT_CHEVRON_X, y + ACT_CHEVRON_DY, True)
     s.add("</g>")
 

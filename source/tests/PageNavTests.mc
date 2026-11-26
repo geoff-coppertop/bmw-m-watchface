@@ -135,24 +135,24 @@ function navOtherPagesStopAtTheGraph(logger as Test.Logger) as Boolean {
     return true;
 }
 
-// The touch rule: a tap peeks (a quick card, for every zone); a hold goes deeper (opens a
-// page, only where one exists).
+// The touch rule: every touch is a press. A press on a zone shows its card (every zone has one);
+// pressing the card or the zone again opens its page (only where one exists).
 
 (:test)
-function touchHoldOpensExactlyTheZonesThatHaveAPage(logger as Test.Logger) as Boolean {
-    Test.assert(PageNav.holdOpens(:weather));
-    Test.assert(PageNav.holdOpens(:hr));
-    Test.assert(PageNav.holdOpens(:activity));
-    Test.assert(!PageNav.holdOpens(:date));
-    Test.assert(!PageNav.holdOpens(:battery));
+function touchOnlySomeZonesHaveAPage(logger as Test.Logger) as Boolean {
+    Test.assert(PageNav.hasPage(:weather));
+    Test.assert(PageNav.hasPage(:hr));
+    Test.assert(PageNav.hasPage(:activity));
+    Test.assert(!PageNav.hasPage(:date));
+    Test.assert(!PageNav.hasPage(:battery));
     return true;
 }
 
 (:test)
-function touchTapShowsACardForEveryZone(logger as Test.Logger) as Boolean {
+function touchEveryZoneHasACard(logger as Test.Logger) as Boolean {
     var zones = [:weather, :hr, :activity, :date, :battery];
     for (var i = 0; i < zones.size(); i++) {
-        Test.assert(PageNav.tapShowsCard(zones[i]));
+        Test.assert(PageNav.hasCard(zones[i]));
     }
     return true;
 }
@@ -161,7 +161,7 @@ function touchTapShowsACardForEveryZone(logger as Test.Logger) as Boolean {
 function touchEveryZoneThatOpensAPageHasPages(logger as Test.Logger) as Boolean {
     var zones = [:weather, :hr, :activity, :date, :battery];
     for (var i = 0; i < zones.size(); i++) {
-        if (PageNav.holdOpens(zones[i])) {
+        if (PageNav.hasPage(zones[i])) {
             Test.assert(PageNav.subCount(zones[i]) >= 1);
         }
     }

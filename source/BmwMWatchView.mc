@@ -21,6 +21,7 @@ class BmwMWatchView extends WatchUi.WatchFace {
     private var _card as Symbol or Null = null;       // the quick card showing, if any
     private var _cardAt as Number = 0;                // System.getTimer() when the card went up
     private var _detail as DetailPage or Null = null;
+    private var _lastTouch as Number = -1000;        // System.getTimer() of the last counted touch
     private var _touchAt as Number = 0;               // System.getTimer() at the last touch on a page
     private var _w as Number = 0;
     private var _h as Number = 0;
@@ -29,6 +30,18 @@ class BmwMWatchView extends WatchUi.WatchFace {
     function initialize() {
         WatchFace.initialize();
         _detail = new DetailPage(self);
+    }
+
+    function onLayout(dc as Dc) as Void {
+        Fonts.load();
+        // one console line: whether the vector fonts loaded, and the real line heights
+        System.println("FONTS vector=" + Fonts.vector
+            + " label=" + dc.getFontHeight(Fonts.label)
+            + " value=" + dc.getFontHeight(Fonts.value)
+            + " title=" + dc.getFontHeight(Fonts.title)
+            + " | system xtiny=" + dc.getFontHeight(Graphics.FONT_XTINY)
+            + " tiny=" + dc.getFontHeight(Graphics.FONT_TINY)
+            + " screen=" + dc.getWidth() + "x" + dc.getHeight());
     }
 
     function onEnterSleep() as Void {
@@ -75,7 +88,7 @@ class BmwMWatchView extends WatchUi.WatchFace {
         drawMMark(dc, cx, cy - r * 0.4, r);
         drawTemperature(dc, cx, Geometry.tempY(cy, r));
         var info = Gregorian.info(Time.now(), Time.FORMAT_MEDIUM);
-        drawWindow(dc, cx + Geometry.middleRingR(r), cy, info.day_of_week.toString().toUpper(), info.day.toString());
+        drawWindow(dc, cx + Geometry.middleRingR(r) + Theme.WINDOW_DATE_DX, cy, info.day_of_week.toString().toUpper(), info.day.toString());
         drawBatteryIcon(dc, cx - Geometry.middleRingR(r), cy);
 
         drawHands(dc, cx, cy, r);
@@ -89,14 +102,18 @@ class BmwMWatchView extends WatchUi.WatchFace {
 
     // ---- taps -------------------------------------------------------------
 
-    // A tap peeks (see PageNav.tapShowsCard): on the dial it shows a quick card for the zone
-    // touched. A tap anywhere dismisses a card that is up, and does nothing else. While a page is
-    // open a tap moves between pages. Returns true if it was used.
-    function handleTap(x as Number, y as Number) as Boolean {
-        if (_card != null) {
-            closeCard();
+    // A press (the only touch a watch face receives: see PageNav). On the dial: a press on a zone
+    // shows its card; a press on the card, or on the same zone again, opens that zone's page (if
+    // it has one); a press anywhere else dismisses the card. While a page is open a press moves
+    // between pages or closes it. Returns true if it was used.
+    function handleTouch(x as Number, y as Number) as Boolean {
+        // One touch can be reported twice (as a tap and as a press): count it once.
+        var now = System.getTimer();
+        if (now - _lastTouch < 400) {
             return true;
         }
+        _lastTouch = now;
+
         if (_nav.isOpen()) {
             markTouch();
             _nav.tap(x, y, _w);
@@ -107,29 +124,29 @@ class BmwMWatchView extends WatchUi.WatchFace {
             }
             return true;
         }
+
         var hit = Geometry.hitTest(x, y, _w, _h, _r);
-        if (hit == null || !PageNav.tapShowsCard(hit)) {
+        var shown = _card;
+        if (shown != null) {
+            closeCard();
+            if (PageNav.hasPage(shown) && (hit == shown || inCard(x, y, shown))) {
+                _nav.open(shown);
+                markTouch();
+                WatchUi.requestUpdate();
+            }
+            return true;
+        }
+        if (hit == null || !PageNav.hasCard(hit)) {
             return false;
         }
         showCard(hit);
         return true;
     }
 
-    // A hold goes deeper (see PageNav.holdOpens): it opens the page for the zone held, if it
-    // has one (the date and battery do not). Not used while a page is open.
-    function handleHold(x as Number, y as Number) as Boolean {
-        if (_nav.isOpen()) {
-            return false;
-        }
-        var hit = Geometry.hitTest(x, y, _w, _h, _r);
-        if (hit == null || !PageNav.holdOpens(hit)) {
-            return false;
-        }
-        closeCard();
-        _nav.open(hit);
-        markTouch();
-        WatchUi.requestUpdate();
-        return true;
+    // Is (x, y) inside the card for this zone? The card is centred on the screen.
+    private function inCard(x as Number, y as Number, kind as Symbol) as Boolean {
+        var ch = (kind == :activity) ? Theme.CARD_H_ROWS : Theme.CARD_H;
+        return (x - _w / 2).abs() <= Theme.CARD_W / 2 && (y - _h / 2).abs() <= ch / 2;
     }
 
     private function showCard(kind as Symbol) as Void {
@@ -295,7 +312,7 @@ class BmwMWatchView extends WatchUi.WatchFace {
     // The temperature alone above the badge; it is also the weather tap target.
     private function drawTemperature(dc as Dc, cx as Numeric, y as Numeric) as Void {
         dc.setColor(_asleep ? Theme.GREY : Theme.WHITE, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, y, Theme.FONT_VALUE, weatherText(),
+        dc.drawText(cx, y, Fonts.value, weatherText(),
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
     }
 
@@ -320,11 +337,15 @@ class BmwMWatchView extends WatchUi.WatchFace {
 
     // The date window at 3 o'clock: a small grey weekday over a white day number.
     private function drawWindow(dc as Dc, x as Numeric, y as Numeric, label as String, value as String) as Void {
+        // The two lines are stacked from their real heights and centred on y.
+        var hl = dc.getFontHeight(Fonts.label);
+        var hv = dc.getFontHeight(Fonts.value);
+        var top = y - (hl + hv) / 2;
         dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(x, y + Theme.WINDOW_LABEL_DY, Theme.FONT_LABEL, label,
+        dc.drawText(x, top + hl / 2, Fonts.label, label,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
         dc.setColor(_asleep ? Theme.GREY : Theme.WHITE, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(x, y + Theme.WINDOW_VALUE_DY, Theme.FONT_VALUE, value,
+        dc.drawText(x, top + hl + hv / 2, Fonts.value, value,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
     }
 
