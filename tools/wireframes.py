@@ -301,19 +301,19 @@ def tap_zones():
     dial_into(s, 0, 0, True)
     x0 = W + 40
     s.text(x0, 40, "Touch targets", "title", WHITE, "start")
-    rows = [("1", ZONE_COLORS[1], "Temperature (12 o'clock)", "press: weather card", "press again: Weather page"),
-            ("2", ZONE_COLORS[2], "Date (3 o'clock)", "press: date card", "again: dismiss"),
-            ("3", ZONE_COLORS[3], "Battery (9 o'clock)", "press: battery card", "again: dismiss"),
-            ("4", ZONE_COLORS[4], "Roundel (centre)", "press: heart rate card", "press again: Heart rate page"),
-            ("5", ZONE_COLORS[5], "Rings (bottom)", "press: activity card", "press again: Activity page")]
+    rows = [("1", ZONE_COLORS[1], "Temperature (12 o'clock)", "tap/hold: weather card", "hold it: Weather page"),
+            ("2", ZONE_COLORS[2], "Date (3 o'clock)", "tap/hold: date card", "again: dismiss"),
+            ("3", ZONE_COLORS[3], "Battery (9 o'clock)", "tap/hold: battery card", "again: dismiss"),
+            ("4", ZONE_COLORS[4], "Roundel (centre)", "tap/hold: heart rate card", "hold it: Heart rate page"),
+            ("5", ZONE_COLORS[5], "Rings (bottom)", "tap/hold: activity card", "hold it: Activity page")]
     for i, (n, c, name, tap, hold) in enumerate(rows):
         y = 90 + i * 70
         s.circle(x0 + 12, y, 12, c)
         s.text(x0 + 12, y, n, "label", BLACK)
         s.text(x0 + 36, y, name, "value", WHITE, "start")
         s.text(x0 + 36, y + 28, tap + "   &#183;   " + hold, "label", GREY, "start")
-    s.text(x0, 90 + 5 * 70 + 6, "A watch face only gets presses (touch and hold), so: press for the card,", "label", GREY, "start")
-    s.text(x0, 90 + 5 * 70 + 32, "press the card or the zone again for its page, press elsewhere to dismiss.", "label", GREY, "start")
+    s.text(x0, 90 + 5 * 70 + 6, "A tap shows the card where the device sends taps; a hold always does.", "label", GREY, "start")
+    s.text(x0, 90 + 5 * 70 + 32, "Hold the card or the zone again for its page; touch elsewhere to dismiss.", "label", GREY, "start")
     return s.doc((W + 60 + lw) * 1.6, (H + 60) * 1.6, "-30 -30 %d %d" % (W + 60 + lw, H + 60))
 
 

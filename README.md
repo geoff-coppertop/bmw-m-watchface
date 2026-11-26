@@ -37,11 +37,12 @@ simulator screenshots. They are generated from `source/Theme.mc` by
 - Three readouts on one arc, the same distance from the centre as the middle ring: the
   temperature at 12 o'clock, the date at 3 o'clock, and the watch battery at 9 o'clock as a
   simple icon that empties as the battery drains (red below 20%).
-- One touch rule. A watch face only receives one kind of touch: Garmin's `WatchFaceDelegate` has
-  `onPress` (documented as touch and hold) and no tap, so every touch below is a press. **Press a
-  zone** on the dial and its quick card appears (all five zones have one). **Press the card, or the
-  same zone again,** to open its page (only the temperature, roundel and rings have one). **Press
-  anywhere else** and the card is dismissed. Inside a page, presses move between pages or close it.
+- One touch rule. Garmin's `WatchFaceDelegate` documents only `onPress` (touch and hold) and no
+  tap, and the simulator sends no taps, so the face must work with holds alone. **Hold a zone** on
+  the dial and its quick card appears (all five zones have one). **Hold the card, or the same zone
+  again,** to open its page (only the temperature, roundel and rings have one). **Touch anywhere
+  else** and the card is dismissed. If a device does send a tap, a **tap** also shows the card and
+  a tap anywhere dismisses it. Inside a page, touches move between pages or close it.
 - Quick cards: press the temperature, date, battery, roundel or rings and a small card appears
   over the dial with more detail (weather and feels-like, the date in full, battery percentage and
   days left, heart rate with resting rate and stress, the three activity figures). It disappears

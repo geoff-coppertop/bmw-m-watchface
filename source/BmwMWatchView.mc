@@ -102,11 +102,22 @@ class BmwMWatchView extends WatchUi.WatchFace {
 
     // ---- taps -------------------------------------------------------------
 
-    // A press (the only touch a watch face receives: see PageNav). On the dial: a press on a zone
-    // shows its card; a press on the card, or on the same zone again, opens that zone's page (if
-    // it has one); a press anywhere else dismisses the card. While a page is open a press moves
-    // between pages or closes it. Returns true if it was used.
-    function handleTouch(x as Number, y as Number) as Boolean {
+    // The two touches a device may send. A watch face is documented to receive only a press (touch
+    // and hold: WatchFaceDelegate has no tap), and the simulator sends nothing else, but if a
+    // device does send a tap it behaves as follows:
+    //   tap:  shows the card for the zone touched; a tap anywhere dismisses a card that is up
+    //   hold: shows the card too (so a hold-only device can reach everything); holding the card, or
+    //         the same zone again, opens that zone's page (if it has one)
+    // While a page is open both move between pages or close it (see PageNav.tap).
+    function handleTap(x as Number, y as Number) as Boolean {
+        return touch(x, y, false);
+    }
+
+    function handleHold(x as Number, y as Number) as Boolean {
+        return touch(x, y, true);
+    }
+
+    private function touch(x as Number, y as Number, hold as Boolean) as Boolean {
         // One touch can be reported twice (as a tap and as a press): count it once.
         var now = System.getTimer();
         if (now - _lastTouch < 400) {
@@ -132,7 +143,7 @@ class BmwMWatchView extends WatchUi.WatchFace {
         if (shown != null) {
             closeCard();
             System.println("  -> card " + shown + " was up; hit=" + hit + " inCard=" + inCard(x, y, shown));
-            if (PageNav.hasPage(shown) && (hit == shown || inCard(x, y, shown))) {
+            if (hold && PageNav.hasPage(shown) && (hit == shown || inCard(x, y, shown))) {
                 System.println("  -> open page " + shown);
                 _nav.open(shown);
                 markTouch();

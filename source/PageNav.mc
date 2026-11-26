@@ -19,11 +19,12 @@ class PageNav {
         return kind == :body ? 4 : 2;
     }
 
-    // The touch rule, in one place. A watch face only receives one kind of touch (a press, which
-    // Garmin documents as touch and hold: WatchFaceDelegate has no tap), so everything is a press:
-    //   press a zone: its quick card (every zone has one);
-    //   press the card, or the same zone again: its page (only some zones have one);
-    //   press anywhere else while a card is up: dismiss it.
+    // The touch rule, in one place. A watch face is documented to receive only a press (touch and
+    // hold; WatchFaceDelegate has no tap), so that is what must work on its own:
+    //   hold a zone: its quick card (every zone has one);
+    //   hold the card, or the same zone again: its page (only some zones have one);
+    //   touch anywhere else while a card is up: dismiss it.
+    // A device that also sends a tap gets: tap a zone for its card, tap anywhere to dismiss it.
     static function hasPage(zone as Symbol) as Boolean {
         return zone == :weather || zone == :hr || zone == :activity;
     }
