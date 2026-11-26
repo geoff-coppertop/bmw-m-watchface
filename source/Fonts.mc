@@ -2,7 +2,7 @@ import Toybox.Graphics;
 import Toybox.Lang;
 
 // The four font roles, loaded once. label, value and title are vector fonts at the pixel sizes
-// in Theme (so they can be smaller than the smallest system font); hero is the system numerals.
+// in Theme (so they can be smaller than the smallest system font); hero is the big number.
 // A device without a vector font keeps the system fonts, so the face still draws.
 class Fonts {
     static var label as Graphics.FontType = Graphics.FONT_XTINY;
@@ -19,6 +19,8 @@ class Fonts {
         var l = Graphics.getVectorFont({ :face => faces, :size => Theme.FONT_PX_LABEL });
         var v = Graphics.getVectorFont({ :face => faces, :size => Theme.FONT_PX_VALUE });
         var t = Graphics.getVectorFont({ :face => faces, :size => Theme.FONT_PX_TITLE });
+        var h = Graphics.getVectorFont({ :face => faces, :size => Theme.FONT_PX_HERO });
+        if (h != null) { hero = h; }
         if (l != null && v != null && t != null) {
             label = l;
             value = v;

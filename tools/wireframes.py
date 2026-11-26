@@ -92,7 +92,7 @@ DIM = {BLUE: BLUE_DIM, NAVY: NAVY_DIM, RED: RED_DIM}
 METRIC = {"steps": BLUE, "active": NAVY, "body": RED, "hr": RED, "weather": RED, "temp": RED, "stress": RED}
 
 # pixel sizes per Theme font role: the vector font sizes the watch face uses (hero: the system numerals)
-FONT_PX = {"label": num("FONT_PX_LABEL"), "value": num("FONT_PX_VALUE"), "title": num("FONT_PX_TITLE"), "hero": 96}
+FONT_PX = {"label": num("FONT_PX_LABEL"), "value": num("FONT_PX_VALUE"), "title": num("FONT_PX_TITLE"), "hero": num("FONT_PX_HERO")}
 
 # ---------------------------------------------------------------- screen
 W, H = 448, 486

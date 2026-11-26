@@ -27,11 +27,11 @@ module Theme {
     // ---- font roles ---------------------------------------------------------
     // Text is drawn with vector fonts at these pixel sizes (see Fonts.mc), so it can be smaller
     // than the smallest system font. If the device has no vector font, Fonts falls back to the
-    // system fonts XTINY, TINY and SMALL. Change a size here and the wireframes follow.
+    // system fonts XTINY, TINY, SMALL and NUMBER_HOT. Change a size here and the wireframes follow.
     const FONT_PX_LABEL = 22;      // labels, date row
     const FONT_PX_VALUE = 28;      // values
     const FONT_PX_TITLE = 32;      // page titles, conditions
-                                   // headline numbers: the system NUMBER_HOT font
+    const FONT_PX_HERO = 80;       // the big number on a metric or weather page
 
     // ---- dial spacing (pixels unless noted) -------------------------------
     const GAP = 2;               // between badge stripes, ring bars, and ring and ticks
