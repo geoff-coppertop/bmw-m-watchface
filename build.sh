@@ -17,6 +17,9 @@ if [ ! -f developer_key.der ]; then
 fi
 
 mkdir -p bin
+# The compiler is Java and reads the bitmap resources through AWT. The container's JDK
+# is headless, so tell Java not to look for a display (else: "Can't load libawt_xawt.so").
+export JAVA_TOOL_OPTIONS="-Djava.awt.headless=true ${JAVA_TOOL_OPTIONS:-}"
 monkeyc \
     -f monkey.jungle \
     -o "$OUT" \

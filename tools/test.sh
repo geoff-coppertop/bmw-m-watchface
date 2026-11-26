@@ -21,6 +21,8 @@ if [ ! -f developer_key.der ]; then
 fi
 
 mkdir -p bin
+# The compiler is Java and the container's JDK is headless: don't let it look for a display.
+export JAVA_TOOL_OPTIONS="-Djava.awt.headless=true ${JAVA_TOOL_OPTIONS:-}"
 monkeyc -f monkey.jungle -o "$OUT" -y developer_key.der -d "$DEVICE" --unit-test --warn
 echo "Built $OUT with unit tests for $DEVICE."
 
