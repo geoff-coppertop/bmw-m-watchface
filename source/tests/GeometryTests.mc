@@ -10,7 +10,7 @@ function geometryDialRadius(logger as Test.Logger) as Boolean {
 (:test)
 function geometryRingsMatchTheBadgeStripes(logger as Test.Logger) as Boolean {
     Test.assertEqual(Geometry.ringWidth(220), 14);           // 13.86 rounds up, it is not truncated to 13
-    Test.assert((Geometry.ringOuterR(220) - 183.2).abs() < 0.01);
+    Test.assert((Geometry.ringOuterR(220) - 179.2).abs() < 0.01);   // 192.2 (major tick) - 6 gap - 7 half a ring
     return true;
 }
 
@@ -41,8 +41,8 @@ function geometryHitTestMisses(logger as Test.Logger) as Boolean {
 
 (:test)
 function geometryTemperatureMirrorsTheMiddleRing(logger as Test.Logger) as Boolean {
-    Test.assert((Geometry.middleRingR(220) - 167.2).abs() < 0.01);          // 183.2 minus one 14 + 2 pitch
-    Test.assert((Geometry.tempY(243, 220) - 75.8).abs() < 0.01);            // the same distance above the centre
+    Test.assert((Geometry.middleRingR(220) - 163.2).abs() < 0.01);          // 179.2 minus one 14 + 2 pitch
+    Test.assert((Geometry.tempY(243, 220) - 79.8).abs() < 0.01);            // the same distance above the centre
     return true;
 }
 

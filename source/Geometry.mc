@@ -15,10 +15,10 @@ module Geometry {
         return (r * 0.2 / 99.0 * 36 * 0.866 + 0.5).toNumber();
     }
 
-    // Centre radius of the outer ring: Theme.GAP inside the major ticks.
+    // Centre radius of the outer ring: Theme.RING_TICK_GAP inside the major ticks.
     function ringOuterR(r as Number) as Float {
         var tickInner = (r - Theme.TICK_INSET) - r * Theme.TICK_MAJOR;
-        return tickInner - Theme.GAP - ringWidth(r) / 2.0;
+        return tickInner - Theme.RING_TICK_GAP - ringWidth(r) / 2.0;
     }
 
     // Centre radius of the middle ring (the navy active minutes gauge).

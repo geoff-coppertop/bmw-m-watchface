@@ -54,7 +54,7 @@ WHITE, BLACK = col("WHITE"), col("BLACK")
 GREY = col("GREY")
 CHROME = "#555555"          # the mock watch bezel in the images; not part of the face
 ZONE_COLORS = {1: "#FFD400", 2: "#E040FB", 3: "#3DDC84", 4: "#FF8A00", 5: "#00C0FF"}   # touch targets: yellow, magenta, green, orange, cyan
-GAP, TICK_INSET = num("GAP"), num("TICK_INSET")
+GAP, TICK_INSET, RING_TICK_GAP = num("GAP"), num("TICK_INSET"), num("RING_TICK_GAP")
 TICK_MAJOR, TICK_MINOR = num("TICK_MAJOR"), num("TICK_MINOR")
 MARGIN, ROW_PITCH = num("MARGIN"), num("ROW_PITCH")
 BAR_W, BAR_H, BAR_R = num("BAR_W"), num("BAR_H"), num("BAR_R")
@@ -152,7 +152,7 @@ def screen(s, ox=0, oy=0):
 RING_W = int(R * 0.2 / 99 * 36 * 0.866 + 0.5)          # same rounding as ringWidth()
 PITCH = RING_W + GAP
 TICK_INNER = (R - TICK_INSET) - R * TICK_MAJOR
-RING_OUT = TICK_INNER - GAP - RING_W / 2.0              # ringOuterR()
+RING_OUT = TICK_INNER - RING_TICK_GAP - RING_W / 2.0    # ringOuterR()
 LOGO_STRIPES = [(66, BLUE), (107, NAVY), (148, RED)]    # top-left x, colour
 LOGO_M = [(132, 99), (189, 0), (227.5, 0), (227.5, 40), (252, 0), (290, 0), (290, 99),
           (254.5, 99), (254.5, 58), (229.5, 99), (196.5, 99), (196.5, 58), (171.5, 99)]

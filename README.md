@@ -194,11 +194,11 @@ whole face.
   tracks, the sleep band and axes, white, and one grey `999999` for secondary text, glyph
   strokes, chevrons and inactive dots. The cloud strip shades between black and the grey,
   which is a ramp of that one grey, not another colour.
-- **Spacing:** one 2 px gap is used between the badge stripes, between ring bars
-  and between the outer ring and the ticks. Ring bars are as wide as the badge
+- **Spacing:** one 2 px gap is used between the badge stripes and between ring bars;
+  the outer ring sits 6 px inside the major ticks (`RING_TICK_GAP`) so the two never touch. Ring bars are as wide as the badge
   stripes. Detail pages share a 70 px margin, a 32 px row pitch and one bar size.
-- **Fonts:** four roles mapped to Garmin system fonts: label, value, title and
-  hero number.
+- **Fonts:** four roles (label, value, title, hero number), drawn as vector fonts at the pixel
+  sizes `FONT_PX_*` in `Theme.mc` (`Fonts.mc` loads them, falling back to the system fonts).
 
 The touch targets' sizes (the shared radius of the roundel, date and battery circles, the
 temperature and rings arcs) are tokens too, read by both the app and the wireframe

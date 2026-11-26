@@ -34,7 +34,8 @@ module Theme {
     const FONT_PX_HERO = 80;       // the big number on a metric or weather page
 
     // ---- dial spacing (pixels unless noted) -------------------------------
-    const GAP = 2;               // between badge stripes, ring bars, and ring and ticks
+    const GAP = 2;               // between badge stripes and between the ring bars
+    const RING_TICK_GAP = 6;     // between the outer ring and the major ticks (a visible margin)
     const TICK_INSET = 8;        // outer end of the ticks, in from the dial edge
     const TICK_MAJOR = 0.09;     // major tick length, as a fraction of dial radius
     const TICK_MINOR = 0.035;    // minor tick length, as a fraction of dial radius
