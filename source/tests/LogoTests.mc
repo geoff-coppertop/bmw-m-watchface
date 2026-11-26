@@ -29,7 +29,7 @@ function logoScalesAndOffsets(logger as Test.Logger) as Boolean {
     var p = Logo.stripePoints(0, 100, 50, 0.5);
     Test.assertEqual(p[0][0], 128.5);            // 100 + (66 - 9) * 0.5
     Test.assertEqual(p[0][1], 50);
-    Test.assertEqual(p[3][0], 100);              // the foot sits at the left edge
+    Test.assertEqual(p[3][0], 100.0);            // the foot sits at the left edge
     Test.assertEqual(p[3][1], 99.5);             // 50 + 99 * 0.5
     Test.assertEqual(Logo.STRIPES_WIDTH, 175);   // 184 - 9
     return true;

@@ -46,10 +46,10 @@ class PageNav {
         from = null;
     }
 
-    // Back one step: graph -> detail -> the Activity page it came from -> the dial.
+    // Back one step: graph -> previous graph -> detail -> the Activity page it came from -> the dial.
     function back() as Void {
-        if (sub == 1) {
-            sub = 0;
+        if (sub > 0) {
+            sub -= 1;
         } else if (from != null) {
             page = from;
             from = null;
