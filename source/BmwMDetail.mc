@@ -835,8 +835,8 @@ class DetailPage {
 
         dc.setPenWidth(3);
         dc.setColor(_gColor, Graphics.COLOR_TRANSPARENT);
-        var px as Numeric or Null = null;       // the previous point, if there is one
-        var py as Numeric or Null = null;
+        var px = null;       // the previous point, if there is one (local types are inferred, so cast on use)
+        var py = null;
         for (var i = 0; i < n; i++) {
             var v = _gVals[i];
             if (v == null) {
