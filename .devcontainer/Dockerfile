@@ -5,8 +5,9 @@ FROM mcr.microsoft.com/devcontainers/base:jammy
 # The connect-iq-sdk feature builds connect-iq-sdk-manager-cli, which needs
 # Go 1.25, but it installs jammy's apt Go (1.18), which cannot fetch a newer
 # toolchain. Put a current Go first on PATH so that build uses it.
-# uv runs the Python tools (tools/*.py declare their own dependencies).
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /usr/local/bin/
+# uv runs the Python tools (tools/*.py declare their own dependencies). Pinned by version and
+# digest; to upgrade, change both (digest: the manifest list of the new tag on ghcr.io).
+COPY --from=ghcr.io/astral-sh/uv:0.11.32@sha256:df4cae8f3a96d175e2e5f992e597550000edbe78fdc2594d5cd8de1a217f504c /uv /uvx /usr/local/bin/
 
 ARG GO_VERSION=1.25.0
 RUN arch="$(dpkg --print-architecture)" \
