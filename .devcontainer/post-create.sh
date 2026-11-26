@@ -6,6 +6,20 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
+# --- Simulator libraries ---------------------------------------------------
+# The Connect IQ simulator (and so the unit tests) is a GTK3/WebKit GUI binary;
+# xvfb lets it run headless for tools/test.sh.
+if ! dpkg -s libwebkit2gtk-4.0-37 >/dev/null 2>&1; then
+    echo "Installing Connect IQ simulator libraries..."
+    sudo apt-get update
+    sudo apt-get install -y --no-install-recommends \
+        libsecret-1-0 libusb-1.0-0 libxext6 libx11-6 libxkbcommon0 libxxf86vm1 \
+        libsm6 libatk1.0-0 libgtk-3-0 libfreetype6 libpng16-16 libcairo2 \
+        libpango-1.0-0 libpangocairo-1.0-0 libpangoft2-1.0-0 libgdk-pixbuf-2.0-0 \
+        libfontconfig1 libwebkit2gtk-4.0-37 libsoup2.4-1 libjavascriptcoregtk-4.0-18 \
+        libjpeg-turbo8 xvfb xauth
+fi
+
 # --- Developer signing key (monkeyc -y) -------------------------------------
 # Private key; never committed. Generated once per container.
 if [ ! -f developer_key.der ]; then

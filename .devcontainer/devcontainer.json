@@ -1,6 +1,8 @@
 {
     "name": "bmw-m-watchface",
-    "image": "mcr.microsoft.com/devcontainers/base:debian",
+    // Ubuntu 22.04, not Debian: the Connect IQ simulator is linked against
+    // libwebkit2gtk-4.0, libsoup2.4 and libjpeg8, which Debian 13 no longer ships.
+    "image": "mcr.microsoft.com/devcontainers/base:jammy",
     "features": {
         "ghcr.io/devcontainers/features/github-cli:1": {},
         "ghcr.io/geoff-coppertop/devcontainer-features/shell-baseline:1": {},
