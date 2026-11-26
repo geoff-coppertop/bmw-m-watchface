@@ -240,13 +240,10 @@ class BmwMWatchView extends WatchUi.WatchFace {
         var left = cx - (281 * k) / 2;      // logo is 281 units wide
         var top = cy - mh / 2;
 
-        var stripeX = [66, 107, 148];       // top-left x of each stripe
         var colors = [Theme.BLUE, Theme.NAVY, Theme.RED];
         for (var i = 0; i < 3; i++) {
-            var xt = stripeX[i];
-            var pts = [[xt, 0], [xt + 36, 0], [xt + 36 - 57, 99], [xt - 57, 99]];
             dc.setColor(_asleep ? Theme.GREY : colors[i], Graphics.COLOR_TRANSPARENT);
-            dc.fillPolygon(logoPoints(pts, left, top, k));
+            dc.fillPolygon(Logo.stripePoints(i, left, top, k));     // shared with the page header
         }
 
         var m = [[132, 99], [189, 0], [227.5, 0], [227.5, 40], [252, 0], [290, 0], [290, 99],

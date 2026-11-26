@@ -42,16 +42,12 @@ module Theme {
     const BAR_W = 280;
     const BAR_H = 10;
     const BAR_R = 5;
-    const Y_STRIPES = 34;        // M stripe accent at the top of every page
-    const Y_TITLE = 76;          // title on pages with no glyph
-    const Y_GLYPH = 100;         // big glyph on the metric pages
-    const GLYPH_BIG = 62;
-    const Y_TITLE_UNDER_GLYPH = 168;
-    const Y_HERO = 240;
-    const Y_SUB = 298;
-    const Y_BAR = 326;
-    const Y_ROWS = 366;          // first row on the metric pages
-    const Y_WEATHER_ROWS = 270;  // first row on the weather page: Y_ROWS minus three row pitches
+    const Y_STRIPES = 34;        // the badge stripes at the top of every page
+    const Y_TITLE = 76;          // page title
+    const Y_HERO = 142;          // the big number (a metric's value, or the temperature)
+    const Y_SUB = 204;           // the line under it (a goal, or the conditions)
+    const Y_NOTE = 234;          // the next line (feels-like), or the progress bar on a metric page
+    const Y_ROWS = 270;          // the first detail row on every page; rows are ROW_PITCH apart
 
     // ---- graph pages and navigation ---------------------------------------
     const CHART_X = 60;           // left/right inset of the plot area
@@ -105,11 +101,7 @@ module Theme {
     const TOUCH_RING_IN = 20;     // pixels inside the inner ring
 
     // ---- page furniture: accents, chevrons, marks ---------------------------
-    const STRIPE_X0 = -40;        // M stripe accent at the top of every page: first stripe, from centre
-    const STRIPE_PITCH = 28;
-    const STRIPE_W = 20;
-    const STRIPE_SLANT = 8;
-    const STRIPE_HALF_H = 7;
+    const STRIPE_H = 26;          // the stripes at the top of every page: the face badge's stripes, scaled to this height
     const NAV_CHEVRON_X = 24;     // edge chevrons, from the screen edge
     const CHEVRON_HALF_W = 6;
     const CHEVRON_HALF_H = 12;
@@ -139,11 +131,8 @@ module Theme {
     // ---- Weather page ------------------------------------------------------
     // Its rows sit on the same grid as the metric pages: the last of the four detail
     // rows is at Y_ROWS, and the hourly strip uses the two rows below it.
-    const WEATHER_Y_HERO = 142;
     const WEATHER_Y_UNIT = 120;
     const WEATHER_UNIT_DX = 8;
-    const WEATHER_Y_COND = 204;
-    const WEATHER_Y_FEELS = 234;
     const WEATHER_NODATA_DY = 34;
 
     // Line weight for stroked glyphs: grows with glyph size, never below 2 px.

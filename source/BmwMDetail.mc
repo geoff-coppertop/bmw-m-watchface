@@ -187,10 +187,8 @@ class DetailPage {
                       stText, ss == null ? "--" : ss.toString()];
         }
 
-        _face.drawGlyph(dc, kind, cx, Theme.Y_GLYPH, Theme.GLYPH_BIG);
-
         dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, Theme.Y_TITLE_UNDER_GLYPH, Theme.FONT_TITLE, title,
+        dc.drawText(cx, Theme.Y_TITLE, Theme.FONT_TITLE, title,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
         dc.setColor(Theme.WHITE, Graphics.COLOR_TRANSPARENT);
         dc.drawText(cx, Theme.Y_HERO, Theme.FONT_HERO, big,
@@ -199,7 +197,7 @@ class DetailPage {
         dc.drawText(cx, Theme.Y_SUB, Theme.FONT_LABEL, sub,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
         if (frac >= 0.0) {
-            drawBar(dc, cx, Theme.Y_BAR, frac, barColor);
+            drawBar(dc, cx, Theme.Y_NOTE, frac, barColor);
         }
         for (var i = 0; i < labels.size(); i++) {
             drawRow(dc, w, Theme.Y_ROWS + i * Theme.ROW_PITCH, labels[i], values[i]);
@@ -414,18 +412,18 @@ class DetailPage {
         var big = tempNum(cond.temperature).toString();
         var bw = dc.getTextWidthInPixels(big, Theme.FONT_HERO);
         dc.setColor(Theme.WHITE, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, Theme.WEATHER_Y_HERO, Theme.FONT_HERO, big,
+        dc.drawText(cx, Theme.Y_HERO, Theme.FONT_HERO, big,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
         dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
         dc.drawText(cx + bw / 2 + Theme.WEATHER_UNIT_DX, Theme.WEATHER_Y_UNIT, Theme.FONT_TITLE, tempUnit(),
             Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
 
         dc.setColor(Theme.WHITE, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, Theme.WEATHER_Y_COND, Theme.FONT_TITLE, conditionText(cond.condition),
+        dc.drawText(cx, Theme.Y_SUB, Theme.FONT_TITLE, conditionText(cond.condition),
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
         if (cond.feelsLikeTemperature != null) {
             dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(cx, Theme.WEATHER_Y_FEELS, Theme.FONT_LABEL,
+            dc.drawText(cx, Theme.Y_NOTE, Theme.FONT_LABEL,
                 "Feels like " + tempNum(cond.feelsLikeTemperature).toString() + "°",
                 Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
         }
@@ -434,10 +432,10 @@ class DetailPage {
         if (cond.highTemperature != null && cond.lowTemperature != null) {
             hl = tempNum(cond.highTemperature).toString() + "° / " + tempNum(cond.lowTemperature).toString() + "°";
         }
-        drawRow(dc, w, Theme.Y_WEATHER_ROWS, "High / low", hl);
-        drawRow(dc, w, Theme.Y_WEATHER_ROWS + Theme.ROW_PITCH, "Rain chance", numStr(cond.precipitationChance, "%"));
-        drawRow(dc, w, Theme.Y_WEATHER_ROWS + 2 * Theme.ROW_PITCH, "Wind", windText(cond));
-        drawRow(dc, w, Theme.Y_WEATHER_ROWS + 3 * Theme.ROW_PITCH, "Humidity", numStr(cond.relativeHumidity, "%"));
+        drawRow(dc, w, Theme.Y_ROWS, "High / low", hl);
+        drawRow(dc, w, Theme.Y_ROWS + Theme.ROW_PITCH, "Rain chance", numStr(cond.precipitationChance, "%"));
+        drawRow(dc, w, Theme.Y_ROWS + 2 * Theme.ROW_PITCH, "Wind", windText(cond));
+        drawRow(dc, w, Theme.Y_ROWS + 3 * Theme.ROW_PITCH, "Humidity", numStr(cond.relativeHumidity, "%"));
 
         // every three hours across the next twelve: a label every hour would not fit
         var fc = Weather.getHourlyForecast();
@@ -447,11 +445,11 @@ class DetailPage {
                 if (idx >= fc.size()) { break; }
                 var x = w * (0.2 + 0.2 * i);
                 dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
-                dc.drawText(x, Theme.Y_ROWS + Theme.ROW_PITCH, Theme.FONT_LABEL, hourLabel(fc[idx].forecastTime),
+                dc.drawText(x, Theme.Y_ROWS + 4 * Theme.ROW_PITCH, Theme.FONT_LABEL, hourLabel(fc[idx].forecastTime),
                     Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
                 if (fc[idx].temperature != null) {
                     dc.setColor(Theme.WHITE, Graphics.COLOR_TRANSPARENT);
-                    dc.drawText(x, Theme.Y_ROWS + 2 * Theme.ROW_PITCH, Theme.FONT_VALUE, tempNum(fc[idx].temperature).toString() + "°",
+                    dc.drawText(x, Theme.Y_ROWS + 5 * Theme.ROW_PITCH, Theme.FONT_VALUE, tempNum(fc[idx].temperature).toString() + "°",
                         Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
                 }
             }
@@ -956,15 +954,16 @@ class DetailPage {
 
     // ---- shared bits -----------------------------------------------------
 
-    // Three small slanted M stripes as an accent at the top of every page.
+    // The face badge's three stripes, scaled down, as an accent at the top of every page. They use the
+    // same geometry as the badge on the dial (Logo), so the two always match.
     private function drawStripes(dc as Dc, cx as Numeric, y as Numeric) as Void {
+        var k = Theme.STRIPE_H / Logo.HEIGHT.toFloat();
+        var left = cx - Logo.STRIPES_WIDTH * k / 2;
+        var top = y - Theme.STRIPE_H / 2;
         var colors = [Theme.BLUE, Theme.NAVY, Theme.RED];
         for (var i = 0; i < 3; i++) {
-            var x = cx + Theme.STRIPE_X0 + i * Theme.STRIPE_PITCH;
             dc.setColor(colors[i], Graphics.COLOR_TRANSPARENT);
-            dc.fillPolygon([[x + Theme.STRIPE_SLANT, y - Theme.STRIPE_HALF_H],
-                            [x + Theme.STRIPE_SLANT + Theme.STRIPE_W, y - Theme.STRIPE_HALF_H],
-                            [x + Theme.STRIPE_W, y + Theme.STRIPE_HALF_H], [x, y + Theme.STRIPE_HALF_H]]);
+            dc.fillPolygon(Logo.stripePoints(i, left, top, k));
         }
     }
 

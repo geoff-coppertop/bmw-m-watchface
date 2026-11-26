@@ -54,10 +54,8 @@ GAP, TICK_INSET = num("GAP"), num("TICK_INSET")
 TICK_MAJOR, TICK_MINOR = num("TICK_MAJOR"), num("TICK_MINOR")
 MARGIN, ROW_PITCH = num("MARGIN"), num("ROW_PITCH")
 BAR_W, BAR_H, BAR_R = num("BAR_W"), num("BAR_H"), num("BAR_R")
-Y_STRIPES, Y_TITLE, Y_GLYPH, GLYPH_BIG = num("Y_STRIPES"), num("Y_TITLE"), num("Y_GLYPH"), num("GLYPH_BIG")
-Y_TITLE_UNDER_GLYPH, Y_HERO, Y_SUB, Y_BAR = (num("Y_TITLE_UNDER_GLYPH"), num("Y_HERO"),
-                                              num("Y_SUB"), num("Y_BAR"))
-Y_ROWS, Y_WEATHER_ROWS = num("Y_ROWS"), num("Y_WEATHER_ROWS")
+Y_STRIPES, Y_TITLE, Y_HERO, Y_SUB, Y_NOTE, Y_ROWS = (num("Y_STRIPES"), num("Y_TITLE"), num("Y_HERO"), num("Y_SUB"),
+                                                     num("Y_NOTE"), num("Y_ROWS"))
 CHART_X, CHART_TOP, CHART_BOTTOM = num("CHART_X"), num("CHART_TOP"), num("CHART_BOTTOM")
 Y_XLABELS, Y_STATS, Y_DOTS, DOT_R = num("Y_XLABELS"), num("Y_STATS"), num("Y_DOTS"), num("DOT_R")
 Y_CAPTION = num("Y_CAPTION")
@@ -72,8 +70,7 @@ CARD_TITLE_Y, CARD_BIG_Y, CARD_DETAIL_Y, CARD_ROW_Y, CARD_ROW_PITCH = (num("CARD
 WINDOW_LABEL_DY, WINDOW_VALUE_DY = num("WINDOW_LABEL_DY"), num("WINDOW_VALUE_DY")
 TOUCH_R, TOUCH_TEMP_HALF_R, TOUCH_ARC_ANGLE = num("TOUCH_R"), num("TOUCH_TEMP_HALF_R"), num("TOUCH_ARC_ANGLE")
 TOUCH_RING_OUT, TOUCH_RING_IN = num("TOUCH_RING_OUT"), num("TOUCH_RING_IN")
-STRIPE_X0, STRIPE_PITCH, STRIPE_W = num("STRIPE_X0"), num("STRIPE_PITCH"), num("STRIPE_W")
-STRIPE_SLANT, STRIPE_HALF_H = num("STRIPE_SLANT"), num("STRIPE_HALF_H")
+STRIPE_H = num("STRIPE_H")
 NAV_CHEVRON_X, CHEVRON_HALF_W, CHEVRON_HALF_H, DOT_PITCH = (num("NAV_CHEVRON_X"), num("CHEVRON_HALF_W"),
                                                               num("CHEVRON_HALF_H"), num("DOT_PITCH"))
 MARK_DY, MOON_R, MOON_CUT_R, MOON_CUT_DX, MOON_CUT_DY = (num("MARK_DY"), num("MOON_R"), num("MOON_CUT_R"),
@@ -83,8 +80,7 @@ CLOUD_STRIP_DY, CLOUD_STRIP_H = num("CLOUD_STRIP_DY"), num("CLOUD_STRIP_H")
 ACT_GLYPH, ACT_GLYPH_DX, ACT_TEXT_DX = num("ACT_GLYPH"), num("ACT_GLYPH_DX"), num("ACT_TEXT_DX")
 ACT_LABEL_DY, ACT_VALUE_DY, ACT_BAR_DY = num("ACT_LABEL_DY"), num("ACT_VALUE_DY"), num("ACT_BAR_DY")
 ACT_CHEVRON_X, ACT_CHEVRON_DY = num("ACT_CHEVRON_X"), num("ACT_CHEVRON_DY")
-WEATHER_Y_HERO, WEATHER_Y_UNIT, WEATHER_UNIT_DX = num("WEATHER_Y_HERO"), num("WEATHER_Y_UNIT"), num("WEATHER_UNIT_DX")
-WEATHER_Y_COND, WEATHER_Y_FEELS = num("WEATHER_Y_COND"), num("WEATHER_Y_FEELS")
+WEATHER_Y_UNIT, WEATHER_UNIT_DX = num("WEATHER_Y_UNIT"), num("WEATHER_UNIT_DX")
 ACTIVITY_ROW_TOP, ACTIVITY_ROW_PITCH = num("ACTIVITY_ROW_TOP"), num("ACTIVITY_ROW_PITCH")
 BAR_COLS_W, BAR_COLS_GAP = num("BAR_COLS_W"), num("BAR_COLS_GAP")
 DIM = {BLUE: BLUE_DIM, NAVY: NAVY_DIM, RED: RED_DIM}
@@ -370,10 +366,13 @@ def g_body(s, x, y, sz, c, frac):
 
 # ---------------------------------------------------------------- detail pages
 def stripes(s, ox):
-    for i, c in enumerate([BLUE, NAVY, RED]):
-        x = ox + CX + STRIPE_X0 + i * STRIPE_PITCH
-        s.poly([(x + STRIPE_SLANT, Y_STRIPES - STRIPE_HALF_H), (x + STRIPE_SLANT + STRIPE_W, Y_STRIPES - STRIPE_HALF_H),
-                (x + STRIPE_W, Y_STRIPES + STRIPE_HALF_H), (x, Y_STRIPES + STRIPE_HALF_H)], c)
+    """The face badge's stripes, scaled down: the same geometry as Logo.stripePoints()."""
+    k = STRIPE_H / 99.0
+    left = ox + CX - 175 * k / 2
+    top = Y_STRIPES - STRIPE_H / 2
+    for xt, c in LOGO_STRIPES:
+        s.poly([(left + (x - 9) * k, top + y * k) for x, y in
+                [(xt, 0), (xt + 36, 0), (xt + 36 - 57, 99), (xt - 57, 99)]], c)
 
 
 def bar(s, ox, y, frac, c):
@@ -434,11 +433,10 @@ def pages():
     # 2: a metric page (steps), opened from Activity, so it has a back chevron
     screen(s, W + 40)
     stripes(s, 0)
-    g_walker(s, CX, Y_GLYPH, GLYPH_BIG, BLUE)
-    s.text(CX, Y_TITLE_UNDER_GLYPH, "STEPS", "title", GREY)
+    s.text(CX, Y_TITLE, "STEPS", "title", GREY)
     s.text(CX, Y_HERO, "6214", "hero", WHITE)
     s.text(CX, Y_SUB, "of 10000 goal", "label", GREY)
-    bar(s, 0, Y_BAR, .62, BLUE)
+    bar(s, 0, Y_NOTE, .62, BLUE)
     for i, (l, v) in enumerate([("Distance", "4.7 km"), ("Calories", "312 kcal"), ("Floors", "6 / 10")]):
         row(s, 0, Y_ROWS + i * ROW_PITCH, l, v)
     nav(s, 0, True)
@@ -448,27 +446,26 @@ def pages():
     screen(s, (W + 40) * 2)
     stripes(s, 0)
     s.text(CX, Y_TITLE, "WEATHER", "title", GREY)
-    s.text(CX, WEATHER_Y_HERO, "18", "hero", WHITE)
+    s.text(CX, Y_HERO, "18", "hero", WHITE)
     s.text(CX + 61 + WEATHER_UNIT_DX - 8, WEATHER_Y_UNIT, "&#176;C", "title", GREY, "start")
-    s.text(CX, WEATHER_Y_COND, "Partly cloudy", "title", WHITE)
-    s.text(CX, WEATHER_Y_FEELS, "Feels like 16&#176;", "label", GREY)
+    s.text(CX, Y_SUB, "Partly cloudy", "title", WHITE)
+    s.text(CX, Y_NOTE, "Feels like 16&#176;", "label", GREY)
     for i, (l, v) in enumerate([("High / low", "20&#176; / 9&#176;"), ("Rain chance", "30%"),
                                 ("Wind", "12 km/h NW"), ("Humidity", "65%")]):
-        row(s, 0, Y_WEATHER_ROWS + i * ROW_PITCH, l, v)
+        row(s, 0, Y_ROWS + i * ROW_PITCH, l, v)
     for i, (t, v) in enumerate([("14", "19&#176;"), ("17", "20&#176;"), ("20", "17&#176;"), ("23", "14&#176;")]):
         x = W * (.2 + .2 * i)
-        s.text(x, Y_ROWS + ROW_PITCH, t, "label", GREY)
-        s.text(x, Y_ROWS + 2 * ROW_PITCH, v, "value", WHITE)
+        s.text(x, Y_ROWS + 4 * ROW_PITCH, t, "label", GREY)
+        s.text(x, Y_ROWS + 5 * ROW_PITCH, v, "value", WHITE)
     nav(s, 0, False)
     s.add("</g>")
     # 4: Body Battery detail, opened from Activity, with four pages in all
     screen(s, (W + 40) * 3)
     stripes(s, 0)
-    g_body(s, CX, Y_GLYPH, GLYPH_BIG, RED, .78)
-    s.text(CX, Y_TITLE_UNDER_GLYPH, "BODY BATTERY", "title", GREY)
+    s.text(CX, Y_TITLE, "BODY BATTERY", "title", GREY)
     s.text(CX, Y_HERO, "78", "hero", WHITE)
     s.text(CX, Y_SUB, "High energy", "label", GREY)
-    bar(s, 0, Y_BAR, .78, METRIC["body"])
+    bar(s, 0, Y_NOTE, .78, METRIC["body"])
     for i, (l, v) in enumerate([("24 h low / high", "34 / 88"), ("Stress", "34 &#183; Low"), ("Sleep score", "82")]):
         row(s, 0, Y_ROWS + i * ROW_PITCH, l, v)
     nav(s, 0, True, 4)
