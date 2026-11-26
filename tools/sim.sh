@@ -3,8 +3,11 @@
 #   ./tools/sim.sh            -> venux1
 #   ./tools/sim.sh fenix7     -> another device id
 #
-# Stays in the foreground; Ctrl-C stops the simulator. Reports if the simulator dies
-# (the 9.2.0 Linux simulator has been seen to segfault in a worker thread after ~20 s).
+# Stays in the foreground; Ctrl-C stops the simulator.
+#
+# The simulator runs in a network namespace with only loopback. With real network access the
+# 9.2.0 Linux simulator segfaults in a worker thread after ~20 s (cause unknown; it is stable
+# without it). monkeydo talks to it over localhost, so it runs in the same namespace.
 set -uo pipefail
 
 cd "$(dirname "$0")/.."
@@ -12,7 +15,11 @@ cd "$(dirname "$0")/.."
 DEVICE="${1:-venux1}"
 PRG="bin/bmw-m-watchface.prg"
 
-./build.sh "$DEVICE" || exit 1
+if [ -z "${SIM_ISOLATED:-}" ]; then
+    ./build.sh "$DEVICE" || exit 1
+    exec unshare -rn env SIM_ISOLATED=1 bash "$0" "$@"
+fi
+ip link set lo up
 
 connectiq &
 SIM=$!
