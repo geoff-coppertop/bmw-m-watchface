@@ -25,7 +25,7 @@ cleanup() { kill "$SIM" "$APP" 2>/dev/null; }
 trap 'cleanup; exit 0' INT TERM
 trap cleanup EXIT
 
-# The 9.2.0 Linux simulator crashes unpredictably (segfault in a worker thread), so keep
+# The 9.2.0 and 9.3.0 Linux simulators crash unpredictably (segfault in a worker thread), so keep
 # restarting it and reloading the face until you press Ctrl-C.
 while true; do
     connectiq &
