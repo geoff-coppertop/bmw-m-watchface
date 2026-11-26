@@ -110,11 +110,13 @@ class BmwMWatchView extends WatchUi.WatchFace {
         // One touch can be reported twice (as a tap and as a press): count it once.
         var now = System.getTimer();
         if (now - _lastTouch < 400) {
+            System.println("  -> ignored (" + (now - _lastTouch) + " ms after the last touch)");
             return true;
         }
         _lastTouch = now;
 
         if (_nav.isOpen()) {
+            System.println("  -> in page " + _nav.page + "/" + _nav.sub);
             markTouch();
             _nav.tap(x, y, _w);
             if (!_nav.isOpen()) {
@@ -129,7 +131,9 @@ class BmwMWatchView extends WatchUi.WatchFace {
         var shown = _card;
         if (shown != null) {
             closeCard();
+            System.println("  -> card " + shown + " was up; hit=" + hit + " inCard=" + inCard(x, y, shown));
             if (PageNav.hasPage(shown) && (hit == shown || inCard(x, y, shown))) {
+                System.println("  -> open page " + shown);
                 _nav.open(shown);
                 markTouch();
                 WatchUi.requestUpdate();
@@ -139,6 +143,7 @@ class BmwMWatchView extends WatchUi.WatchFace {
         if (hit == null || !PageNav.hasCard(hit)) {
             return false;
         }
+        System.println("  -> show card " + hit);
         showCard(hit);
         return true;
     }
