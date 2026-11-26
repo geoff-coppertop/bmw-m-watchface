@@ -5,18 +5,18 @@
 #
 # Stays in the foreground; Ctrl-C stops the simulator.
 #
-# The simulator runs in a network namespace with only loopback. With real network access the
-# 9.2.0 Linux simulator segfaults in a worker thread after ~20 s (cause unknown; it is stable
-# without it). monkeydo talks to it over localhost, so it runs in the same namespace.
+# The simulator runs in a network namespace with only loopback: with real network access the
+# 9.2.0 Linux simulator segfaults in a worker thread after ~20 s even with nothing loaded.
+# monkeydo talks to it over localhost, so it runs in the same namespace.
 set -uo pipefail
 
 cd "$(dirname "$0")/.."
 
 DEVICE="${1:-venux1}"
-PRG="bin/bmw-m-watchface.prg"
+PRG="${PRG:-bin/bmw-m-watchface.prg}"   # PRG=/path/other.prg to load something else (skips the build)
 
 if [ -z "${SIM_ISOLATED:-}" ]; then
-    ./build.sh "$DEVICE" || exit 1
+    if [ "$PRG" = "bin/bmw-m-watchface.prg" ]; then ./build.sh "$DEVICE" || exit 1; fi
     exec unshare -rn env SIM_ISOLATED=1 bash "$0" "$@"
 fi
 ip link set lo up
