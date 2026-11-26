@@ -198,7 +198,7 @@ the dial radius in `BmwMWatchView.mc` rather than tokens.
 ### In the devcontainer (recommended)
 
 Open the repo in VS Code ("Reopen in Container") or a Codespace. The container
-installs the Connect IQ SDK 9.2.0 and generates a local signing key
+installs the Connect IQ SDK 9.3.0 and generates a local signing key
 (`developer_key.der`, git-ignored). Downloading the Venu X1 device files needs a
 Garmin account, so export these on the host before opening the container (or
 set them as Codespaces/repo secrets):

@@ -5,7 +5,7 @@
         "ghcr.io/devcontainers/features/github-cli:1": {},
         "ghcr.io/geoff-coppertop/devcontainer-features/shell-baseline:1": {},
         "ghcr.io/geoff-coppertop/devcontainer-features/connect-iq-sdk:1": {
-            "version": "9.2.0"
+            "version": "9.3.0"
         },
         "ghcr.io/geoff-coppertop/devcontainer-features/claude-code:1": {}
     },
