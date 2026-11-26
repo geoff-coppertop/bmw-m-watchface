@@ -77,6 +77,24 @@ simulator screenshots. They are generated from `source/Theme.mc` by
   Tap the top strip to close. A page also closes after 20 seconds of no taps, or when
   the watch dims.
 
+## Running on Windows or macOS (no container)
+
+The project is plain Monkey C, so it builds with the Garmin tooling directly. The bash scripts
+(`build.sh`, `tools/test.sh`, `tools/sim.sh`) are for the Linux devcontainer; you do not need them.
+
+1. Install the Connect IQ SDK with Garmin's SDK Manager, and in it download the **Venu X1** device.
+2. Install VS Code and the **Monkey C** extension (`garmin.monkey-c`). Open this folder normally,
+   not "Reopen in Container".
+3. Run **Monkey C: Verify Installation**, then **Monkey C: Generate a Developer Key** (once).
+4. **Run face in simulator** (F5, or Run > Start Debugging) builds, starts the simulator and loads
+   the face. **Run unit tests** does the same with the 62 tests. Both are in `.vscode/launch.json`.
+5. To put it on the watch: **Monkey C: Build for Device**, then copy the `.prg` into the watch's
+   `GARMIN/APPS` folder.
+6. `uv run tools/wireframes.py` works on any platform with [uv](https://docs.astral.sh/uv/).
+
+The simulator on Linux crashes in this container (see below); Garmin's bug tracker also has crash
+reports for the 9.2.0 simulator on Windows, so if it misbehaves try 9.1.0 or 9.3.0.
+
 ## Layout
 
 ```

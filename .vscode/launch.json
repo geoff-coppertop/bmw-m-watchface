@@ -1,0 +1,19 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "monkeyc",
+            "request": "launch",
+            "name": "Run face in simulator",
+            "stopAtEntry": false,
+            "device": "venux1"
+        },
+        {
+            "type": "monkeyc",
+            "request": "launch",
+            "name": "Run unit tests",
+            "runTests": true,
+            "device": "venux1"
+        }
+    ]
+}
