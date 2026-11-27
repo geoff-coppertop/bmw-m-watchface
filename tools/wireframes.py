@@ -59,13 +59,9 @@ TICK_MAJOR, TICK_MINOR = num("TICK_MAJOR"), num("TICK_MINOR")
 BATT_W, BATT_H, BATT_R, BATT_TERM_W, BATT_TERM_H, BATT_PAD = (num("BATT_W"), num("BATT_H"), num("BATT_R"),
                                                                 num("BATT_TERM_W"), num("BATT_TERM_H"),
                                                                 num("BATT_PAD"))
-CARD_W, CARD_H, CARD_H_ROWS, CARD_H_TWO, CARD_R, CARD_PAD = (num("CARD_W"), num("CARD_H"), num("CARD_H_ROWS"),
-                                                              num("CARD_H_TWO"), num("CARD_R"), num("CARD_PAD"))
-CARD_DETAIL2_PITCH = num("CARD_DETAIL2_PITCH")
+CARD_W, CARD_H, CARD_R, CARD_PAD = num("CARD_W"), num("CARD_H"), num("CARD_R"), num("CARD_PAD")
+CARD_LINE_GAP, CARD_ROW_PITCH = num("CARD_LINE_GAP"), num("CARD_ROW_PITCH")
 CARD_SWATCH_H, CARD_SWATCH_GAP = num("CARD_SWATCH_H"), num("CARD_SWATCH_GAP")
-CARD_TITLE_Y, CARD_BIG_Y, CARD_DETAIL_Y, CARD_ROW_Y, CARD_ROW_PITCH = (num("CARD_TITLE_Y"), num("CARD_BIG_Y"),
-                                                                        num("CARD_DETAIL_Y"), num("CARD_ROW_Y"),
-                                                                        num("CARD_ROW_PITCH"))
 WINDOW_DATE_DX = num("WINDOW_DATE_DX")
 TOUCH_R, TOUCH_ARC_ANGLE = num("TOUCH_R"), num("TOUCH_ARC_ANGLE")
 TOUCH_RING_OUT, TOUCH_RING_IN = num("TOUCH_RING_OUT"), num("TOUCH_RING_IN")
@@ -191,32 +187,38 @@ def draw_battery_icon(s, x, y, pct):
 
 def draw_card(s, kind):
     """Mirror of Cards.drawCard(): a quick card over the dial, with example values."""
-    rows = kind == "activity"
-    ch = CARD_H_ROWS if rows else (CARD_H_TWO if kind == "weather" else CARD_H)
+    ch = CARD_H                                           # every card is the same size
     left, top = CX - CARD_W / 2, CY - ch / 2
     s.add('<rect x="%.1f" y="%.1f" width="%d" height="%d" rx="%d" fill="%s" stroke="%s" stroke-width="2"/>'
           % (left, top, CARD_W, ch, CARD_R, BLACK, GREY))
-    title, big, detail = {
-        "battery": ("WATCH BATTERY", "82%", "6.3 days left"),
-        "weather": ("WEATHER", "18&#176;C", "Partly cloudy &#183; feels 16&#176;"),
-        "hr": ("HEART RATE", "72 bpm", "Resting 52 &#183; Stress 34"),
-        "activity": ("ACTIVITY", "", ""),
-    }[kind]
-    s.text(CX, top + CARD_TITLE_Y, title, "label", GREY)
-    if rows:
+    if kind == "activity":
         for i, (n, v) in enumerate([("Steps", "6214 / 10000"), ("Active", "68 / 150 min"), ("Body battery", "78")]):
-            y = top + CARD_ROW_Y + i * CARD_ROW_PITCH
-            k = CARD_SWATCH_H / 99.0                          # Logo.stripePoints(0, ...): the M's first stripe
+            y = top + ch / 2 + (i - 1) * CARD_ROW_PITCH
+            k = CARD_SWATCH_H / 99.0                      # Logo.stripePoints(0, ...): the M's first stripe
             sx0, sy0 = left + CARD_PAD, y - CARD_SWATCH_H / 2
             s.poly([(sx0 + 57 * k, sy0), (sx0 + 93 * k, sy0), (sx0 + 36 * k, sy0 + 99 * k), (sx0, sy0 + 99 * k)],
-                   [BLUE, NAVY, RED][i])                      # each row wears its ring's colour
+                   [BLUE, NAVY, RED][i])                  # each row wears its ring's colour
             s.text(sx0 + 93 * k + CARD_SWATCH_GAP, y, n, "label", GREY, "start")
             s.text(left + CARD_W - CARD_PAD, y, v, "value", WHITE, "end")
-    else:
-        s.text(CX, top + CARD_BIG_Y, big, "title", WHITE)
-        s.text(CX, top + CARD_DETAIL_Y, detail, "label", GREY)
-        if kind == "weather":
-            s.text(CX, top + CARD_DETAIL_Y + CARD_DETAIL2_PITCH, "High 20&#176; &#183; Low 9&#176;", "label", GREY)
+        return
+    above, big, below = {
+        "battery": ("WATCH BATTERY", "82%", ["6.3 days left"]),
+        "weather": ("Wednesday 25 November", "18&#176;C",
+                    ["Partly cloudy &#183; feels 16&#176;", "High 20&#176; &#183; Low 9&#176;"]),
+        "hr": ("", "72 bpm", ["Resting 52 &#183; Stress 34"]),
+    }[kind]
+    hl, ht = FONT_PX["label"], FONT_PX["title"]           # line heights: the font sizes (getFontHeight)
+    total = ht + len(below) * (hl + CARD_LINE_GAP) + (hl + CARD_LINE_GAP if above else 0)
+    y = top + (ch - total) / 2
+    if above:
+        s.text(CX, y + hl / 2, above, "label", GREY)
+        y += hl + CARD_LINE_GAP
+    s.text(CX, y + ht / 2, big, "title", WHITE)
+    y += ht
+    for line in below:
+        y += CARD_LINE_GAP
+        s.text(CX, y + hl / 2, line, "label", GREY)
+        y += hl
 
 
 def dial_into(s, ox, oy, zones=False, card=None):
@@ -280,7 +282,7 @@ def tap_zones():
     dial_into(s, 0, 0, True)
     x0 = W + 40
     s.text(x0, 40, "Touch targets", "title", WHITE, "start")
-    rows = [("1", ZONE_COLORS[1], "Date (3 o'clock)", "weather card: temperature, conditions, high and low"),
+    rows = [("1", ZONE_COLORS[1], "Date (3 o'clock)", "weather card: day and date, temperature, conditions, high and low"),
             ("2", ZONE_COLORS[2], "Battery (9 o'clock)", "battery card: percentage and days left"),
             ("3", ZONE_COLORS[3], "Roundel (centre)", "heart rate card: bpm, resting rate, stress"),
             ("4", ZONE_COLORS[4], "Rings (bottom)", "activity card: steps, active minutes, body battery")]
@@ -305,7 +307,7 @@ def dial(zones=False):
 def cards():
     """The quick cards shown when a zone is pressed, over the dial."""
     s = Svg()
-    kinds = ["battery", "weather", "activity"]
+    kinds = ["battery", "weather", "hr", "activity"]
     total = len(kinds) * W + (len(kinds) - 1) * 40
     s.add('<rect x="-20" y="-20" width="%d" height="%d" fill="#1b1b1b"/>' % (total + 40, H + 40))
     for i, k in enumerate(kinds):

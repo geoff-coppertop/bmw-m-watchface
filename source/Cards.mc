@@ -9,22 +9,16 @@ import Toybox.UserProfile;
 import Toybox.Weather;
 
 // The quick card shown over the dial when a zone is touched: a little more detail than the face
-// shows (weather with feels-like and the day's high and low, battery and days left, heart rate with resting
-// rate and stress, steps / active minutes / body battery). It is not a page: it disappears by
-// itself after a few seconds, or when you touch elsewhere. The weather card is the only place the
-// temperature appears: it comes from touching the date.
+// shows. Every card is the same size. Weather (reached by touching the date) leads with the full
+// day and date; battery has its title; heart rate and activity have none (the number says bpm, and
+// the activity rows carry their ring's colour). It is not a page: it disappears by itself after a
+// few seconds, or when you touch elsewhere. The weather card is the only place the temperature
+// appears.
 class Cards {
 
-    function height(kind as Symbol) as Number {
-        if (kind == :activity) { return Theme.CARD_H_ROWS; }
-        return (kind == :weather) ? Theme.CARD_H_TWO : Theme.CARD_H;
-    }
-
     function drawCard(dc as Dc, kind as Symbol) as Void {
-        var w = dc.getWidth();
-        var cx = w / 2;
-        var rows = (kind == :activity);
-        var ch = height(kind);
+        var cx = dc.getWidth() / 2;
+        var ch = Theme.CARD_H;                          // every card is the same size
         var left = cx - Theme.CARD_W / 2;
         var top = dc.getHeight() / 2 - ch / 2;
 
@@ -35,83 +29,99 @@ class Cards {
         dc.drawRoundedRectangle(left, top, Theme.CARD_W, ch, Theme.CARD_R);
         dc.setPenWidth(1);
 
-        var title = "";
+        if (kind == :activity) {
+            drawActivityRows(dc, left, top, ch);
+            return;
+        }
+
+        // A card is an optional small line, one big line, and up to two small lines under it,
+        // stacked from the real font heights and centred in the card.
+        var above = "";
         var big = "--";
-        var detail = "";
-        var detail2 = "";
-        var j = Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER;
+        var below = [] as Array<String>;
 
         if (kind == :battery) {
             var st = System.getSystemStats();
-            title = "WATCH BATTERY";
+            above = "WATCH BATTERY";
             big = st.battery.toNumber().toString() + "%";
-            detail = Stats.daysText(st.batteryInDays) + " left" + (st.charging ? " · Charging" : "");
+            below.add(Stats.daysText(st.batteryInDays) + " left" + (st.charging ? " · Charging" : ""));
 
         } else if (kind == :weather) {
-            title = "WEATHER";
+            // the small line is the full day and date: the card is reached through the date
+            var d = Gregorian.info(Time.now(), Time.FORMAT_LONG);
+            above = d.day_of_week.toString() + " " + d.day.toString() + " " + d.month.toString();
             var cond = (Toybox has :Weather) ? Weather.getCurrentConditions() : null;
             if (cond != null && cond.temperature != null) {
                 big = tempNum(cond.temperature).toString() + tempUnit();
-                detail = conditionText(cond.condition);
+                var line = conditionText(cond.condition);
                 if (cond.feelsLikeTemperature != null) {
-                    detail += (detail.length() > 0 ? " · " : "") + "feels " + tempNum(cond.feelsLikeTemperature).toString() + "°";
+                    line += (line.length() > 0 ? " · " : "") + "feels " + tempNum(cond.feelsLikeTemperature).toString() + "°";
                 }
+                below.add(line);
                 var hi = (cond.highTemperature != null) ? tempNum(cond.highTemperature).toString() + "°" : "--";
                 var lo = (cond.lowTemperature != null) ? tempNum(cond.lowTemperature).toString() + "°" : "--";
-                detail2 = "High " + hi + " · Low " + lo;
+                below.add("High " + hi + " · Low " + lo);
             } else {
-                detail = "No weather data";
+                below.add("No weather data");
             }
 
-        } else if (kind == :hr) {
-            title = "HEART RATE";
+        } else {
+            // :hr, the roundel: no title, the number says bpm
             var act = Activity.getActivityInfo();
             if (act != null && act.currentHeartRate != null) { big = act.currentHeartRate.toString() + " bpm"; }
             var prof = UserProfile.getProfile();
             var st2 = ActivityMonitor.getInfo().stressScore;
-            detail = "Resting " + ((prof != null && prof.restingHeartRate != null) ? prof.restingHeartRate.toString() : "--")
-                + " · Stress " + (st2 == null ? "--" : st2.toString());
-
-        } else {
-            // :activity, the rings: three rows
-            title = "ACTIVITY";
-            var info2 = ActivityMonitor.getInfo();
-            var stepsTxt = (info2.steps == null) ? "--" : info2.steps.toString()
-                + ((info2.stepGoal != null) ? " / " + info2.stepGoal.toString() : "");
-            var wk = info2.activeMinutesWeek;
-            var actTxt = (wk == null) ? "--" : wk.total.toString()
-                + ((info2.activeMinutesWeekGoal != null) ? " / " + info2.activeMinutesWeekGoal.toString() : "") + " min";
-            var bb = Vitals.bodyBattery();
-            var names = ["Steps", "Active", "Body battery"];
-            var vals = [stepsTxt, actTxt, bb == null ? "--" : bb.toString()];
-            // each row wears the colour of its ring on the dial
-            var colors = [Theme.metricColor(:steps), Theme.metricColor(:active), Theme.metricColor(:body)];
-            // the swatch is one of the M badge's stripes, at the same lean, so it comes from Logo
-            var k = Theme.CARD_SWATCH_H / Logo.HEIGHT.toFloat();
-            var sw = ((Logo.STRIPE_W + Logo.LEAN) * k).toNumber();
-            for (var i = 0; i < 3; i++) {
-                var y = top + Theme.CARD_ROW_Y + i * Theme.CARD_ROW_PITCH;
-                dc.setColor(colors[i], Graphics.COLOR_TRANSPARENT);
-                dc.fillPolygon(Logo.stripePoints(0, left + Theme.CARD_PAD, y - Theme.CARD_SWATCH_H / 2, k));
-                dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
-                dc.drawText(left + Theme.CARD_PAD + sw + Theme.CARD_SWATCH_GAP, y, Fonts.label, names[i],
-                    Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
-                dc.setColor(Theme.WHITE, Graphics.COLOR_TRANSPARENT);
-                dc.drawText(left + Theme.CARD_W - Theme.CARD_PAD, y, Fonts.value, vals[i],
-                    Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER);
-            }
+            below.add("Resting " + ((prof != null && prof.restingHeartRate != null) ? prof.restingHeartRate.toString() : "--")
+                + " · Stress " + (st2 == null ? "--" : st2.toString()));
         }
 
-        dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, top + Theme.CARD_TITLE_Y, Fonts.label, title, j);
-        if (!rows) {
-            dc.setColor(Theme.WHITE, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(cx, top + Theme.CARD_BIG_Y, Fonts.title, big, j);
+        var j = Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER;
+        var hl = dc.getFontHeight(Fonts.label);
+        var ht = dc.getFontHeight(Fonts.title);
+        var gap = Theme.CARD_LINE_GAP;
+        var total = ht + below.size() * (hl + gap) + (above.length() > 0 ? hl + gap : 0);
+        var y = top + (ch - total) / 2;
+        if (above.length() > 0) {
             dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(cx, top + Theme.CARD_DETAIL_Y, Fonts.label, detail, j);
-            if (detail2.length() > 0) {
-                dc.drawText(cx, top + Theme.CARD_DETAIL_Y + Theme.CARD_DETAIL2_PITCH, Fonts.label, detail2, j);
-            }
+            dc.drawText(cx, y + hl / 2, Fonts.label, above, j);
+            y += hl + gap;
+        }
+        dc.setColor(Theme.WHITE, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(cx, y + ht / 2, Fonts.title, big, j);
+        y += ht;
+        dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
+        for (var i = 0; i < below.size(); i++) {
+            y += gap;
+            dc.drawText(cx, y + hl / 2, Fonts.label, below[i], j);
+            y += hl;
+        }
+    }
+
+    // The three activity figures, one row each, centred in the card. Each row wears the colour of
+    // its ring on the dial, as a slanted M stripe (the badge's own geometry, from Logo).
+    private function drawActivityRows(dc as Dc, left as Number, top as Number, ch as Number) as Void {
+        var info = ActivityMonitor.getInfo();
+        var stepsTxt = (info.steps == null) ? "--" : info.steps.toString()
+            + ((info.stepGoal != null) ? " / " + info.stepGoal.toString() : "");
+        var wk = info.activeMinutesWeek;
+        var actTxt = (wk == null) ? "--" : wk.total.toString()
+            + ((info.activeMinutesWeekGoal != null) ? " / " + info.activeMinutesWeekGoal.toString() : "") + " min";
+        var bb = Vitals.bodyBattery();
+        var names = ["Steps", "Active", "Body battery"];
+        var vals = [stepsTxt, actTxt, bb == null ? "--" : bb.toString()];
+        var colors = [Theme.metricColor(:steps), Theme.metricColor(:active), Theme.metricColor(:body)];
+        var k = Theme.CARD_SWATCH_H / Logo.HEIGHT.toFloat();
+        var sw = ((Logo.STRIPE_W + Logo.LEAN) * k).toNumber();
+        for (var i = 0; i < 3; i++) {
+            var y = top + ch / 2 + (i - 1) * Theme.CARD_ROW_PITCH;
+            dc.setColor(colors[i], Graphics.COLOR_TRANSPARENT);
+            dc.fillPolygon(Logo.stripePoints(0, left + Theme.CARD_PAD, y - Theme.CARD_SWATCH_H / 2, k));
+            dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
+            dc.drawText(left + Theme.CARD_PAD + sw + Theme.CARD_SWATCH_GAP, y, Fonts.label, names[i],
+                Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
+            dc.setColor(Theme.WHITE, Graphics.COLOR_TRANSPARENT);
+            dc.drawText(left + Theme.CARD_W - Theme.CARD_PAD, y, Fonts.value, vals[i],
+                Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER);
         }
     }
 

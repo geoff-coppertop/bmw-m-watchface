@@ -58,17 +58,11 @@ module Theme {
 
     // ---- quick cards (press a zone) -------------------------------------------
     const CARD_W = 330;
-    const CARD_H = 124;           // one big value: title, value, detail
-    const CARD_H_ROWS = 164;      // the Activity card: title and three rows
-    const CARD_H_TWO = 152;       // the Weather card: one more detail line (high and low)
+    const CARD_H = 152;           // every card is this size; its content is centred in it
     const CARD_R = 14;
     const CARD_PAD = 24;          // side padding for rows
-    const CARD_TITLE_Y = 24;      // from the top of the card
-    const CARD_BIG_Y = 62;
-    const CARD_DETAIL_Y = 98;
-    const CARD_DETAIL2_PITCH = 28; // the second detail line, below the first
-    const CARD_ROW_Y = 62;
-    const CARD_ROW_PITCH = 36;
+    const CARD_LINE_GAP = 6;      // between the lines of a card (the lines stack from their font heights)
+    const CARD_ROW_PITCH = 36;    // the Activity card's rows
     const CARD_SWATCH_H = 22;     // the slanted M stripe, in a ring's colour, before each Activity row
     const CARD_SWATCH_GAP = 8;    // between the stripe and the label
     const CARD_MS = 4000;         // how long a card stays up
