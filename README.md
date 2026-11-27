@@ -208,6 +208,10 @@ Compiled and run on a Venu X1 and in the Windows simulator; the unit tests pass.
   faces; a plain tap is not delivered. Confirmed in the simulator: a hold arrives, a tap does not.
   `onTap` is wired to the same handler in case a device sends it. The face logs `TOUCH onPress
   x,y` / `TOUCH onTap x,y` to the console.
+- Errors: drawing and touch handling are wrapped in `try/catch`. If something throws, the face shows
+  `ERROR` and the message for 10 seconds (and prints it to the console) instead of crashing back to
+  the default face. The watch's own crash log is `GARMIN/APPS/LOGS/CIQ_LOG.YML` (`.BAK` is the older
+  one); it only records errors the watch reports, so a hard freeze may leave nothing.
 - Check on the watch that the Units setting appears in Garmin Connect and that changing it
   redraws the face (`onSettingsChanged`).
 - Layout clearances (date and battery against the ticks, the ring band against the ticks) were

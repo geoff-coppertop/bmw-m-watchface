@@ -14,6 +14,8 @@ import Toybox.WatchUi;
 class BmwMWatchView extends WatchUi.WatchFace {
 
     private var _asleep as Boolean = false;
+    private var _error as String or Null = null;      // the last error caught while drawing or touching
+    private var _errorUntil as Number = 0;            // System.getTimer() until which it is shown
 
     private var _cards as Cards = new Cards();
     private var _card as Symbol or Null = null;       // the quick card showing, if any
@@ -49,7 +51,52 @@ class BmwMWatchView extends WatchUi.WatchFace {
         WatchUi.requestUpdate();
     }
 
+    // Drawing and touch handling are wrapped so that an error shows up as text on the face instead
+    // of a silent crash back to the default face (the watch's crash log is easy to miss). If the
+    // face shows "ERROR", the message below it says what failed; send it along.
     function onUpdate(dc as Dc) as Void {
+        try {
+            if (_error != null && System.getTimer() < _errorUntil) {
+                drawError(dc);
+                return;
+            }
+            drawFace(dc);
+        } catch (ex) {
+            _error = errorText(ex);
+            _errorUntil = System.getTimer() + 10000;
+            System.println("ERROR in onUpdate: " + _error);
+            drawError(dc);
+        }
+    }
+
+    private function errorText(ex as Lang.Exception) as String {
+        var m = ex.getErrorMessage();
+        return (m != null) ? m : "unknown error";
+    }
+
+    // The error message, in plain white on black, wrapped to fit.
+    private function drawError(dc as Dc) as Void {
+        var w = dc.getWidth();
+        var h = dc.getHeight();
+        dc.setColor(Theme.WHITE, Theme.BLACK);
+        dc.clear();
+        dc.setColor(Theme.RED, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(w / 2, h / 2 - 80, Fonts.title, "ERROR",
+            Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+        dc.setColor(Theme.WHITE, Graphics.COLOR_TRANSPARENT);
+        var msg = (_error != null) ? _error : "";
+        var perLine = 24;
+        var y = h / 2 - 40;
+        for (var i = 0; i < 6 && msg.length() > 0; i++) {
+            var n = msg.length() < perLine ? msg.length() : perLine;
+            dc.drawText(w / 2, y, Fonts.label, msg.substring(0, n),
+                Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+            msg = msg.substring(n, msg.length());
+            y += 28;
+        }
+    }
+
+    private function drawFace(dc as Dc) as Void {
         var w = dc.getWidth();
         var h = dc.getHeight();
         var cx = w / 2;
@@ -92,6 +139,18 @@ class BmwMWatchView extends WatchUi.WatchFace {
     // has no tap), and the simulator sends nothing else, so a hold is what works; a device that
     // also sends a tap gets the same behaviour. Returns true if the touch was used.
     function handleTouch(x as Number, y as Number) as Boolean {
+        try {
+            return touch(x, y);
+        } catch (ex) {
+            _error = errorText(ex);
+            _errorUntil = System.getTimer() + 10000;
+            System.println("ERROR in handleTouch: " + _error);
+            WatchUi.requestUpdate();
+            return true;
+        }
+    }
+
+    private function touch(x as Number, y as Number) as Boolean {
         // One touch can be reported twice (as a tap and as a press): count it once.
         var now = System.getTimer();
         if (now - _lastTouch < 400) {
