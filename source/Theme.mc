@@ -71,8 +71,6 @@ module Theme {
     const CARD_ROW_PITCH = 36;
     const CARD_SWATCH_H = 22;     // the slanted M stripe, in a ring's colour, before each Activity row
     const CARD_SWATCH_GAP = 8;    // between the stripe and the label
-    const CARD_CHEVRON_HALF_W = 6; // the chevron on the date card: touch it for the weather
-    const CARD_CHEVRON_HALF_H = 11;
     const CARD_MS = 4000;         // how long a card stays up
 
     // ---- touch targets on the dial (Geometry.hitTest and the touch-targets wireframe) --

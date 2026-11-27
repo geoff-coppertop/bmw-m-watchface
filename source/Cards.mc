@@ -10,10 +10,10 @@ import Toybox.UserProfile;
 import Toybox.Weather;
 
 // The quick card shown over the dial when a zone is touched: a little more detail than the face
-// shows (weather and feels-like, the date in full, battery and days left, heart rate with resting
+// shows (weather with feels-like and the day's high and low, battery and days left, heart rate with resting
 // rate and stress, steps / active minutes / body battery). It is not a page: it disappears by
-// itself after a few seconds, or when you touch elsewhere. The date card leads on to the weather
-// card (touch it); the temperature appears nowhere else.
+// itself after a few seconds, or when you touch elsewhere. The weather card is the only place the
+// temperature appears: it comes from touching the date.
 class Cards {
 
     function height(kind as Symbol) as Number {
@@ -47,12 +47,6 @@ class Cards {
             title = "WATCH BATTERY";
             big = st.battery.toNumber().toString() + "%";
             detail = Stats.daysText(st.batteryInDays) + " left" + (st.charging ? " · Charging" : "");
-
-        } else if (kind == :date) {
-            var info = Gregorian.info(Time.now(), Time.FORMAT_LONG);
-            title = "TODAY";
-            big = info.day_of_week.toString();
-            detail = info.day.toString() + " " + info.month.toString() + " " + info.year.toString();
 
         } else if (kind == :weather) {
             title = "WEATHER";
@@ -109,16 +103,6 @@ class Cards {
             }
         }
 
-        if (kind == :date) {
-            // a chevron: touch the date card to go on to the weather
-            var ax = left + Theme.CARD_W - Theme.CARD_PAD;
-            var ay = top + ch / 2;
-            dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
-            dc.setPenWidth(2);
-            dc.drawLine(ax - Theme.CARD_CHEVRON_HALF_W, ay - Theme.CARD_CHEVRON_HALF_H, ax + Theme.CARD_CHEVRON_HALF_W, ay);
-            dc.drawLine(ax + Theme.CARD_CHEVRON_HALF_W, ay, ax - Theme.CARD_CHEVRON_HALF_W, ay + Theme.CARD_CHEVRON_HALF_H);
-            dc.setPenWidth(1);
-        }
         dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
         dc.drawText(cx, top + Theme.CARD_TITLE_Y, Fonts.label, title, j);
         if (!rows) {

@@ -29,12 +29,12 @@ simulator screenshots. They are generated from `source/Theme.mc` by
 - Two readouts on one arc, the same distance from the centre as the middle ring: the date at
   3 o'clock, and the watch battery at 9 o'clock as a simple icon that empties as the battery
   drains (red below 20%). The temperature is not on the dial.
-- Quick cards. Hold the date, battery, roundel or rings and a small card appears over the dial
-  with a little more detail: the date in full, battery percentage and days left, heart rate with
-  resting rate and stress, steps / active minutes / body battery, each row marked with a slanted
-  M stripe in its ring's colour. Touch anywhere to dismiss it; it also goes after four seconds.
-- The weather is behind the date: touch the date card (it has a chevron) and the weather card
-  replaces it, with the temperature, conditions, feels-like, and the day's high and low.
+- Quick cards. Hold the date, battery, roundel or rings and a small card appears over the dial:
+  the weather (holding the date: temperature, conditions, feels-like, and the day's high and low),
+  battery percentage and days left, heart rate with resting rate and stress, or steps / active
+  minutes / body battery, each row marked with a slanted M stripe in its ring's colour. Touch
+  anywhere to dismiss it; it also goes after four seconds. The temperature is not on the dial: the
+  date is the way to the weather.
 
 **Why a hold, and why no pages.** Garmin's `WatchFaceDelegate` documents only `onPress` (touch and
 hold). A plain tap and a swipe are never delivered to a watch face, and the simulator sends only

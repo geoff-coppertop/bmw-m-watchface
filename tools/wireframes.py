@@ -62,7 +62,6 @@ BATT_W, BATT_H, BATT_R, BATT_TERM_W, BATT_TERM_H, BATT_PAD = (num("BATT_W"), num
 CARD_W, CARD_H, CARD_H_ROWS, CARD_H_TWO, CARD_R, CARD_PAD = (num("CARD_W"), num("CARD_H"), num("CARD_H_ROWS"),
                                                               num("CARD_H_TWO"), num("CARD_R"), num("CARD_PAD"))
 CARD_DETAIL2_PITCH = num("CARD_DETAIL2_PITCH")
-CARD_CHEVRON_HALF_W, CARD_CHEVRON_HALF_H = num("CARD_CHEVRON_HALF_W"), num("CARD_CHEVRON_HALF_H")
 CARD_SWATCH_H, CARD_SWATCH_GAP = num("CARD_SWATCH_H"), num("CARD_SWATCH_GAP")
 CARD_TITLE_Y, CARD_BIG_Y, CARD_DETAIL_Y, CARD_ROW_Y, CARD_ROW_PITCH = (num("CARD_TITLE_Y"), num("CARD_BIG_Y"),
                                                                         num("CARD_DETAIL_Y"), num("CARD_ROW_Y"),
@@ -199,16 +198,11 @@ def draw_card(s, kind):
           % (left, top, CARD_W, ch, CARD_R, BLACK, GREY))
     title, big, detail = {
         "battery": ("WATCH BATTERY", "82%", "6.3 days left"),
-        "date": ("TODAY", "Wednesday", "25 November 2026"),
         "weather": ("WEATHER", "18&#176;C", "Partly cloudy &#183; feels 16&#176;"),
         "hr": ("HEART RATE", "72 bpm", "Resting 52 &#183; Stress 34"),
         "activity": ("ACTIVITY", "", ""),
     }[kind]
     s.text(CX, top + CARD_TITLE_Y, title, "label", GREY)
-    if kind == "date":                                   # touch the date card for the weather
-        ax, ay = left + CARD_W - CARD_PAD, top + ch / 2
-        s.line((ax - CARD_CHEVRON_HALF_W, ay - CARD_CHEVRON_HALF_H), (ax + CARD_CHEVRON_HALF_W, ay), GREY, 2)
-        s.line((ax + CARD_CHEVRON_HALF_W, ay), (ax - CARD_CHEVRON_HALF_W, ay + CARD_CHEVRON_HALF_H), GREY, 2)
     if rows:
         for i, (n, v) in enumerate([("Steps", "6214 / 10000"), ("Active", "68 / 150 min"), ("Body battery", "78")]):
             y = top + CARD_ROW_Y + i * CARD_ROW_PITCH
@@ -286,7 +280,7 @@ def tap_zones():
     dial_into(s, 0, 0, True)
     x0 = W + 40
     s.text(x0, 40, "Touch targets", "title", WHITE, "start")
-    rows = [("1", ZONE_COLORS[1], "Date (3 o'clock)", "date card; touch it for the weather card"),
+    rows = [("1", ZONE_COLORS[1], "Date (3 o'clock)", "weather card: temperature, conditions, high and low"),
             ("2", ZONE_COLORS[2], "Battery (9 o'clock)", "battery card: percentage and days left"),
             ("3", ZONE_COLORS[3], "Roundel (centre)", "heart rate card: bpm, resting rate, stress"),
             ("4", ZONE_COLORS[4], "Rings (bottom)", "activity card: steps, active minutes, body battery")]
@@ -311,7 +305,7 @@ def dial(zones=False):
 def cards():
     """The quick cards shown when a zone is pressed, over the dial."""
     s = Svg()
-    kinds = ["battery", "date", "weather", "activity"]
+    kinds = ["battery", "weather", "activity"]
     total = len(kinds) * W + (len(kinds) - 1) * 40
     s.add('<rect x="-20" y="-20" width="%d" height="%d" fill="#1b1b1b"/>' % (total + 40, H + 40))
     for i, k in enumerate(kinds):

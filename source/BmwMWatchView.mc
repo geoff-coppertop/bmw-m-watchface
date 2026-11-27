@@ -86,11 +86,11 @@ class BmwMWatchView extends WatchUi.WatchFace {
 
     // ---- touch --------------------------------------------------------------
 
-    // A touch on a zone shows its card; a touch anywhere dismisses a card that is up, except on the
-    // date card: touching that card (or the date again) leads on to the weather card, which is the
-    // only way to see the temperature. A watch face is documented to receive only a press (touch
-    // and hold: WatchFaceDelegate has no tap), and the simulator sends nothing else, so a hold is
-    // what works; a device that also sends a tap gets the same behaviour. Returns true if used.
+    // A touch on a zone shows its card; a touch anywhere dismisses a card that is up. The date is
+    // the way to the weather: touching it shows the weather card (there is no temperature on the
+    // dial). A watch face is documented to receive only a press (touch and hold: WatchFaceDelegate
+    // has no tap), and the simulator sends nothing else, so a hold is what works; a device that
+    // also sends a tap gets the same behaviour. Returns true if the touch was used.
     function handleTouch(x as Number, y as Number) as Boolean {
         // One touch can be reported twice (as a tap and as a press): count it once.
         var now = System.getTimer();
@@ -99,25 +99,16 @@ class BmwMWatchView extends WatchUi.WatchFace {
         }
         _lastTouch = now;
 
-        var hit = Geometry.hitTest(x, y, _w, _h, _r);
-        var shown = _card;
-        if (shown != null) {
+        if (_card != null) {
             closeCard();
-            if (shown == :date && (hit == :date || inCard(x, y, shown))) {
-                showCard(:weather);
-            }
             return true;
         }
+        var hit = Geometry.hitTest(x, y, _w, _h, _r);
         if (hit == null) {
             return false;
         }
-        showCard(hit);
+        showCard(hit == :date ? :weather : hit);
         return true;
-    }
-
-    // Is (x, y) inside the card for this zone? The card is centred on the screen.
-    private function inCard(x as Number, y as Number, kind as Symbol) as Boolean {
-        return (x - _w / 2).abs() <= Theme.CARD_W / 2 && (y - _h / 2).abs() <= _cards.height(kind) / 2;
     }
 
     private function showCard(kind as Symbol) as Void {
