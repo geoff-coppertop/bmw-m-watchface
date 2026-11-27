@@ -79,6 +79,7 @@ source/
   Logo.mc               the M badge's stripe geometry (pure, tested)
   Stats.mc              battery threshold and number formatting (pure, tested)
   Units.mc              the temperature unit setting (pure, tested)
+  Vitals.mc             body battery: newest sample with data, last good value, read once a minute
   tests/                unit tests, run with ./tools/test.sh
 resources/            strings, settings and launcher icon
 build.sh              compile to bin/bmw-m-watchface.prg (devcontainer)

@@ -3,7 +3,6 @@ import Toybox.Activity;
 import Toybox.Graphics;
 import Toybox.Lang;
 import Toybox.Math;
-import Toybox.SensorHistory;
 import Toybox.System;
 import Toybox.Time;
 import Toybox.Time.Gregorian;
@@ -418,19 +417,8 @@ class BmwMWatchView extends WatchUi.WatchFace {
         return info.activeMinutesWeek.total.toFloat() / info.activeMinutesWeekGoal;
     }
 
-    private function bodyBattery() as Number or Null {
-        if ((Toybox has :SensorHistory) && (SensorHistory has :getBodyBatteryHistory)) {
-            var it = SensorHistory.getBodyBatteryHistory({ :period => 1 });
-            var sample = (it != null) ? it.next() : null;
-            if (sample != null && sample.data != null) {
-                return sample.data.toNumber();
-            }
-        }
-        return null;
-    }
-
     private function bodyBatFrac() as Float {
-        var bb = bodyBattery();
+        var bb = Vitals.bodyBattery();
         return bb == null ? 0.0 : bb / 100.0;
     }
 }

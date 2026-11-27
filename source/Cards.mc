@@ -2,7 +2,6 @@ import Toybox.Activity;
 import Toybox.ActivityMonitor;
 import Toybox.Graphics;
 import Toybox.Lang;
-import Toybox.SensorHistory;
 import Toybox.System;
 import Toybox.Time;
 import Toybox.Time.Gregorian;
@@ -82,7 +81,7 @@ class Cards {
             var wk = info2.activeMinutesWeek;
             var actTxt = (wk == null) ? "--" : wk.total.toString()
                 + ((info2.activeMinutesWeekGoal != null) ? " / " + info2.activeMinutesWeekGoal.toString() : "") + " min";
-            var bb = bodyBatteryNow();
+            var bb = Vitals.bodyBattery();
             var names = ["Steps", "Active", "Body battery"];
             var vals = [stepsTxt, actTxt, bb == null ? "--" : bb.toString()];
             // each row wears the colour of its ring on the dial
@@ -114,15 +113,6 @@ class Cards {
                 dc.drawText(cx, top + Theme.CARD_DETAIL_Y + Theme.CARD_DETAIL2_PITCH, Fonts.label, detail2, j);
             }
         }
-    }
-
-    private function bodyBatteryNow() as Number or Null {
-        if ((Toybox has :SensorHistory) && (SensorHistory has :getBodyBatteryHistory)) {
-            var it = SensorHistory.getBodyBatteryHistory({ :period => 1 });
-            var smp = (it != null) ? it.next() : null;
-            if (smp != null && smp.data != null) { return smp.data.toNumber(); }
-        }
-        return null;
     }
 
     private function conditionText(c as Number or Null) as String {
