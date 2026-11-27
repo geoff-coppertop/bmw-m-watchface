@@ -56,7 +56,7 @@ module Theme {
     const BATT_PAD = 2;           // gap between the outline and the fill
 
     // ---- quick cards (press a zone) -------------------------------------------
-    const CARD_W = 300;
+    const CARD_W = 330;
     const CARD_H = 124;           // one big value: title, value, detail
     const CARD_H_ROWS = 164;      // the Activity card: title and three rows
     const CARD_H_TWO = 152;       // the Weather card: one more detail line (high and low)
@@ -68,9 +68,8 @@ module Theme {
     const CARD_DETAIL2_PITCH = 28; // the second detail line, below the first
     const CARD_ROW_Y = 62;
     const CARD_ROW_PITCH = 36;
-    const CARD_SWATCH_W = 6;      // the bar in a ring's colour before each Activity row
-    const CARD_SWATCH_H = 22;
-    const CARD_SWATCH_GAP = 10;   // between the bar and the label
+    const CARD_SWATCH_H = 22;     // the slanted M stripe, in a ring's colour, before each Activity row
+    const CARD_SWATCH_GAP = 8;    // between the stripe and the label
     const CARD_MS = 4000;         // how long a card stays up
 
     // ---- touch targets on the dial (Geometry.hitTest and the touch-targets wireframe) --
