@@ -73,11 +73,12 @@ class BmwMWatchView extends WatchUi.WatchFace {
         }
     }
 
-    // In low-power mode the face draws nothing (a black screen), so it must leave that state when the
-    // screen really wakes. onExitSleep is not guaranteed to arrive (it did not when the screen timed
-    // out with a card up, which left the face stuck in its low-power look on an awake screen), so
-    // the flag also clears itself from evidence that the screen is awake: a touch, or updates
-    // arriving about once a second (in low-power mode the watch updates only once a minute).
+    // In low-power mode the face keeps its colours but has no second hand, so it must leave that
+    // state when the screen really wakes. onExitSleep is not guaranteed to arrive (it did not when
+    // the screen timed out with a card up, which left the face stuck without a second hand on an
+    // awake screen), so the flag also clears itself from evidence that the screen is awake: a
+    // touch, or updates arriving about once a second (in low-power mode the watch updates only once
+    // a minute).
     private function wakeIfAwake() as Void {
         var now = System.getTimer();
         if (_asleep && now - _sleepAt > 4000 && now - _lastUpdate < 4000) {
@@ -114,12 +115,6 @@ class BmwMWatchView extends WatchUi.WatchFace {
     }
 
     private function drawFace(dc as Dc) as Void {
-        if (_asleep) {
-            // No always-on look: in low-power mode the face is a black screen, which looks off.
-            dc.setColor(Theme.BLACK, Theme.BLACK);
-            dc.clear();
-            return;
-        }
         var w = dc.getWidth();
         var h = dc.getHeight();
         var cx = w / 2;
@@ -368,15 +363,17 @@ class BmwMWatchView extends WatchUi.WatchFace {
         drawHand(dc, cx, cy, hourDeg, r * 0.56, r * 0.07, r * 0.1, Theme.WHITE, Theme.BLUE);
         drawHand(dc, cx, cy, minDeg, r * 0.88, r * 0.05, r * 0.12, Theme.WHITE, Theme.BLUE);
 
-        var a = rad(t.sec * 6.0);
-        var tail = r * 0.18;
-        var len = r * 0.94;
-        dc.setPenWidth(3);
-        dc.setColor(Theme.RED, Graphics.COLOR_TRANSPARENT);
-        dc.drawLine(
-            cx - Math.sin(a) * tail, cy + Math.cos(a) * tail,
-            cx + Math.sin(a) * len, cy - Math.cos(a) * len);
-        dc.setPenWidth(1);
+        if (!_asleep) {                       // the second hand is the only thing low-power mode drops
+            var a = rad(t.sec * 6.0);
+            var tail = r * 0.18;
+            var len = r * 0.94;
+            dc.setPenWidth(3);
+            dc.setColor(Theme.RED, Graphics.COLOR_TRANSPARENT);
+            dc.drawLine(
+                cx - Math.sin(a) * tail, cy + Math.cos(a) * tail,
+                cx + Math.sin(a) * len, cy - Math.cos(a) * len);
+            dc.setPenWidth(1);
+        }
 
         drawRoundel(dc, cx, cy, r);
     }
