@@ -53,7 +53,7 @@ BLUE_DIM, NAVY_DIM, RED_DIM = col("BLUE_DIM"), col("NAVY_DIM"), col("RED_DIM")
 WHITE, BLACK = col("WHITE"), col("BLACK")
 GREY = col("GREY")
 CHROME = "#555555"          # the mock watch bezel in the images; not part of the face
-ZONE_COLORS = {1: "#FFD400", 2: "#E040FB", 3: "#3DDC84", 4: "#FF8A00", 5: "#00C0FF"}   # touch targets: yellow, magenta, green, orange, cyan
+ZONE_COLORS = {1: "#E040FB", 2: "#3DDC84", 3: "#FF8A00", 4: "#00C0FF"}   # touch targets: magenta, green, orange, cyan
 GAP, TICK_INSET, RING_TICK_GAP = num("GAP"), num("TICK_INSET"), num("RING_TICK_GAP")
 TICK_MAJOR, TICK_MINOR = num("TICK_MAJOR"), num("TICK_MINOR")
 BATT_W, BATT_H, BATT_R, BATT_TERM_W, BATT_TERM_H, BATT_PAD = (num("BATT_W"), num("BATT_H"), num("BATT_R"),
@@ -62,12 +62,13 @@ BATT_W, BATT_H, BATT_R, BATT_TERM_W, BATT_TERM_H, BATT_PAD = (num("BATT_W"), num
 CARD_W, CARD_H, CARD_H_ROWS, CARD_H_TWO, CARD_R, CARD_PAD = (num("CARD_W"), num("CARD_H"), num("CARD_H_ROWS"),
                                                               num("CARD_H_TWO"), num("CARD_R"), num("CARD_PAD"))
 CARD_DETAIL2_PITCH = num("CARD_DETAIL2_PITCH")
+CARD_CHEVRON_HALF_W, CARD_CHEVRON_HALF_H = num("CARD_CHEVRON_HALF_W"), num("CARD_CHEVRON_HALF_H")
 CARD_SWATCH_H, CARD_SWATCH_GAP = num("CARD_SWATCH_H"), num("CARD_SWATCH_GAP")
 CARD_TITLE_Y, CARD_BIG_Y, CARD_DETAIL_Y, CARD_ROW_Y, CARD_ROW_PITCH = (num("CARD_TITLE_Y"), num("CARD_BIG_Y"),
                                                                         num("CARD_DETAIL_Y"), num("CARD_ROW_Y"),
                                                                         num("CARD_ROW_PITCH"))
 WINDOW_DATE_DX = num("WINDOW_DATE_DX")
-TOUCH_R, TOUCH_TEMP_HALF_R, TOUCH_ARC_ANGLE = num("TOUCH_R"), num("TOUCH_TEMP_HALF_R"), num("TOUCH_ARC_ANGLE")
+TOUCH_R, TOUCH_ARC_ANGLE = num("TOUCH_R"), num("TOUCH_ARC_ANGLE")
 TOUCH_RING_OUT, TOUCH_RING_IN = num("TOUCH_RING_OUT"), num("TOUCH_RING_IN")
 DIM = {BLUE: BLUE_DIM, NAVY: NAVY_DIM, RED: RED_DIM}
 # Theme.metricColor(): one colour per metric everywhere
@@ -204,6 +205,10 @@ def draw_card(s, kind):
         "activity": ("ACTIVITY", "", ""),
     }[kind]
     s.text(CX, top + CARD_TITLE_Y, title, "label", GREY)
+    if kind == "date":                                   # touch the date card for the weather
+        ax, ay = left + CARD_W - CARD_PAD, top + ch / 2
+        s.line((ax - CARD_CHEVRON_HALF_W, ay - CARD_CHEVRON_HALF_H), (ax + CARD_CHEVRON_HALF_W, ay), GREY, 2)
+        s.line((ax + CARD_CHEVRON_HALF_W, ay), (ax - CARD_CHEVRON_HALF_W, ay + CARD_CHEVRON_HALF_H), GREY, 2)
     if rows:
         for i, (n, v) in enumerate([("Steps", "6214 / 10000"), ("Active", "68 / 150 min"), ("Body battery", "78")]):
             y = top + CARD_ROW_Y + i * CARD_ROW_PITCH
@@ -234,8 +239,6 @@ def dial_into(s, ox, oy, zones=False, card=None):
         s.line(pt(inner, 90 - i * 6), pt(outer, 90 - i * 6),
                WHITE if major else GREY, 4 if major else 2)
     draw_badge(s, CY - R * .4)
-    temp_y = CY - (RING_OUT - PITCH)                 # Geometry.tempY()
-    s.text(CX, temp_y, "18&#176;C", "value", WHITE)  # the weather tap target
     arc = RING_OUT - PITCH                           # one arc: the middle ring's distance from the centre
     sx = CX + arc                                    # the date window at 3 o'clock
     hl, hv = FONT_PX["label"] * 1.2, FONT_PX["value"] * 1.2        # approximate line heights
@@ -256,26 +259,20 @@ def dial_into(s, ox, oy, zones=False, card=None):
         z = ZONE_COLORS
         s.add('<clipPath id="scr"><rect width="%d" height="%d" rx="70"/></clipPath><g clip-path="url(#scr)">' % (W, H))
         shape = 'fill="%s" fill-opacity=".25" stroke="%s" stroke-width="2"'
-        top_lo, top_hi = 90 - TOUCH_ARC_ANGLE, 90 + TOUCH_ARC_ANGLE          # the temperature arc, around 12 o'clock
-        t_in, t_out = arc - TOUCH_TEMP_HALF_R, arc + TOUCH_TEMP_HALF_R
-        tband = ([pt(t_out, a_) for a_ in range(top_lo, top_hi + 1, 3)]
-                 + [pt(t_in, a_) for a_ in range(top_hi, top_lo - 1, -3)])
-        s.add('<polygon points="%s" %s/>' % (pts(tband), shape % (z[1], z[1])))
-        s.add('<circle cx="%.1f" cy="%.1f" r="%.1f" %s/>' % (CX + arc, CY, R * TOUCH_R, shape % (z[2], z[2])))
-        s.add('<circle cx="%.1f" cy="%.1f" r="%.1f" %s/>' % (CX - arc, CY, R * TOUCH_R, shape % (z[3], z[3])))
-        s.add('<circle cx="%.1f" cy="%.1f" r="%.1f" %s/>' % (CX, CY, R * TOUCH_R, shape % (z[4], z[4])))
+        s.add('<circle cx="%.1f" cy="%.1f" r="%.1f" %s/>' % (CX + arc, CY, R * TOUCH_R, shape % (z[1], z[1])))
+        s.add('<circle cx="%.1f" cy="%.1f" r="%.1f" %s/>' % (CX - arc, CY, R * TOUCH_R, shape % (z[2], z[2])))
+        s.add('<circle cx="%.1f" cy="%.1f" r="%.1f" %s/>' % (CX, CY, R * TOUCH_R, shape % (z[3], z[3])))
         lo_a, hi_a = 270 - TOUCH_ARC_ANGLE, 270 + TOUCH_ARC_ANGLE
         band = ([pt(r_hi, a_) for a_ in range(lo_a, hi_a + 1, 3)]
                 + [pt(r_lo, a_) for a_ in range(hi_a, lo_a - 1, -3)])
-        s.add('<polygon points="%s" %s/>' % (pts(band), shape % (z[5], z[5])))
+        s.add('<polygon points="%s" %s/>' % (pts(band), shape % (z[4], z[4])))
         s.add('</g>')                                   # end of the screen clip
         # The number badge always sits centred on the top edge of its target's outline.
         badge = lambda x, y, n: (s.circle(x, y, 12, z[n]), s.text(x, y, str(n), "label", BLACK))
-        badge(CX, CY - t_out, 1)                        # temperature: top (outer edge) of its arc
-        badge(CX + arc, CY - R * TOUCH_R, 2)                # date: top of its circle
-        badge(CX - arc, CY - R * TOUCH_R, 3)                # battery: top of its circle
-        badge(CX, CY - R * TOUCH_R, 4)                      # roundel: top of its circle
-        badge(CX, CY + r_lo, 5)                         # rings: top (inner edge) of the wedge
+        badge(CX + arc, CY - R * TOUCH_R, 1)                # date: top of its circle
+        badge(CX - arc, CY - R * TOUCH_R, 2)                # battery: top of its circle
+        badge(CX, CY - R * TOUCH_R, 3)                      # roundel: top of its circle
+        badge(CX, CY + r_lo, 4)                         # rings: top (inner edge) of the wedge
     if card:
         draw_card(s, card)
     s.add("</g>")
@@ -289,19 +286,18 @@ def tap_zones():
     dial_into(s, 0, 0, True)
     x0 = W + 40
     s.text(x0, 40, "Touch targets", "title", WHITE, "start")
-    rows = [("1", ZONE_COLORS[1], "Temperature (12 o'clock)", "weather card: temperature, conditions, feels like"),
-            ("2", ZONE_COLORS[2], "Date (3 o'clock)", "date card: the day and date in full"),
-            ("3", ZONE_COLORS[3], "Battery (9 o'clock)", "battery card: percentage and days left"),
-            ("4", ZONE_COLORS[4], "Roundel (centre)", "heart rate card: bpm, resting rate, stress"),
-            ("5", ZONE_COLORS[5], "Rings (bottom)", "activity card: steps, active minutes, body battery")]
+    rows = [("1", ZONE_COLORS[1], "Date (3 o'clock)", "date card; touch it for the weather card"),
+            ("2", ZONE_COLORS[2], "Battery (9 o'clock)", "battery card: percentage and days left"),
+            ("3", ZONE_COLORS[3], "Roundel (centre)", "heart rate card: bpm, resting rate, stress"),
+            ("4", ZONE_COLORS[4], "Rings (bottom)", "activity card: steps, active minutes, body battery")]
     for i, (n, c, name, what) in enumerate(rows):
         y = 90 + i * 70
         s.circle(x0 + 12, y, 12, c)
         s.text(x0 + 12, y, n, "label", BLACK)
         s.text(x0 + 36, y, name, "value", WHITE, "start")
         s.text(x0 + 36, y + 28, what, "label", GREY, "start")
-    s.text(x0, 90 + 5 * 70 + 6, "Hold a zone for its card.", "label", GREY, "start")
-    s.text(x0, 90 + 5 * 70 + 32, "Touch anywhere to dismiss it, or it goes after 4 seconds.", "label", GREY, "start")
+    s.text(x0, 90 + 4 * 70 + 6, "Hold a zone for its card.", "label", GREY, "start")
+    s.text(x0, 90 + 4 * 70 + 32, "Touch anywhere to dismiss it, or it goes after 4 seconds.", "label", GREY, "start")
     return s.doc((W + 60 + lw) * 1.6, (H + 60) * 1.6, "-30 -30 %d %d" % (W + 60 + lw, H + 60))
 
 
@@ -315,7 +311,7 @@ def dial(zones=False):
 def cards():
     """The quick cards shown when a zone is pressed, over the dial."""
     s = Svg()
-    kinds = ["battery", "weather", "activity"]
+    kinds = ["battery", "date", "weather", "activity"]
     total = len(kinds) * W + (len(kinds) - 1) * 40
     s.add('<rect x="-20" y="-20" width="%d" height="%d" fill="#1b1b1b"/>' % (total + 40, H + 40))
     for i, k in enumerate(kinds):

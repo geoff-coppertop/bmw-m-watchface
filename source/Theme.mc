@@ -40,8 +40,9 @@ module Theme {
     const TICK_MINOR = 0.035;    // minor tick length, as a fraction of dial radius
 
     // ---- dial windows ------------------------------------------------------------
-    // The temperature (12 o'clock), the date (3) and the watch battery (9) all sit on one
-    // arc: the middle ring's distance from the centre (Geometry.middleRingR).
+    // The date (3 o'clock) and the watch battery (9) sit on one arc: the middle ring's distance
+    // from the centre (Geometry.middleRingR). The temperature is not on the dial: it is the weather
+    // card, reached by touching the date and then its card.
     // The date's two lines are stacked from the real font heights (Dc.getFontHeight), so they
     // never overlap whatever the device's fonts are. The date also sits a little inside the arc
     // so it clears the 3 o'clock tick.
@@ -70,12 +71,13 @@ module Theme {
     const CARD_ROW_PITCH = 36;
     const CARD_SWATCH_H = 22;     // the slanted M stripe, in a ring's colour, before each Activity row
     const CARD_SWATCH_GAP = 8;    // between the stripe and the label
+    const CARD_CHEVRON_HALF_W = 6; // the chevron on the date card: touch it for the weather
+    const CARD_CHEVRON_HALF_H = 11;
     const CARD_MS = 4000;         // how long a card stays up
 
     // ---- touch targets on the dial (Geometry.hitTest and the touch-targets wireframe) --
     const TOUCH_R = 0.36;         // radius of the roundel, date and battery circles, as a fraction of the dial radius
-    const TOUCH_ARC_ANGLE = 42;   // the temperature and rings targets are arcs: degrees either side of 12 / 6 o'clock
-    const TOUCH_TEMP_HALF_R = 30; // the temperature arc: half its thickness, around the temperature's own radius
+    const TOUCH_ARC_ANGLE = 42;   // the rings target is an arc: degrees either side of 6 o'clock
     const TOUCH_RING_OUT = 14;    // pixels beyond the outer ring
     const TOUCH_RING_IN = 20;     // pixels inside the inner ring
 

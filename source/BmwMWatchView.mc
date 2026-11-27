@@ -7,7 +7,6 @@ import Toybox.SensorHistory;
 import Toybox.System;
 import Toybox.Time;
 import Toybox.Time.Gregorian;
-import Toybox.Weather;
 import Toybox.WatchUi;
 
 // Analog chronograph watchface in BMW M Motorsport colours. All colours,
@@ -72,7 +71,6 @@ class BmwMWatchView extends WatchUi.WatchFace {
 
         drawBezel(dc, cx, cy, r);
         drawMMark(dc, cx, cy - r * 0.4, r);
-        drawTemperature(dc, cx, Geometry.tempY(cy, r));
         var info = Gregorian.info(Time.now(), Time.FORMAT_MEDIUM);
         drawWindow(dc, cx + Geometry.middleRingR(r) + Theme.WINDOW_DATE_DX, cy, info.day_of_week.toString().toUpper(), info.day.toString());
         drawBatteryIcon(dc, cx - Geometry.middleRingR(r), cy);
@@ -88,10 +86,11 @@ class BmwMWatchView extends WatchUi.WatchFace {
 
     // ---- touch --------------------------------------------------------------
 
-    // A touch on a zone shows its card; a touch anywhere dismisses a card that is up. A watch face
-    // is documented to receive only a press (touch and hold: WatchFaceDelegate has no tap), and
-    // the simulator sends nothing else, so a hold is what works; a device that also sends a tap
-    // gets the same behaviour. Returns true if the touch was used.
+    // A touch on a zone shows its card; a touch anywhere dismisses a card that is up, except on the
+    // date card: touching that card (or the date again) leads on to the weather card, which is the
+    // only way to see the temperature. A watch face is documented to receive only a press (touch
+    // and hold: WatchFaceDelegate has no tap), and the simulator sends nothing else, so a hold is
+    // what works; a device that also sends a tap gets the same behaviour. Returns true if used.
     function handleTouch(x as Number, y as Number) as Boolean {
         // One touch can be reported twice (as a tap and as a press): count it once.
         var now = System.getTimer();
@@ -100,16 +99,25 @@ class BmwMWatchView extends WatchUi.WatchFace {
         }
         _lastTouch = now;
 
-        if (_card != null) {
+        var hit = Geometry.hitTest(x, y, _w, _h, _r);
+        var shown = _card;
+        if (shown != null) {
             closeCard();
+            if (shown == :date && (hit == :date || inCard(x, y, shown))) {
+                showCard(:weather);
+            }
             return true;
         }
-        var hit = Geometry.hitTest(x, y, _w, _h, _r);
         if (hit == null) {
             return false;
         }
         showCard(hit);
         return true;
+    }
+
+    // Is (x, y) inside the card for this zone? The card is centred on the screen.
+    private function inCard(x as Number, y as Number, kind as Symbol) as Boolean {
+        return (x - _w / 2).abs() <= Theme.CARD_W / 2 && (y - _h / 2).abs() <= _cards.height(kind) / 2;
     }
 
     private function showCard(kind as Symbol) as Void {
@@ -245,13 +253,6 @@ class BmwMWatchView extends WatchUi.WatchFace {
         dc.fillPolygon(pts);
     }
 
-    // The temperature alone above the badge; it is also the weather tap target.
-    private function drawTemperature(dc as Dc, cx as Numeric, y as Numeric) as Void {
-        dc.setColor(_asleep ? Theme.GREY : Theme.WHITE, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, y, Fonts.value, weatherText(),
-            Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-    }
-
     // The watch battery as a simple icon that empties as the battery drains: a grey outline
     // and terminal, a white fill (red below 20%). The exact figure is on the quick card.
     private function drawBatteryIcon(dc as Dc, x as Numeric, y as Numeric) as Void {
@@ -364,16 +365,5 @@ class BmwMWatchView extends WatchUi.WatchFace {
     private function bodyBatFrac() as Float {
         var bb = bodyBattery();
         return bb == null ? 0.0 : bb / 100.0;
-    }
-
-    private function weatherText() as String {
-        if (Toybox has :Weather) {
-            var cond = Weather.getCurrentConditions();
-            if (cond != null && cond.temperature != null) {
-                var imperial = Units.tempImperial();
-                return Units.temp(cond.temperature, imperial).toString() + Units.tempUnit(imperial);
-            }
-        }
-        return "--°";
     }
 }

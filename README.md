@@ -26,13 +26,15 @@ simulator screenshots. They are generated from `source/Theme.mc` by
 - M badge at 12 o'clock, drawn from the flat M logo's geometry.
 - Three activity rings inside the lower dial, in the badge colours:
   steps (blue), weekly active minutes (navy) and body battery (red).
-- Three readouts on one arc, the same distance from the centre as the middle ring: the
-  temperature at 12 o'clock, the date at 3 o'clock, and the watch battery at 9 o'clock as a
-  simple icon that empties as the battery drains (red below 20%).
-- Quick cards. Hold the temperature, date, battery, roundel or rings and a small card appears
-  over the dial with a little more detail: weather and feels-like, the date in full, battery
-  percentage and days left, heart rate with resting rate and stress, steps / active minutes /
-  body battery. Touch anywhere to dismiss it; it also goes after four seconds.
+- Two readouts on one arc, the same distance from the centre as the middle ring: the date at
+  3 o'clock, and the watch battery at 9 o'clock as a simple icon that empties as the battery
+  drains (red below 20%). The temperature is not on the dial.
+- Quick cards. Hold the date, battery, roundel or rings and a small card appears over the dial
+  with a little more detail: the date in full, battery percentage and days left, heart rate with
+  resting rate and stress, steps / active minutes / body battery, each row marked with a slanted
+  M stripe in its ring's colour. Touch anywhere to dismiss it; it also goes after four seconds.
+- The weather is behind the date: touch the date card (it has a chevron) and the weather card
+  replaces it, with the temperature, conditions, feels-like, and the day's high and low.
 
 **Why a hold, and why no pages.** Garmin's `WatchFaceDelegate` documents only `onPress` (touch and
 hold). A plain tap and a swipe are never delivered to a watch face, and the simulator sends only
@@ -127,7 +129,7 @@ vary slightly.
 ## Tests
 
 The logic that does not need the watch is split into small modules (`Geometry`, `Logo`, `Stats`,
-`Units`, `Theme`) and covered by Connect IQ unit tests in `source/tests/`: 21 tests for the touch
+`Units`, `Theme`) and covered by Connect IQ unit tests in `source/tests/`: 20 tests for the touch
 hit-testing, the badge geometry, number formatting, the unit conversion and the theme mappings.
 Drawing code and anything that reads live watch data is not tested.
 
@@ -154,7 +156,7 @@ Everything visual comes from `source/Theme.mc`, so a change there changes the wh
   overlap whatever the device's fonts are.
 
 The touch targets' sizes (the shared radius of the roundel, date and battery circles, the
-temperature and rings arcs) are tokens too, read by both the app and the wireframe tool, so the
+rings arc) are tokens too, read by both the app and the wireframe tool, so the
 touch-targets image follows the code. The dial's own layout (badge, hands, roundel, tick lengths)
 is written as fractions of the dial radius in `BmwMWatchView.mc` rather than tokens.
 
@@ -197,7 +199,7 @@ See [Running on Windows or macOS](#running-on-windows-or-macos-no-container).
 
 ## Status
 
-Compiled and run on a Venu X1 and in the Windows simulator; the 21 unit tests pass.
+Compiled and run on a Venu X1 and in the Windows simulator; the unit tests pass.
 
 - A watch face may not use `Toybox.Timer` (the first run on a watch failed with "Symbol 'start' not
   available to 'Watch Face'"), so the card expires by timestamp, checked in `onUpdate`. If a card

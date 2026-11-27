@@ -12,14 +12,20 @@ import Toybox.Weather;
 // The quick card shown over the dial when a zone is touched: a little more detail than the face
 // shows (weather and feels-like, the date in full, battery and days left, heart rate with resting
 // rate and stress, steps / active minutes / body battery). It is not a page: it disappears by
-// itself after a few seconds, or when you touch elsewhere.
+// itself after a few seconds, or when you touch elsewhere. The date card leads on to the weather
+// card (touch it); the temperature appears nowhere else.
 class Cards {
+
+    function height(kind as Symbol) as Number {
+        if (kind == :activity) { return Theme.CARD_H_ROWS; }
+        return (kind == :weather) ? Theme.CARD_H_TWO : Theme.CARD_H;
+    }
 
     function drawCard(dc as Dc, kind as Symbol) as Void {
         var w = dc.getWidth();
         var cx = w / 2;
         var rows = (kind == :activity);
-        var ch = rows ? Theme.CARD_H_ROWS : (kind == :weather ? Theme.CARD_H_TWO : Theme.CARD_H);
+        var ch = height(kind);
         var left = cx - Theme.CARD_W / 2;
         var top = dc.getHeight() / 2 - ch / 2;
 
@@ -103,6 +109,16 @@ class Cards {
             }
         }
 
+        if (kind == :date) {
+            // a chevron: touch the date card to go on to the weather
+            var ax = left + Theme.CARD_W - Theme.CARD_PAD;
+            var ay = top + ch / 2;
+            dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
+            dc.setPenWidth(2);
+            dc.drawLine(ax - Theme.CARD_CHEVRON_HALF_W, ay - Theme.CARD_CHEVRON_HALF_H, ax + Theme.CARD_CHEVRON_HALF_W, ay);
+            dc.drawLine(ax + Theme.CARD_CHEVRON_HALF_W, ay, ax - Theme.CARD_CHEVRON_HALF_W, ay + Theme.CARD_CHEVRON_HALF_H);
+            dc.setPenWidth(1);
+        }
         dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
         dc.drawText(cx, top + Theme.CARD_TITLE_Y, Fonts.label, title, j);
         if (!rows) {

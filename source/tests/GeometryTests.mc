@@ -17,8 +17,7 @@ function geometryRingsMatchTheBadgeStripes(logger as Test.Logger) as Boolean {
 (:test)
 function geometryHitTestOnTheVenuX1(logger as Test.Logger) as Boolean {
     // screen 448 x 486, dial radius 220, centre (224, 243)
-    Test.assertEqual(Geometry.hitTest(224, 76, 448, 486, 220), :weather);    // the temperature at 12 o'clock
-    Test.assertEqual(Geometry.hitTest(224, 100, 448, 486, 220), :weather);
+    Test.assert(Geometry.hitTest(224, 76, 448, 486, 220) == null);           // 12 o'clock: no temperature zone any more
     Test.assertEqual(Geometry.hitTest(391, 243, 448, 486, 220), :date);      // the date window at 3 o'clock
     Test.assertEqual(Geometry.hitTest(57, 243, 448, 486, 220), :battery);    // the battery icon at 9 o'clock
     Test.assertEqual(Geometry.hitTest(224, 243, 448, 486, 220), :hr);        // the roundel
@@ -40,9 +39,8 @@ function geometryHitTestMisses(logger as Test.Logger) as Boolean {
 }
 
 (:test)
-function geometryTemperatureMirrorsTheMiddleRing(logger as Test.Logger) as Boolean {
+function geometryMiddleRingRadius(logger as Test.Logger) as Boolean {
     Test.assert((Geometry.middleRingR(220) - 163.2).abs() < 0.01);          // 179.2 minus one 14 + 2 pitch
-    Test.assert((Geometry.tempY(243, 220) - 79.8).abs() < 0.01);            // the same distance above the centre
     return true;
 }
 
@@ -63,16 +61,5 @@ function geometryTouchRadiusComesFromTheTheme(logger as Test.Logger) as Boolean 
     var edge = (Theme.TOUCH_R * 220).toNumber();                            // 79 px on the Venu X1
     Test.assertEqual(Geometry.hitTest(224 + edge - 2, 243, 448, 486, 220), :hr);     // just inside
     Test.assert(Geometry.hitTest(224 + edge + 2, 243, 448, 486, 220) == null);       // just outside
-    return true;
-}
-
-(:test)
-function geometryTemperatureTargetIsAnArcLikeTheRings(logger as Test.Logger) as Boolean {
-    // along the arc, out toward the edge of its 42 degree wedge (40 degrees from straight up)
-    Test.assertEqual(Geometry.hitTest(331, 115, 448, 486, 220), :weather);
-    // past the wedge (45 degrees)
-    Test.assert(Geometry.hitTest(342, 125, 448, 486, 220) == null);
-    // off the arc's radius: a point the old rectangle covered, near the top corner
-    Test.assert(Geometry.hitTest(350, 80, 448, 486, 220) == null);
     return true;
 }
