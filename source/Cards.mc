@@ -74,9 +74,12 @@ class Cards {
             var act = Activity.getActivityInfo();
             if (act != null && act.currentHeartRate != null) { big = act.currentHeartRate.toString() + " bpm"; }
             var prof = UserProfile.getProfile();
-            var st2 = ActivityMonitor.getInfo().stressScore;
+            // breathing rate, in breaths per minute; some watches do not offer it, and some readings
+            // are not measured, so it may be "--"
+            var ai = ActivityMonitor.getInfo();
+            var rr = (ai has :respirationRate) ? ai.respirationRate : null;
             below.add("Resting " + ((prof != null && prof.restingHeartRate != null) ? prof.restingHeartRate.toString() : "--")
-                + " · Stress " + (st2 == null ? "--" : st2.toString()));
+                + " · Breath " + (rr == null ? "--" : rr.toString()));
         }
 
         var j = Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER;

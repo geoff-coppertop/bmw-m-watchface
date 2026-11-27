@@ -205,7 +205,7 @@ def draw_card(s, kind):
         "battery": ("@battery", "82%", ["6.3 days left"]),
         "weather": ("Wed, 25 Nov, 2026", "18&#176;C",
                     ["Partly cloudy &#183; feels 16&#176;", "High 20&#176; &#183; Low 9&#176;"]),
-        "hr": ("@heart", "72 bpm", ["Resting 52 &#183; Stress 34"]),
+        "hr": ("@heart", "72 bpm", ["Resting 52 &#183; Breath 14"]),
     }[kind]
     hl, ht = FONT_PX["label"], FONT_PX["title"]           # line heights: the font sizes (getFontHeight)
     total = ht + len(below) * (hl + CARD_LINE_GAP) + (hl + CARD_LINE_GAP if above else 0)
@@ -293,7 +293,7 @@ def tap_zones():
     s.text(x0, 40, "Touch targets", "title", WHITE, "start")
     rows = [("1", ZONE_COLORS[1], "Date (3 o'clock)", "weather card: day and date, temperature, conditions, high and low"),
             ("2", ZONE_COLORS[2], "Battery (9 o'clock)", "battery card: percentage and days left"),
-            ("3", ZONE_COLORS[3], "Roundel (centre)", "heart rate card: bpm, resting rate, stress"),
+            ("3", ZONE_COLORS[3], "Roundel (centre)", "heart rate card: bpm, resting rate, breathing rate"),
             ("4", ZONE_COLORS[4], "Rings (bottom)", "activity card: steps, active minutes, body battery")]
     for i, (n, c, name, what) in enumerate(rows):
         y = 90 + i * 70
