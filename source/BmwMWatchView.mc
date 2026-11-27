@@ -13,6 +13,11 @@ import Toybox.WatchUi;
 class BmwMWatchView extends WatchUi.WatchFace {
 
     private var _asleep as Boolean = false;
+    private var _dbgEnter as Number = 0;              // DEBUG_SLEEP: how many onEnterSleep / onExitSleep so far
+    private var _dbgExit as Number = 0;
+    private var _dbgGap as Number = 0;                // ms between the last two onUpdate calls
+    private var _dbgTouch as String = "-";            // the last touch: P (press) or T (tap), z / a = asleep / awake
+    private var _dbgTouchAt as Number = 0;
     private var _sleepAt as Number = 0;               // System.getTimer() when onEnterSleep last arrived
     private var _lastUpdate as Number = -10000;       // System.getTimer() of the last onUpdate
     private var _error as String or Null = null;      // the last error caught while drawing or touching
@@ -43,12 +48,14 @@ class BmwMWatchView extends WatchUi.WatchFace {
     }
 
     function onEnterSleep() as Void {
+        _dbgEnter += 1;
         _asleep = true;
         _sleepAt = System.getTimer();
         _card = null;    // the card goes when the watch dims
     }
 
     function onExitSleep() as Void {
+        _dbgExit += 1;
         _asleep = false;
         WatchUi.requestUpdate();
     }
@@ -89,7 +96,25 @@ class BmwMWatchView extends WatchUi.WatchFace {
         if (_asleep && now - _sleepAt > 4000 && now - _lastUpdate < 4000) {
             _asleep = false;
         }
+        _dbgGap = now - _lastUpdate;
         _lastUpdate = now;
+    }
+
+    // DEBUG_SLEEP: called by the delegate for every touch, before anything decides what to do with it.
+    function noteTouch(kind as String) as Void {
+        _dbgTouch = kind + (_asleep ? "z" : "a");
+        _dbgTouchAt = System.getTimer();
+    }
+
+    private function drawDebug(dc as Dc, cy as Number) as Void {
+        var now = System.getTimer();
+        var w = dc.getWidth();
+        var j = Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER;
+        dc.setColor(Theme.WHITE, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(w / 2, cy - 170, Fonts.label,
+            (_asleep ? "SLEEP" : "AWAKE") + " E" + _dbgEnter + " X" + _dbgExit, j);
+        dc.drawText(w / 2, cy - 146, Fonts.label,
+            "u" + (_dbgGap / 100) + " " + _dbgTouch + ((now - _dbgTouchAt) / 1000) + "s", j);
     }
 
     private function errorText(ex as Lang.Exception) as String {
@@ -149,6 +174,9 @@ class BmwMWatchView extends WatchUi.WatchFace {
 
         if (_card != null) {
             _cards.drawCard(dc, _card);       // the quick card over the dial (only a touch makes one)
+        }
+        if (Theme.DEBUG_SLEEP) {
+            drawDebug(dc, cy);
         }
     }
 

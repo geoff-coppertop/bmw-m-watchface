@@ -24,6 +24,10 @@ module Theme {
                               // inactive dots, low-power (sleep) accents
     const BLACK = 0x000000;
 
+    // TEMPORARY: draw a two-line readout of the sleep / wake events at the top of the dial, to find
+    // why the face can get stuck in its low-power look. Set to false (or delete) once it is fixed.
+    const DEBUG_SLEEP = true;
+
     // ---- font roles ---------------------------------------------------------
     // Text is drawn with vector fonts at these pixel sizes (see Fonts.mc), so it can be smaller
     // than the smallest system font. If the device has no vector font, Fonts falls back to the
