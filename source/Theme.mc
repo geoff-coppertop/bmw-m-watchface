@@ -63,7 +63,7 @@ module Theme {
     const CARD_ROW_PITCH = 32;    // distance between a card's rows
     const CARD_SWATCH_H = 22;     // the slanted M stripe, in a ring's colour, before each Activity row
     const CARD_SWATCH_GAP = 8;    // between the stripe and the label
-    const CARD_MS = 4000;         // how long a card stays up
+    const CARD_MS = 3000;         // how long a card stays up (short, so it is gone before the watch's 8 s screen timeout is likely to hit)
 
     // ---- touch targets on the dial (Geometry.hitTest and the touch-targets wireframe) --
     const TOUCH_R = 0.36;         // radius of the roundel, date and battery circles, as a fraction of the dial radius

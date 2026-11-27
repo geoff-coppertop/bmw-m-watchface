@@ -286,7 +286,7 @@ def tap_zones():
         s.text(x0 + 36, y, name, "value", WHITE, "start")
         s.text(x0 + 36, y + 28, what, "label", GREY, "start")
     s.text(x0, 90 + 4 * 70 + 6, "Hold a zone for its card.", "label", GREY, "start")
-    s.text(x0, 90 + 4 * 70 + 32, "Touch anywhere to dismiss it, or it goes after 4 seconds.", "label", GREY, "start")
+    s.text(x0, 90 + 4 * 70 + 32, "Touch anywhere to dismiss it, or it goes after 3 seconds.", "label", GREY, "start")
     return s.doc((W + 60 + lw) * 1.6, (H + 60) * 1.6, "-30 -30 %d %d" % (W + 60 + lw, H + 60))
 
 

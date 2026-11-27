@@ -39,7 +39,7 @@ simulator screenshots. They are generated from `source/Theme.mc` by
   - Rings: `Steps`, `Active` (minutes this week) and `Body battery` (/ 100), each row marked with a
     slanted M stripe in its ring's colour.
 
-  Touch anywhere to dismiss a card; it also goes after four seconds. The temperature is not on the
+  Touch anywhere to dismiss a card; it also goes after three seconds (a watch face cannot keep the screen awake, so a short card is less likely to meet the screen timeout). The temperature is not on the
   dial: the date is the way to the weather.
 
 **Why a hold, and why no pages.** Garmin's `WatchFaceDelegate` documents only `onPress` (touch and
