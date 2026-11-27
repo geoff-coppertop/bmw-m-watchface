@@ -32,8 +32,8 @@ simulator screenshots. They are generated from `source/Theme.mc` by
   drains (red below 20%). The temperature is not on the dial.
 - Quick cards. Hold the date, battery, roundel or rings and a card appears over the dial. Every
   card has the same size and layout: rows of grey label on the left and white value on the right,
-  every value with its unit (the weather card has the day and date above its rows).
-  - Date: `Now`, `Conditions`, `Feels like`, `High / low` (the weather, under `Wed, 25 Sep, 2026`).
+  every value with its unit.
+  - Date: the weather: `Now`, `Conditions`, `Feels like`, `High / low`.
   - Battery: `Battery` (%) and `Time left` (days), plus `Status: Charging` when charging.
   - Roundel: `Current HR` and `Resting HR` (bpm), `Breathing` (brpm) and `Stress` (a 0 to 100 score
     with its band: resting, low, medium, high).

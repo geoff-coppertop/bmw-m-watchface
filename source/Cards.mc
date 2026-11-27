@@ -3,14 +3,12 @@ import Toybox.ActivityMonitor;
 import Toybox.Graphics;
 import Toybox.Lang;
 import Toybox.System;
-import Toybox.Time;
-import Toybox.Time.Gregorian;
 import Toybox.UserProfile;
 import Toybox.Weather;
 
 // The quick card shown over the dial when a zone is touched. Every card has the same size and the
 // same layout: rows of "label ... value", the label grey on the left and the value white on the
-// right (the weather card has the date above its rows). The activity rows also carry their
+// right. The activity rows also carry their
 // ring's colour as a slanted M stripe. It is not a page: it disappears by itself after a few
 // seconds, or when you touch elsewhere. The weather card is the only place the temperature appears.
 class Cards {
@@ -28,7 +26,6 @@ class Cards {
         dc.drawRoundedRectangle(left, top, Theme.CARD_W, ch, Theme.CARD_R);
         dc.setPenWidth(1);
 
-        var headerText = "";                              // only the weather card has one: the date
         var names = [] as Array<String>;
         var vals = [] as Array<String>;
         var colors = null as Array<Number> or Null;      // a ring colour per row, for the activity card
@@ -45,10 +42,7 @@ class Cards {
             }
 
         } else if (kind == :weather) {
-            // the header is the day and date, like "Wed, 25 Sep, 2026": the card is reached through
-            // the date
-            var d = Gregorian.info(Time.now(), Time.FORMAT_MEDIUM);
-            headerText = d.day_of_week.toString() + ", " + d.day.toString() + " " + d.month.toString() + ", " + d.year.toString();
+            // reached by touching the date, which is already on the dial, so the card does not repeat it
             var cond = (Toybox has :Weather) ? Weather.getCurrentConditions() : null;
             if (cond != null && cond.temperature != null) {
                 var hi = (cond.highTemperature != null) ? tempNum(cond.highTemperature).toString() : "--";
@@ -100,22 +94,11 @@ class Cards {
             colors = [Theme.metricColor(:steps), Theme.metricColor(:active), Theme.metricColor(:body)] as Array<Number>;
         }
 
-        // Stack the header and the rows from the real font heights, centred in the card.
-        var hl = dc.getFontHeight(Fonts.label);
+        // Stack the rows from the real font height, centred in the card.
         var hv = dc.getFontHeight(Fonts.value);
-        var gap = Theme.CARD_LINE_GAP;
         var pitch = Theme.CARD_ROW_PITCH;
         var rows = names.size();
-        var headerH = (headerText.length() > 0) ? hl + gap : 0;
-        var total = headerH + (rows - 1) * pitch + hv;
-        var y = top + (ch - total) / 2;
-
-        if (headerText.length() > 0) {
-            dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(cx, y + hl / 2, Fonts.label, headerText,
-                Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-        }
-        y += headerH;
+        var y = top + (ch - ((rows - 1) * pitch + hv)) / 2;
 
         var k = Theme.CARD_SWATCH_H / Logo.HEIGHT.toFloat();
         var sw = ((Logo.STRIPE_W + Logo.LEAN) * k).toNumber();
