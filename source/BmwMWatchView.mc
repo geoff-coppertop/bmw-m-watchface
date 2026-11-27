@@ -16,6 +16,7 @@ class BmwMWatchView extends WatchUi.WatchFace {
     private var _errorUntil as Number = 0;            // System.getTimer() until which it is shown
 
     private var _cards as Cards = new Cards();
+    private var _traced as Number = 0;               // TEMPORARY: how many draws have printed trace lines
     private var _low as Boolean = false;              // this draw is the watch's low-power (always-on) draw
     private var _card as Symbol or Null = null;       // the quick card showing, if any
     private var _cardAt as Number = 0;                // System.getTimer() when the card went up
@@ -66,12 +67,15 @@ class BmwMWatchView extends WatchUi.WatchFace {
     // of a silent crash back to the default face (the watch's crash log is easy to miss). If the
     // face shows "ERROR", the message below it says what failed; send it along.
     function onUpdate(dc as Dc) as Void {
+        var trace = _traced < 3;                       // TEMPORARY: trace the first three draws to the console
+        if (trace) { _traced += 1; System.println("TRACE onUpdate " + _traced + ": start"); }
         try {
             if (_error != null && System.getTimer() < _errorUntil) {
                 drawError(dc);
                 return;
             }
             drawFace(dc);
+            if (trace) { System.println("TRACE onUpdate " + _traced + ": drawn"); }
         } catch (ex) {
             _error = errorText(ex);
             _errorUntil = System.getTimer() + 10000;
@@ -116,7 +120,9 @@ class BmwMWatchView extends WatchUi.WatchFace {
         _w = w;
         _h = h;
         _r = r;
+        if (_traced <= 3) { System.println("TRACE before getDisplayMode, has=" + (System has :getDisplayMode)); }
         _low = lowPowerMode();
+        if (_traced <= 3) { System.println("TRACE low=" + _low); }
         if (_low) {
             _card = null;                     // no card in the always-on look
         }
