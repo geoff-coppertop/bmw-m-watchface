@@ -12,14 +12,6 @@ import Toybox.WatchUi;
 // spacing constants and font roles come from the Theme module.
 class BmwMWatchView extends WatchUi.WatchFace {
 
-    private var _asleep as Boolean = false;
-    private var _dbgEnter as Number = 0;              // DEBUG_SLEEP: how many onEnterSleep / onExitSleep so far
-    private var _dbgExit as Number = 0;
-    private var _dbgGap as Number = 0;                // ms between the last two onUpdate calls
-    private var _dbgTouch as String = "-";            // the last touch: P (press) or T (tap), z / a = asleep / awake
-    private var _dbgTouchAt as Number = 0;
-    private var _sleepAt as Number = 0;               // System.getTimer() when onEnterSleep last arrived
-    private var _lastUpdate as Number = -10000;       // System.getTimer() of the last onUpdate
     private var _error as String or Null = null;      // the last error caught while drawing or touching
     private var _errorUntil as Number = 0;            // System.getTimer() until which it is shown
 
@@ -47,16 +39,14 @@ class BmwMWatchView extends WatchUi.WatchFace {
             + " screen=" + dc.getWidth() + "x" + dc.getHeight());
     }
 
+    // The face has no low-power look of its own: with Always-On Display off the watch simply turns
+    // the screen off, so the face always draws the same full dial. (An earlier dimmed, no-second-hand
+    // style could get stuck on an awake screen.) The only thing done on dimming is to drop a card.
     function onEnterSleep() as Void {
-        _dbgEnter += 1;
-        _asleep = true;
-        _sleepAt = System.getTimer();
-        _card = null;    // the card goes when the watch dims
+        _card = null;
     }
 
     function onExitSleep() as Void {
-        _dbgExit += 1;
-        _asleep = false;
         WatchUi.requestUpdate();
     }
 
@@ -64,7 +54,6 @@ class BmwMWatchView extends WatchUi.WatchFace {
     // of a silent crash back to the default face (the watch's crash log is easy to miss). If the
     // face shows "ERROR", the message below it says what failed; send it along.
     function onUpdate(dc as Dc) as Void {
-        wakeIfAwake();
         try {
             if (_error != null && System.getTimer() < _errorUntil) {
                 drawError(dc);
@@ -77,44 +66,6 @@ class BmwMWatchView extends WatchUi.WatchFace {
             System.println("ERROR in onUpdate: " + _error);
             drawError(dc);
         }
-    }
-
-    // A colour as drawn now: in low-power mode the same colour, dimmed (see Theme.lowPower).
-    private function tone(color as Number) as Number {
-        return _asleep ? Theme.lowPower(color) : color;
-    }
-
-    // In low-power mode the face keeps its colours but has no second hand, so it must leave that
-    // state when the screen really wakes. onExitSleep is not guaranteed to arrive (it did not when
-    // the screen timed out with a card up, which left the face stuck without a second hand on an
-    // awake screen), so the flag also clears itself from evidence that the screen is awake: updates
-    // arriving about once a second (in low-power mode the watch updates only once a minute). A
-    // touch must not clear it, nor be handled while it is set: the watch needs that touch to wake
-    // the screen.
-    private function wakeIfAwake() as Void {
-        var now = System.getTimer();
-        if (_asleep && now - _sleepAt > 4000 && now - _lastUpdate < 4000) {
-            _asleep = false;
-        }
-        _dbgGap = now - _lastUpdate;
-        _lastUpdate = now;
-    }
-
-    // DEBUG_SLEEP: called by the delegate for every touch, before anything decides what to do with it.
-    function noteTouch(kind as String) as Void {
-        _dbgTouch = kind + (_asleep ? "z" : "a");
-        _dbgTouchAt = System.getTimer();
-    }
-
-    private function drawDebug(dc as Dc, cy as Number) as Void {
-        var now = System.getTimer();
-        var w = dc.getWidth();
-        var j = Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER;
-        dc.setColor(Theme.WHITE, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(w / 2, cy - 170, Fonts.label,
-            (_asleep ? "SLEEP" : "AWAKE") + " E" + _dbgEnter + " X" + _dbgExit, j);
-        dc.drawText(w / 2, cy - 146, Fonts.label,
-            "u" + (_dbgGap / 100) + " " + _dbgTouch + ((now - _dbgTouchAt) / 1000) + "s", j);
     }
 
     private function errorText(ex as Lang.Exception) as String {
@@ -175,9 +126,6 @@ class BmwMWatchView extends WatchUi.WatchFace {
         if (_card != null) {
             _cards.drawCard(dc, _card);       // the quick card over the dial (only a touch makes one)
         }
-        if (Theme.DEBUG_SLEEP) {
-            drawDebug(dc, cy);
-        }
     }
 
     // ---- dial -----------------------------------------------------------
@@ -190,9 +138,6 @@ class BmwMWatchView extends WatchUi.WatchFace {
     // has no tap), and the simulator sends nothing else, so a hold is what works; a device that
     // also sends a tap gets the same behaviour. Returns true if the touch was used.
     function handleTouch(x as Number, y as Number) as Boolean {
-        if (_asleep) {
-            return false;       // low-power mode: leave the touch to the watch, so it can wake the screen
-        }
         try {
             return touch(x, y);
         } catch (ex) {
@@ -279,7 +224,7 @@ class BmwMWatchView extends WatchUi.WatchFace {
         dc.drawArc(cx, cy, R, Graphics.ARC_COUNTER_CLOCKWISE, 240, 300);
         if (frac > 1.0) { frac = 1.0; }
         if (frac > 0.01) {
-            dc.setColor(tone(color), Graphics.COLOR_TRANSPARENT);
+            dc.setColor(color, Graphics.COLOR_TRANSPARENT);
             dc.drawArc(cx, cy, R, Graphics.ARC_COUNTER_CLOCKWISE, 240, 240 + 60 * frac);
         }
         dc.setPenWidth(1);
@@ -300,7 +245,7 @@ class BmwMWatchView extends WatchUi.WatchFace {
 
         var colors = [Theme.BLUE, Theme.NAVY, Theme.RED];
         for (var i = 0; i < 3; i++) {
-            dc.setColor(tone(colors[i]), Graphics.COLOR_TRANSPARENT);
+            dc.setColor(colors[i], Graphics.COLOR_TRANSPARENT);
             dc.fillPolygon(Logo.stripePoints(i, left, top, k));     // shared with the page header
         }
 
@@ -326,12 +271,12 @@ class BmwMWatchView extends WatchUi.WatchFace {
         var ri = R * 0.72;
 
         dc.setPenWidth(5);
-        dc.setColor(tone(Theme.BLUE), Graphics.COLOR_TRANSPARENT);
+        dc.setColor(Theme.BLUE, Graphics.COLOR_TRANSPARENT);
         dc.drawArc(cx, cy, R + 6, Graphics.ARC_COUNTER_CLOCKWISE, 100, 170);
-        dc.setColor(tone(Theme.NAVY), Graphics.COLOR_TRANSPARENT);
+        dc.setColor(Theme.NAVY, Graphics.COLOR_TRANSPARENT);
         dc.drawArc(cx, cy, R + 6, Graphics.ARC_COUNTER_CLOCKWISE, 10, 80);
         dc.drawArc(cx, cy, R + 6, Graphics.ARC_COUNTER_CLOCKWISE, 280, 350);
-        dc.setColor(tone(Theme.RED), Graphics.COLOR_TRANSPARENT);
+        dc.setColor(Theme.RED, Graphics.COLOR_TRANSPARENT);
         dc.drawArc(cx, cy, R + 6, Graphics.ARC_COUNTER_CLOCKWISE, 190, 260);
         dc.setPenWidth(1);
 
@@ -339,7 +284,7 @@ class BmwMWatchView extends WatchUi.WatchFace {
         dc.fillCircle(cx, cy, R);
         dc.setColor(Theme.WHITE, Graphics.COLOR_TRANSPARENT);
         dc.fillCircle(cx, cy, ri);
-        dc.setColor(tone(Theme.BLUE), Graphics.COLOR_TRANSPARENT);
+        dc.setColor(Theme.BLUE, Graphics.COLOR_TRANSPARENT);
         fillSector(dc, cx, cy, ri, 90, 180);
         fillSector(dc, cx, cy, ri, 270, 360);
     }
@@ -358,7 +303,7 @@ class BmwMWatchView extends WatchUi.WatchFace {
     // The watch battery icon at 9 o'clock, centred on x (see BatteryIcon). The exact figure is on
     // the quick card.
     private function drawBatteryIcon(dc as Dc, x as Numeric, y as Numeric) as Void {
-        BatteryIcon.draw(dc, x - Theme.BATT_W / 2, y, System.getSystemStats().battery, tone(Theme.RED));
+        BatteryIcon.draw(dc, x - Theme.BATT_W / 2, y, System.getSystemStats().battery);
     }
 
     private function drawWindow(dc as Dc, x as Numeric, y as Numeric, label as String, value as String) as Void {
@@ -381,20 +326,18 @@ class BmwMWatchView extends WatchUi.WatchFace {
         var hourDeg = ((t.hour % 12) + t.min / 60.0) * 30.0;
         var minDeg = (t.min + t.sec / 60.0) * 6.0;
 
-        drawHand(dc, cx, cy, hourDeg, r * 0.56, r * 0.07, r * 0.1, Theme.WHITE, tone(Theme.BLUE));
-        drawHand(dc, cx, cy, minDeg, r * 0.88, r * 0.05, r * 0.12, Theme.WHITE, tone(Theme.BLUE));
+        drawHand(dc, cx, cy, hourDeg, r * 0.56, r * 0.07, r * 0.1, Theme.WHITE, Theme.BLUE);
+        drawHand(dc, cx, cy, minDeg, r * 0.88, r * 0.05, r * 0.12, Theme.WHITE, Theme.BLUE);
 
-        if (!_asleep) {                       // the second hand is the only thing low-power mode drops
-            var a = rad(t.sec * 6.0);
-            var tail = r * 0.18;
-            var len = r * 0.94;
-            dc.setPenWidth(3);
-            dc.setColor(Theme.RED, Graphics.COLOR_TRANSPARENT);
-            dc.drawLine(
-                cx - Math.sin(a) * tail, cy + Math.cos(a) * tail,
-                cx + Math.sin(a) * len, cy - Math.cos(a) * len);
-            dc.setPenWidth(1);
-        }
+        var a = rad(t.sec * 6.0);
+        var tail = r * 0.18;
+        var len = r * 0.94;
+        dc.setPenWidth(3);
+        dc.setColor(Theme.RED, Graphics.COLOR_TRANSPARENT);
+        dc.drawLine(
+            cx - Math.sin(a) * tail, cy + Math.cos(a) * tail,
+            cx + Math.sin(a) * len, cy - Math.cos(a) * len);
+        dc.setPenWidth(1);
 
         drawRoundel(dc, cx, cy, r);
     }

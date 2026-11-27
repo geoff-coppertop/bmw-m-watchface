@@ -22,8 +22,7 @@ simulator screenshots. They are generated from `source/Theme.mc` by
 ## Features
 
 - Analog chronograph dial with a white-sword hand set, a red second hand and a roundel at the hand
-  pivot. In low-power mode the colours are dimmed to 60% (never grey, so the ring fills still read
-  against their empty tracks) and the second hand is dropped.
+  pivot.
 - M badge at 12 o'clock, centred between the roundel and the 12 o'clock tick, drawn from the flat M logo's geometry.
 - Three activity rings inside the lower dial, in the badge colours:
   steps (blue), weekly active minutes (navy) and body battery (red).
@@ -138,7 +137,7 @@ vary slightly.
 ## Tests
 
 The logic that does not need the watch is split into small modules (`Geometry`, `Logo`, `Stats`,
-`Units`, `Theme`) and covered by Connect IQ unit tests in `source/tests/`: 23 tests for the touch
+`Units`, `Theme`) and covered by Connect IQ unit tests in `source/tests/`: 22 tests for the touch
 hit-testing, the badge geometry, number formatting, the unit conversion and the theme mappings.
 Drawing code and anything that reads live watch data is not tested.
 
@@ -221,15 +220,11 @@ Compiled and run on a Venu X1 and in the Windows simulator; the unit tests pass.
   `ERROR` and the message for 10 seconds (and prints it to the console) instead of crashing back to
   the default face. The watch's own crash log is `GARMIN/APPS/LOGS/CIQ_LOG.YML` (`.BAK` is the older
   one); it only records errors the watch reports, so a hard freeze may leave nothing.
-- Low-power mode: the colours are dimmed to 60% (`Theme.LOW_POWER_PCT`, `Theme.lowPower`) and the
-  second hand is dropped. Grey was tried first and looked bad, and it made the ring fills
-  meaningless. On the watch the face once got stuck in the low-power look on an awake screen: the
-  screen had timed out with a card up and `onExitSleep` apparently never arrived (no crash log was
-  written, so it was not a crash). The `_asleep` flag now also clears when updates arrive about once
-  a second (`wakeIfAwake` in `BmwMWatchView.mc`). Touches are ignored (not consumed) while it is
-  set, so the watch can use them to wake the screen; an earlier version handled them, and the
-  screen could not be woken from the dim state. If the dial is dim while the screen is awake, look
-  there.
+- Low power: the face has no low-power look of its own. With Always-On Display off the watch just
+  turns the screen off, so the face always draws the same full dial (with the second hand). Earlier
+  versions dimmed the colours and hid the second hand when the watch dimmed; that state got stuck on
+  an awake screen (touching did not wake it, and no crash log was written), so it was removed. If you
+  turn Always-On on, the dial will be drawn at full brightness once a minute without further care.
 - Check on the watch that the Units setting appears in Garmin Connect and that changing it
   redraws the face (`onSettingsChanged`).
 - Layout clearances (date and battery against the ticks, the ring band against the ticks) were

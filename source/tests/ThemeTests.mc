@@ -11,15 +11,6 @@ function themeDimTintMatchesItsColour(logger as Test.Logger) as Boolean {
 }
 
 (:test)
-function themeLowPowerDimsEachColourToSixtyPercent(logger as Test.Logger) as Boolean {
-    Test.assertEqual(Theme.lowPower(Theme.BLUE), 0x003D6A);     // 00 66 B1 -> 00 3D 6A
-    Test.assertEqual(Theme.lowPower(Theme.NAVY), 0x002448);     // 00 3C 78 -> 00 24 48
-    Test.assertEqual(Theme.lowPower(Theme.RED), 0x88160E);      // E3 26 18 -> 88 16 0E
-    Test.assertEqual(Theme.lowPower(Theme.BLACK), 0x000000);
-    return true;
-}
-
-(:test)
 function themeOneColourPerMetric(logger as Test.Logger) as Boolean {
     Test.assertEqual(Theme.metricColor(:steps), Theme.BLUE);
     Test.assertEqual(Theme.metricColor(:active), Theme.NAVY);

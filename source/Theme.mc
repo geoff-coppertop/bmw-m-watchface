@@ -20,13 +20,8 @@ module Theme {
     const RED_DIM  = 0x3A0C08;
 
     const WHITE = 0xFFFFFF;   // primary text, the M letter, the active page dot
-    const GREY  = 0x999999;   // secondary text, labels, glyph strokes, chevrons,
-                              // inactive dots, low-power (sleep) accents
+    const GREY  = 0x999999;   // secondary text, labels, the minor ticks, the battery outline
     const BLACK = 0x000000;
-
-    // TEMPORARY: draw a two-line readout of the sleep / wake events at the top of the dial, to find
-    // why the face can get stuck in its low-power look. Set to false (or delete) once it is fixed.
-    const DEBUG_SLEEP = true;
 
     // ---- font roles ---------------------------------------------------------
     // Text is drawn with vector fonts at these pixel sizes (see Fonts.mc), so it can be smaller
@@ -75,18 +70,6 @@ module Theme {
     const TOUCH_ARC_ANGLE = 42;   // the rings target is an arc: degrees either side of 6 o'clock
     const TOUCH_RING_OUT = 14;    // pixels beyond the outer ring
     const TOUCH_RING_IN = 20;     // pixels inside the inner ring
-
-    // When the watch drops to low-power mode the face keeps its colours but dims them: each of the
-    // three channels scaled to this percentage. (Grey would lose which colour is which, and a fill
-    // dimmed to its own empty track would lose the gauge; 60% keeps both readable.)
-    const LOW_POWER_PCT = 60;
-
-    function lowPower(color as Number) as Number {
-        var r = ((color >> 16) & 0xFF) * LOW_POWER_PCT / 100;
-        var g = ((color >> 8) & 0xFF) * LOW_POWER_PCT / 100;
-        var b = (color & 0xFF) * LOW_POWER_PCT / 100;
-        return (r << 16) | (g << 8) | b;
-    }
 
     // The colour of each of the three dial rings.
     function metricColor(kind as Symbol) as Number {
