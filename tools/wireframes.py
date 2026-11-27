@@ -238,7 +238,7 @@ def dial_into(s, ox, oy, zones=False, card=None):
         inner = outer - (R * TICK_MAJOR if major else R * TICK_MINOR)
         s.line(pt(inner, 90 - i * 6), pt(outer, 90 - i * 6),
                WHITE if major else GREY, 4 if major else 2)
-    draw_badge(s, CY - R * .4)
+    draw_badge(s, CY - (R * .11 + 6 + 2.5 + TICK_INNER) / 2)    # Geometry.badgeCenterY(): midway between the roundel and the ticks
     arc = RING_OUT - PITCH                           # one arc: the middle ring's distance from the centre
     sx = CX + arc                                    # the date window at 3 o'clock
     hl, hv = FONT_PX["label"] * 1.2, FONT_PX["value"] * 1.2        # approximate line heights

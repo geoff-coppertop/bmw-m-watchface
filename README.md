@@ -23,7 +23,7 @@ simulator screenshots. They are generated from `source/Theme.mc` by
 
 - Analog chronograph dial with a white-sword hand set, a red second hand
   (hidden in low-power mode) and a roundel at the hand pivot.
-- M badge at 12 o'clock, drawn from the flat M logo's geometry.
+- M badge at 12 o'clock, centred between the roundel and the 12 o'clock tick, drawn from the flat M logo's geometry.
 - Three activity rings inside the lower dial, in the badge colours:
   steps (blue), weekly active minutes (navy) and body battery (red).
 - Two readouts on one arc, the same distance from the centre as the middle ring: the date at
@@ -129,7 +129,7 @@ vary slightly.
 ## Tests
 
 The logic that does not need the watch is split into small modules (`Geometry`, `Logo`, `Stats`,
-`Units`, `Theme`) and covered by Connect IQ unit tests in `source/tests/`: 20 tests for the touch
+`Units`, `Theme`) and covered by Connect IQ unit tests in `source/tests/`: 21 tests for the touch
 hit-testing, the badge geometry, number formatting, the unit conversion and the theme mappings.
 Drawing code and anything that reads live watch data is not tested.
 

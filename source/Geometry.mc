@@ -15,10 +15,26 @@ module Geometry {
         return (r * 0.2 / 99.0 * 36 * 0.866 + 0.5).toNumber();
     }
 
+    // Where the major ticks start (their inner end), measured from the dial centre.
+    function tickInnerR(r as Number) as Float {
+        return (r - Theme.TICK_INSET) - r * Theme.TICK_MAJOR;
+    }
+
     // Centre radius of the outer ring: Theme.RING_TICK_GAP inside the major ticks.
     function ringOuterR(r as Number) as Float {
-        var tickInner = (r - Theme.TICK_INSET) - r * Theme.TICK_MAJOR;
-        return tickInner - Theme.RING_TICK_GAP - ringWidth(r) / 2.0;
+        return tickInnerR(r) - Theme.RING_TICK_GAP - ringWidth(r) / 2.0;
+    }
+
+    // The outer edge of the roundel at the hand pivot: its radius, the gap to its coloured arcs,
+    // and half the arcs' 5 px pen.
+    function roundelOuterR(r as Number) as Float {
+        return r * 0.11 + 6 + 2.5;
+    }
+
+    // Where the M badge's centre sits: halfway between the roundel's outer edge and the major
+    // tick at 12 o'clock, so the badge has the same margin above and below it.
+    function badgeCenterY(cy as Number, r as Number) as Float {
+        return cy - (roundelOuterR(r) + tickInnerR(r)) / 2.0;
     }
 
     // Centre radius of the middle ring (the navy active minutes gauge).

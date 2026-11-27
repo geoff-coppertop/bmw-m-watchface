@@ -39,6 +39,14 @@ function geometryHitTestMisses(logger as Test.Logger) as Boolean {
 }
 
 (:test)
+function geometryBadgeIsCentredBetweenTheRoundelAndTheTicks(logger as Test.Logger) as Boolean {
+    Test.assert((Geometry.tickInnerR(220) - 192.2).abs() < 0.01);            // 220 - 8 inset - 19.8 major tick
+    Test.assert((Geometry.roundelOuterR(220) - 32.7).abs() < 0.01);          // 24.2 + 6 + half the 5 px pen
+    Test.assert((Geometry.badgeCenterY(243, 220) - 130.55).abs() < 0.01);    // 243 - (32.7 + 192.2) / 2
+    return true;
+}
+
+(:test)
 function geometryMiddleRingRadius(logger as Test.Logger) as Boolean {
     Test.assert((Geometry.middleRingR(220) - 163.2).abs() < 0.01);          // 179.2 minus one 14 + 2 pitch
     return true;
