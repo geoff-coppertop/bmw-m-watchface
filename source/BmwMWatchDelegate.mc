@@ -18,14 +18,12 @@ class BmwMWatchDelegate extends WatchUi.WatchFaceDelegate {
     function onTap(clickEvent as WatchUi.ClickEvent) as Boolean {
         var c = clickEvent.getCoordinates();
         System.println("TOUCH onTap " + c[0] + "," + c[1]);
-        _view.noteTouch("T");
         return _view.handleTouch(c[0], c[1]);
     }
 
     function onPress(clickEvent as WatchUi.ClickEvent) as Boolean {
         var c = clickEvent.getCoordinates();
         System.println("TOUCH onPress " + c[0] + "," + c[1]);
-        _view.noteTouch("P");
         return _view.handleTouch(c[0], c[1]);
     }
 }
