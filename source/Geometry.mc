@@ -44,7 +44,7 @@ module Geometry {
 
     // Which element a touch on the dial hit. Non-overlapping targets:
     //   date window -> :date, battery icon -> :battery, roundel area -> :hr, ring arc -> :activity.
-    // (The weather is not a zone of its own: it is the card behind the date card.)
+    // (The weather is not a zone of its own: the view shows the weather card for :date.)
     function hitTest(x as Number, y as Number, w as Number, h as Number, r as Number) as Symbol or Null {
         if (w == 0) { return null; }
         var cx = w / 2;
