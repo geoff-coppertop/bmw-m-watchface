@@ -21,4 +21,13 @@ module Stats {
         if (days >= 10) { return days.toNumber().toString() + " days"; }
         return tenthsText((days * 10).toNumber()) + " days";
     }
+
+    // The scale ActivityMonitor.Info.stressScore documents: 0-25 resting, 26-50 low,
+    // 51-75 medium, 76-100 high.
+    function stressBand(score as Number) as String {
+        if (score <= 25) { return "resting"; }
+        if (score <= 50) { return "low"; }
+        if (score <= 75) { return "medium"; }
+        return "high";
+    }
 }

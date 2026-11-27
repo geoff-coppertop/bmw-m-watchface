@@ -27,3 +27,16 @@ function statsDaysText(logger as Test.Logger) as Boolean {
     Test.assertEqual(Stats.daysText(12.7), "12 days");
     return true;
 }
+
+(:test)
+function statsStressBands(logger as Test.Logger) as Boolean {
+    Test.assertEqual(Stats.stressBand(0), "resting");
+    Test.assertEqual(Stats.stressBand(25), "resting");
+    Test.assertEqual(Stats.stressBand(26), "low");
+    Test.assertEqual(Stats.stressBand(50), "low");
+    Test.assertEqual(Stats.stressBand(51), "medium");
+    Test.assertEqual(Stats.stressBand(75), "medium");
+    Test.assertEqual(Stats.stressBand(76), "high");
+    Test.assertEqual(Stats.stressBand(100), "high");
+    return true;
+}

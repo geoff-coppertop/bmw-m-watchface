@@ -8,17 +8,21 @@ import Toybox.Time.Gregorian;
 import Toybox.UserProfile;
 import Toybox.Weather;
 
-// The quick card shown over the dial when a zone is touched: a little more detail than the face
-// shows. Every card is the same size. Weather (reached by touching the date) leads with the full
-// day and date; battery and heart rate have an icon there; activity has none (its rows carry their
-// ring's colour). It is not a page: it disappears by itself after a
-// few seconds, or when you touch elsewhere. The weather card is the only place the temperature
-// appears.
+// The quick card shown over the dial when a zone is touched. Every card has the same size and the
+// same layout: a small header (an icon, or the date for the weather) over rows of "label ... value",
+// the label grey on the left and the value white on the right. The activity rows also carry their
+// ring's colour as a slanted M stripe. It is not a page: it disappears by itself after a few
+// seconds, or when you touch elsewhere. The weather card is the only place the temperature appears.
 class Cards {
+
+    const HEADER_NONE = 0;
+    const HEADER_TEXT = 1;
+    const HEADER_BATTERY = 2;
+    const HEADER_HEART = 3;
 
     function drawCard(dc as Dc, kind as Symbol) as Void {
         var cx = dc.getWidth() / 2;
-        var ch = Theme.CARD_H;                          // every card is the same size
+        var ch = Theme.CARD_H;
         var left = cx - Theme.CARD_W / 2;
         var top = dc.getHeight() / 2 - ch / 2;
 
@@ -29,98 +33,119 @@ class Cards {
         dc.drawRoundedRectangle(left, top, Theme.CARD_W, ch, Theme.CARD_R);
         dc.setPenWidth(1);
 
-        if (kind == :activity) {
-            drawActivityRows(dc, left, top, ch);
-            return;
-        }
-
-        // A card is an optional small line, one big line, and up to three small lines under it,
-        // stacked from the real font heights and centred in the card. The battery and heart rate
-        // cards put their icon beside the big number.
-        var above = "";
-        var icon = false;                                // the battery icon beside the number
-        var heart = false;                               // or the heart, on the heart rate card
-        var big = "--";
-        var below = [] as Array<String>;
+        var header = HEADER_NONE;
+        var headerText = "";
+        var names = [] as Array<String>;
+        var vals = [] as Array<String>;
+        var colors = null as Array<Number> or Null;      // a ring colour per row, for the activity card
 
         if (kind == :battery) {
             var st = System.getSystemStats();
-            icon = true;                                 // the dial's battery icon says what this is
-            big = st.battery.toNumber().toString() + "%";
-            below.add(Stats.daysText(st.batteryInDays) + " left" + (st.charging ? " · Charging" : ""));
-
-        } else if (kind == :weather) {
-            // the small line is the day and date, like "Wed, 25 Sep, 2026": the card is reached
-            // through the date
-            var d = Gregorian.info(Time.now(), Time.FORMAT_MEDIUM);
-            above = d.day_of_week.toString() + ", " + d.day.toString() + " " + d.month.toString() + ", " + d.year.toString();
-            var cond = (Toybox has :Weather) ? Weather.getCurrentConditions() : null;
-            if (cond != null && cond.temperature != null) {
-                big = tempNum(cond.temperature).toString() + tempUnit();
-                var line = conditionText(cond.condition);
-                if (cond.feelsLikeTemperature != null) {
-                    line += (line.length() > 0 ? " · " : "") + "feels " + tempNum(cond.feelsLikeTemperature).toString() + tempUnit();
-                }
-                below.add(line);
-                var hi = (cond.highTemperature != null) ? tempNum(cond.highTemperature).toString() + tempUnit() : "--";
-                var lo = (cond.lowTemperature != null) ? tempNum(cond.lowTemperature).toString() + tempUnit() : "--";
-                below.add("High " + hi + " · Low " + lo);
-            } else {
-                below.add("No weather data");
+            header = HEADER_BATTERY;
+            names.add("Battery");
+            vals.add(st.battery.toNumber().toString() + "%");
+            names.add("Time left");
+            vals.add(Stats.daysText(st.batteryInDays));
+            if (st.charging) {
+                names.add("Status");
+                vals.add("Charging");
             }
 
-        } else {
-            // :hr, the roundel: a heart beside the number, and every figure has its unit
-            heart = true;
+        } else if (kind == :weather) {
+            // the header is the day and date, like "Wed, 25 Sep, 2026": the card is reached through
+            // the date
+            var d = Gregorian.info(Time.now(), Time.FORMAT_MEDIUM);
+            header = HEADER_TEXT;
+            headerText = d.day_of_week.toString() + ", " + d.day.toString() + " " + d.month.toString() + ", " + d.year.toString();
+            var cond = (Toybox has :Weather) ? Weather.getCurrentConditions() : null;
+            if (cond != null && cond.temperature != null) {
+                var hi = (cond.highTemperature != null) ? tempNum(cond.highTemperature).toString() : "--";
+                var lo = (cond.lowTemperature != null) ? tempNum(cond.lowTemperature).toString() : "--";
+                names.add("Now");
+                vals.add(tempNum(cond.temperature).toString() + tempUnit());
+                names.add("Conditions");
+                vals.add(conditionText(cond.condition));
+                names.add("Feels like");
+                vals.add((cond.feelsLikeTemperature != null) ? tempNum(cond.feelsLikeTemperature).toString() + tempUnit() : "--");
+                names.add("High / low");
+                vals.add(hi + "° / " + lo + tempUnit());
+            } else {
+                names.add("Weather");
+                vals.add("No data");
+            }
+
+        } else if (kind == :hr) {
+            header = HEADER_HEART;
             var act = Activity.getActivityInfo();
-            if (act != null && act.currentHeartRate != null) { big = act.currentHeartRate.toString() + " bpm"; }
             var prof = UserProfile.getProfile();
             // breathing rate, in breaths per minute (brpm); some watches do not offer it, and some
-            // readings are not measured, so it may be "--". Stress is a 0 to 100 score.
+            // readings are not measured, so it may be "--". Stress is a 0 to 100 score, shown with its
+            // band (resting, low, medium, high).
             var ai = ActivityMonitor.getInfo();
             var rr = (ai has :respirationRate) ? ai.respirationRate : null;
             var stress = ai.stressScore;
-            below.add("Resting " + ((prof != null && prof.restingHeartRate != null) ? prof.restingHeartRate.toString() : "--") + " bpm");
-            below.add("Breath " + (rr == null ? "--" : rr.toString()) + " brpm");
-            below.add("Stress " + (stress == null ? "--" : stress.toString()) + " / 100");
+            names.add("Current HR");
+            vals.add(((act != null && act.currentHeartRate != null) ? act.currentHeartRate.toString() : "--") + " bpm");
+            names.add("Resting HR");
+            vals.add(((prof != null && prof.restingHeartRate != null) ? prof.restingHeartRate.toString() : "--") + " bpm");
+            names.add("Breathing");
+            vals.add((rr == null ? "--" : rr.toString()) + " brpm");
+            names.add("Stress");
+            vals.add(stress == null ? "--" : stress.toString() + " · " + Stats.stressBand(stress));
+
+        } else {
+            // :activity, the rings
+            var info = ActivityMonitor.getInfo();
+            var wk = info.activeMinutesWeek;
+            var bb = Vitals.bodyBattery();
+            names.add("Steps");
+            vals.add((info.steps == null) ? "--" : info.steps.toString()
+                + ((info.stepGoal != null) ? " / " + info.stepGoal.toString() : ""));
+            names.add("Active");
+            vals.add(((wk == null) ? "--" : wk.total.toString()
+                + ((info.activeMinutesWeekGoal != null) ? " / " + info.activeMinutesWeekGoal.toString() : "")) + " min");
+            names.add("Body battery");
+            vals.add((bb == null ? "--" : bb.toString()) + " / 100");
+            colors = [Theme.metricColor(:steps), Theme.metricColor(:active), Theme.metricColor(:body)] as Array<Number>;
         }
 
-        var j = Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER;
+        // Stack the header and the rows from the real font heights, centred in the card.
         var hl = dc.getFontHeight(Fonts.label);
-        var ht = dc.getFontHeight(Fonts.title);
+        var hv = dc.getFontHeight(Fonts.value);
         var gap = Theme.CARD_LINE_GAP;
-        var hasAbove = above.length() > 0;
-        var total = ht + below.size() * (hl + gap) + (hasAbove ? hl + gap : 0);
+        var pitch = Theme.CARD_ROW_PITCH;
+        var rows = names.size();
+        var headerH = (header != HEADER_NONE) ? hl + gap : 0;
+        var total = headerH + (rows - 1) * pitch + hv;
         var y = top + (ch - total) / 2;
-        if (hasAbove) {
+
+        if (header == HEADER_TEXT) {
             dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(cx, y + hl / 2, Fonts.label, above, j);
-            y += hl + gap;
+            dc.drawText(cx, y + hl / 2, Fonts.label, headerText,
+                Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+        } else if (header == HEADER_BATTERY) {
+            BatteryIcon.draw(dc, cx - BatteryIcon.width() / 2, y + hl / 2, System.getSystemStats().battery, Theme.RED);
+        } else if (header == HEADER_HEART) {
+            drawHeart(dc, cx, y + hl / 2, Theme.CARD_HEART_S);
         }
-        var by = y + ht / 2;                             // the big line's centre
-        if (icon || heart) {
-            // the icon sits left of the number, the pair centred together
-            var iw = icon ? BatteryIcon.width() : Theme.CARD_HEART_S;
-            var tw = dc.getTextWidthInPixels(big, Fonts.title);
-            var x0 = cx - (iw + Theme.CARD_ICON_GAP + tw) / 2;
-            if (icon) {
-                BatteryIcon.draw(dc, x0, by, System.getSystemStats().battery, Theme.RED);
-            } else {
-                drawHeart(dc, x0 + iw / 2, by, Theme.CARD_HEART_S);
+        y += headerH;
+
+        var k = Theme.CARD_SWATCH_H / Logo.HEIGHT.toFloat();
+        var sw = ((Logo.STRIPE_W + Logo.LEAN) * k).toNumber();
+        for (var i = 0; i < rows; i++) {
+            var ry = y + hv / 2 + i * pitch;
+            var lx = left + Theme.CARD_PAD;
+            if (colors != null) {
+                // a slanted M stripe, the badge's own geometry (from Logo), in the ring's colour
+                dc.setColor(colors[i], Graphics.COLOR_TRANSPARENT);
+                dc.fillPolygon(Logo.stripePoints(0, lx, ry - Theme.CARD_SWATCH_H / 2, k));
+                lx += sw + Theme.CARD_SWATCH_GAP;
             }
+            dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
+            dc.drawText(lx, ry, Fonts.label, names[i], Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
             dc.setColor(Theme.WHITE, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(x0 + iw + Theme.CARD_ICON_GAP, by, Fonts.title, big,
-                Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
-        } else {
-            dc.setColor(Theme.WHITE, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(cx, by, Fonts.title, big, j);
-        }
-        y += ht;
-        dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
-        for (var i = 0; i < below.size(); i++) {
-            y += gap;
-            dc.drawText(cx, y + hl / 2, Fonts.label, below[i], j);
-            y += hl;
+            dc.drawText(left + Theme.CARD_W - Theme.CARD_PAD, ry, Fonts.value, vals[i],
+                Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER);
         }
     }
 
@@ -131,34 +156,6 @@ class Cards {
         dc.fillCircle(x - s * 0.25, cy - s * 0.15, s * 0.28);
         dc.fillCircle(x + s * 0.25, cy - s * 0.15, s * 0.28);
         dc.fillPolygon([[x - s * 0.51, cy - s * 0.02], [x + s * 0.51, cy - s * 0.02], [x, cy + s * 0.55]]);
-    }
-
-    // The three activity figures, one row each, centred in the card. Each row wears the colour of
-    // its ring on the dial, as a slanted M stripe (the badge's own geometry, from Logo).
-    private function drawActivityRows(dc as Dc, left as Number, top as Number, ch as Number) as Void {
-        var info = ActivityMonitor.getInfo();
-        var stepsTxt = (info.steps == null) ? "--" : info.steps.toString()
-            + ((info.stepGoal != null) ? " / " + info.stepGoal.toString() : "");
-        var wk = info.activeMinutesWeek;
-        var actTxt = (wk == null) ? "--" : wk.total.toString()
-            + ((info.activeMinutesWeekGoal != null) ? " / " + info.activeMinutesWeekGoal.toString() : "") + " min";
-        var bb = Vitals.bodyBattery();
-        var names = ["Steps", "Active", "Body battery"];
-        var vals = [stepsTxt, actTxt, bb == null ? "--" : bb.toString()];
-        var colors = [Theme.metricColor(:steps), Theme.metricColor(:active), Theme.metricColor(:body)];
-        var k = Theme.CARD_SWATCH_H / Logo.HEIGHT.toFloat();
-        var sw = ((Logo.STRIPE_W + Logo.LEAN) * k).toNumber();
-        for (var i = 0; i < 3; i++) {
-            var y = top + ch / 2 + (i - 1) * Theme.CARD_ROW_PITCH;
-            dc.setColor(colors[i], Graphics.COLOR_TRANSPARENT);
-            dc.fillPolygon(Logo.stripePoints(0, left + Theme.CARD_PAD, y - Theme.CARD_SWATCH_H / 2, k));
-            dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(left + Theme.CARD_PAD + sw + Theme.CARD_SWATCH_GAP, y, Fonts.label, names[i],
-                Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
-            dc.setColor(Theme.WHITE, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(left + Theme.CARD_W - Theme.CARD_PAD, y, Fonts.value, vals[i],
-                Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER);
-        }
     }
 
     private function conditionText(c as Number or Null) as String {

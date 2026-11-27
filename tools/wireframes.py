@@ -61,7 +61,6 @@ BATT_W, BATT_H, BATT_R, BATT_TERM_W, BATT_TERM_H, BATT_PAD = (num("BATT_W"), num
                                                                 num("BATT_PAD"))
 CARD_W, CARD_H, CARD_R, CARD_PAD = num("CARD_W"), num("CARD_H"), num("CARD_R"), num("CARD_PAD")
 CARD_LINE_GAP, CARD_ROW_PITCH, CARD_HEART_S = num("CARD_LINE_GAP"), num("CARD_ROW_PITCH"), num("CARD_HEART_S")
-CARD_ICON_GAP = num("CARD_ICON_GAP")
 CARD_SWATCH_H, CARD_SWATCH_GAP = num("CARD_SWATCH_H"), num("CARD_SWATCH_GAP")
 WINDOW_DATE_DX = num("WINDOW_DATE_DX")
 TOUCH_R, TOUCH_ARC_ANGLE = num("TOUCH_R"), num("TOUCH_ARC_ANGLE")
@@ -187,54 +186,44 @@ def draw_battery_icon(s, x, y, pct):
 
 
 def draw_card(s, kind):
-    """Mirror of Cards.drawCard(): a quick card over the dial, with example values."""
-    ch = CARD_H                                           # every card is the same size
+    """Mirror of Cards.drawCard(): a quick card over the dial, with example values. Every card is the
+    same size: a header (an icon or the date) over rows of label (grey, left) and value (white, right)."""
+    ch = CARD_H
     left, top = CX - CARD_W / 2, CY - ch / 2
     s.add('<rect x="%.1f" y="%.1f" width="%d" height="%d" rx="%d" fill="%s" stroke="%s" stroke-width="2"/>'
           % (left, top, CARD_W, ch, CARD_R, BLACK, GREY))
-    if kind == "activity":
-        for i, (n, v) in enumerate([("Steps", "6214 / 10000"), ("Active", "68 / 150 min"), ("Body battery", "78")]):
-            y = top + ch / 2 + (i - 1) * CARD_ROW_PITCH
-            k = CARD_SWATCH_H / 99.0                      # Logo.stripePoints(0, ...): the M's first stripe
-            sx0, sy0 = left + CARD_PAD, y - CARD_SWATCH_H / 2
-            s.poly([(sx0 + 57 * k, sy0), (sx0 + 93 * k, sy0), (sx0 + 36 * k, sy0 + 99 * k), (sx0, sy0 + 99 * k)],
-                   [BLUE, NAVY, RED][i])                  # each row wears its ring's colour
-            s.text(sx0 + 93 * k + CARD_SWATCH_GAP, y, n, "label", GREY, "start")
-            s.text(left + CARD_W - CARD_PAD, y, v, "value", WHITE, "end")
-        return
-    above, big, below = {
-        "battery": ("", "82%", ["6.3 days left"]),
-        "weather": ("Wed, 25 Nov, 2026", "18&#176;C",
-                    ["Partly cloudy &#183; feels 16&#176;C", "High 20&#176;C &#183; Low 9&#176;C"]),
-        "hr": ("", "72 bpm", ["Resting 52 bpm", "Breath 14 brpm", "Stress 34 / 100"]),
+    header, rows = {
+        "battery": ("@battery", [("Battery", "82%"), ("Time left", "6.3 days")]),
+        "weather": ("Wed, 25 Nov, 2026", [("Now", "18&#176;C"), ("Conditions", "Partly cloudy"),
+                                           ("Feels like", "16&#176;C"), ("High / low", "20&#176; / 9&#176;C")]),
+        "hr": ("@heart", [("Current HR", "72 bpm"), ("Resting HR", "52 bpm"), ("Breathing", "14 brpm"),
+                          ("Stress", "34 &#183; low")]),
+        "activity": ("", [("Steps", "6214 / 10000"), ("Active", "68 / 150 min"), ("Body battery", "78 / 100")]),
     }[kind]
-    hl, ht = FONT_PX["label"], FONT_PX["title"]           # line heights: the font sizes (getFontHeight)
-    total = ht + len(below) * (hl + CARD_LINE_GAP) + (hl + CARD_LINE_GAP if above else 0)
+    hl, hv = FONT_PX["label"], FONT_PX["value"]           # line heights: the font sizes (getFontHeight)
+    header_h = hl + CARD_LINE_GAP if header else 0
+    total = header_h + (len(rows) - 1) * CARD_ROW_PITCH + hv
     y = top + (ch - total) / 2
-    if above:
-        s.text(CX, y + hl / 2, above, "label", GREY)
-        y += hl + CARD_LINE_GAP
-    by = y + ht / 2                                       # the big line's centre
-    if kind in ("battery", "hr"):                         # the icon beside the number, the pair centred
-        iw = (BATT_W + BATT_TERM_W) if kind == "battery" else CARD_HEART_S
-        tw = len(big.replace("&#176;", "-")) * FONT_PX["title"] * 0.5       # rough text width
-        x0 = CX - (iw + CARD_ICON_GAP + tw) / 2
-        if kind == "battery":
-            draw_battery_icon(s, x0 + BATT_W / 2, by, 82)
-        else:
-            hs, hy = CARD_HEART_S, by - CARD_HEART_S * 0.06
-            hx = x0 + iw / 2
-            s.circle(hx - hs * .25, hy - hs * .15, hs * .28, RED)
-            s.circle(hx + hs * .25, hy - hs * .15, hs * .28, RED)
-            s.poly([(hx - hs * .51, hy - hs * .02), (hx + hs * .51, hy - hs * .02), (hx, hy + hs * .55)], RED)
-        s.text(x0 + iw + CARD_ICON_GAP, by, big, "title", WHITE, "start")
-    else:
-        s.text(CX, by, big, "title", WHITE)
-    y += ht
-    for line in below:
-        y += CARD_LINE_GAP
-        s.text(CX, y + hl / 2, line, "label", GREY)
-        y += hl
+    if header == "@battery":
+        draw_battery_icon(s, CX - (BATT_W + BATT_TERM_W) / 2 + BATT_W / 2, y + hl / 2, 82)
+    elif header == "@heart":
+        hs, hy = CARD_HEART_S, y + hl / 2 - CARD_HEART_S * 0.06
+        s.circle(CX - hs * .25, hy - hs * .15, hs * .28, RED)
+        s.circle(CX + hs * .25, hy - hs * .15, hs * .28, RED)
+        s.poly([(CX - hs * .51, hy - hs * .02), (CX + hs * .51, hy - hs * .02), (CX, hy + hs * .55)], RED)
+    elif header:
+        s.text(CX, y + hl / 2, header, "label", GREY)
+    y += header_h
+    for i, (n, v) in enumerate(rows):
+        ry = y + hv / 2 + i * CARD_ROW_PITCH
+        lx = left + CARD_PAD
+        if kind == "activity":                            # a slanted M stripe in the ring's colour
+            k = CARD_SWATCH_H / 99.0                      # Logo.stripePoints(0, ...): the M's first stripe
+            s.poly([(lx + 57 * k, ry - CARD_SWATCH_H / 2), (lx + 93 * k, ry - CARD_SWATCH_H / 2),
+                    (lx + 36 * k, ry + CARD_SWATCH_H / 2), (lx, ry + CARD_SWATCH_H / 2)], [BLUE, NAVY, RED][i])
+            lx += 93 * k + CARD_SWATCH_GAP
+        s.text(lx, ry, n, "label", GREY, "start")
+        s.text(left + CARD_W - CARD_PAD, ry, v, "value", WHITE, "end")
 
 
 def dial_into(s, ox, oy, zones=False, card=None):
@@ -300,7 +289,7 @@ def tap_zones():
     s.text(x0, 40, "Touch targets", "title", WHITE, "start")
     rows = [("1", ZONE_COLORS[1], "Date (3 o'clock)", "weather card: day and date, temperature, conditions, high and low"),
             ("2", ZONE_COLORS[2], "Battery (9 o'clock)", "battery card: percentage and days left"),
-            ("3", ZONE_COLORS[3], "Roundel (centre)", "heart rate card: bpm, resting, breathing, stress"),
+            ("3", ZONE_COLORS[3], "Roundel (centre)", "heart rate card: current and resting HR, breathing, stress"),
             ("4", ZONE_COLORS[4], "Rings (bottom)", "activity card: steps, active minutes, body battery")]
     for i, (n, c, name, what) in enumerate(rows):
         y = 90 + i * 70

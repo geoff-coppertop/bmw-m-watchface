@@ -31,14 +31,18 @@ simulator screenshots. They are generated from `source/Theme.mc` by
   3 o'clock, and the watch battery at 9 o'clock as a simple icon that empties as the battery
   drains (red below 20%). The temperature is not on the dial.
 - Quick cards. Hold the date, battery, roundel or rings and a card appears over the dial. Every
-  card is the same size, with its content centred. The date shows the weather: the day and date (`Wed, 25 Sep, 2026`), the
-  temperature, conditions and feels-like, and the day's high and low. The battery shows
-  its percentage and days left, with the dial's battery icon beside the number. The roundel shows heart rate with a red heart
-  beside the number and four lines: bpm, resting rate (bpm), breathing rate (brpm) and stress (/ 100); the
-  rings show steps, active minutes and body battery, each row marked with a slanted M stripe in its
-  ring's colour. The weather card has the date above its number (with units on every temperature), and the
-  activity rows carry their ring's colour: no card has a text title. Touch anywhere to dismiss a card; it also goes after four seconds. The
-  temperature is not on the dial: the date is the way to the weather.
+  card has the same size and layout: a small header (the dial's battery icon, a red heart, or for
+  the weather the day and date) over rows of grey label on the left and white value on the right.
+  Every value has its unit.
+  - Date: `Now`, `Conditions`, `Feels like`, `High / low` (the weather, under `Wed, 25 Sep, 2026`).
+  - Battery: `Battery` (%) and `Time left` (days), plus `Status: Charging` when charging.
+  - Roundel: `Current HR` and `Resting HR` (bpm), `Breathing` (brpm) and `Stress` (a 0 to 100 score
+    with its band: resting, low, medium, high).
+  - Rings: `Steps`, `Active` (minutes this week) and `Body battery` (/ 100), each row marked with a
+    slanted M stripe in its ring's colour.
+
+  Touch anywhere to dismiss a card; it also goes after four seconds. The temperature is not on the
+  dial: the date is the way to the weather.
 
 **Why a hold, and why no pages.** Garmin's `WatchFaceDelegate` documents only `onPress` (touch and
 hold). A plain tap and a swipe are never delivered to a watch face, and the simulator sends only
@@ -135,7 +139,7 @@ vary slightly.
 ## Tests
 
 The logic that does not need the watch is split into small modules (`Geometry`, `Logo`, `Stats`,
-`Units`, `Theme`) and covered by Connect IQ unit tests in `source/tests/`: 22 tests for the touch
+`Units`, `Theme`) and covered by Connect IQ unit tests in `source/tests/`: 23 tests for the touch
 hit-testing, the badge geometry, number formatting, the unit conversion and the theme mappings.
 Drawing code and anything that reads live watch data is not tested.
 

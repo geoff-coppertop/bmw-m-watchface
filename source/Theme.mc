@@ -58,13 +58,12 @@ module Theme {
 
     // ---- quick cards (press a zone) -------------------------------------------
     const CARD_W = 330;
-    const CARD_H = 152;           // every card is this size; its content is centred in it
+    const CARD_H = 184;           // every card is this size; its content is centred in it
     const CARD_R = 14;
     const CARD_PAD = 24;          // side padding for rows
-    const CARD_LINE_GAP = 6;      // between the lines of a card (the lines stack from their font heights)
+    const CARD_LINE_GAP = 6;      // between a card's header and its first row
     const CARD_HEART_S = 22;      // the heart on the heart rate card: its width, about the line height
-    const CARD_ICON_GAP = 10;     // between a card's icon (battery, heart) and its big number
-    const CARD_ROW_PITCH = 36;    // the Activity card's rows
+    const CARD_ROW_PITCH = 32;    // distance between a card's rows
     const CARD_SWATCH_H = 22;     // the slanted M stripe, in a ring's colour, before each Activity row
     const CARD_SWATCH_GAP = 8;    // between the stripe and the label
     const CARD_MS = 4000;         // how long a card stays up
