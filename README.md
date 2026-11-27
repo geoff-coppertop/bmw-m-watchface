@@ -230,6 +230,9 @@ Compiled and run on a Venu X1 and in the Windows simulator; the unit tests pass.
   was missed once and the face stuck dim on an awake screen. Always-on draws are limited by Garmin
   to about 10% of the pixels lit each minute, so watch for the watch blanking or dimming the face
   if it exceeds that.
+  The low-power draw also does no slow work: it skips the body battery history read and uses the last
+  known value (`Vitals.bodyBattery(false)`), because the watch gives that draw very little time, and
+  a draw that runs over can be cut off and leave the screen stuck on a half-drawn frame.
 - Check on the watch that the Units setting appears in Garmin Connect and that changing it
   redraws the face (`onSettingsChanged`).
 - Layout clearances (date and battery against the ticks, the ring band against the ticks) were

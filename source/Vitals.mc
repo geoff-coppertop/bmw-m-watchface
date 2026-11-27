@@ -19,13 +19,17 @@ class Vitals {
     private static var _at as Number = -100000;          // System.getTimer() of the last read
     private static var _loaded as Boolean = false;
 
-    static function bodyBattery() as Number or Null {
+    // allowRead false means "do not touch the sensor history": return what is already known. The
+    // always-on (low-power) draw passes false, because the watch gives that draw very little time
+    // and the history read is slow; a draw that runs over can be cut off and leave the screen stuck
+    // on a half-drawn frame.
+    static function bodyBattery(allowRead as Boolean) as Number or Null {
         if (!_loaded) {
             _loaded = true;
             _bb = stored();                               // the reading from before the face (re)started
         }
         var now = System.getTimer();
-        if (now - _at < (_bb != null ? 60000 : 10000)) {
+        if (!allowRead || now - _at < (_bb != null ? 60000 : 10000)) {
             return _bb;
         }
         _at = now;

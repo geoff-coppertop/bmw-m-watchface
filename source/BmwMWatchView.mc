@@ -404,7 +404,7 @@ class BmwMWatchView extends WatchUi.WatchFace {
     }
 
     private function bodyBatFrac() as Float {
-        var bb = Vitals.bodyBattery();
+        var bb = Vitals.bodyBattery(!_low);       // no slow history read in the low-power draw
         return bb == null ? 0.0 : bb / 100.0;
     }
 }

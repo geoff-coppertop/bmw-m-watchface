@@ -82,7 +82,7 @@ class Cards {
             // :activity, the rings
             var info = ActivityMonitor.getInfo();
             var wk = info.activeMinutesWeek;
-            var bb = Vitals.bodyBattery();
+            var bb = Vitals.bodyBattery(true);
             names.add("Steps");
             vals.add((info.steps == null) ? "--" : info.steps.toString()
                 + ((info.stepGoal != null) ? " / " + info.stepGoal.toString() : ""));
