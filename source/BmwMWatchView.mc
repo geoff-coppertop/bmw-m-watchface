@@ -73,11 +73,11 @@ class BmwMWatchView extends WatchUi.WatchFace {
         }
     }
 
-    // The sleep style (grey, no second hand) must only show while the screen really is in low-power
-    // mode, but onExitSleep is not guaranteed to arrive (for example when the screen times out with
-    // a card up), which left the face stuck grey on an awake screen. So the flag also clears itself
-    // from evidence that the screen is awake: a touch, or updates arriving about once a second (in
-    // low-power mode the watch updates only once a minute).
+    // In low-power mode the face draws nothing (a black screen), so it must leave that state when the
+    // screen really wakes. onExitSleep is not guaranteed to arrive (it did not when the screen timed
+    // out with a card up, which left the face stuck in its low-power look on an awake screen), so
+    // the flag also clears itself from evidence that the screen is awake: a touch, or updates
+    // arriving about once a second (in low-power mode the watch updates only once a minute).
     private function wakeIfAwake() as Void {
         var now = System.getTimer();
         if (_asleep && now - _sleepAt > 4000 && now - _lastUpdate < 4000) {
@@ -114,6 +114,12 @@ class BmwMWatchView extends WatchUi.WatchFace {
     }
 
     private function drawFace(dc as Dc) as Void {
+        if (_asleep) {
+            // No always-on look: in low-power mode the face is a black screen, which looks off.
+            dc.setColor(Theme.BLACK, Theme.BLACK);
+            dc.clear();
+            return;
+        }
         var w = dc.getWidth();
         var h = dc.getHeight();
         var cx = w / 2;
@@ -242,7 +248,7 @@ class BmwMWatchView extends WatchUi.WatchFace {
         dc.setColor(Theme.dimOf(color), Graphics.COLOR_TRANSPARENT);
         dc.drawArc(cx, cy, R, Graphics.ARC_COUNTER_CLOCKWISE, 240, 300);
         if (frac > 1.0) { frac = 1.0; }
-        if (frac > 0.01 && !_asleep) {
+        if (frac > 0.01) {
             dc.setColor(color, Graphics.COLOR_TRANSPARENT);
             dc.drawArc(cx, cy, R, Graphics.ARC_COUNTER_CLOCKWISE, 240, 240 + 60 * frac);
         }
@@ -264,13 +270,13 @@ class BmwMWatchView extends WatchUi.WatchFace {
 
         var colors = [Theme.BLUE, Theme.NAVY, Theme.RED];
         for (var i = 0; i < 3; i++) {
-            dc.setColor(_asleep ? Theme.GREY : colors[i], Graphics.COLOR_TRANSPARENT);
+            dc.setColor(colors[i], Graphics.COLOR_TRANSPARENT);
             dc.fillPolygon(Logo.stripePoints(i, left, top, k));     // shared with the page header
         }
 
         var m = [[132, 99], [189, 0], [227.5, 0], [227.5, 40], [252, 0], [290, 0], [290, 99],
                  [254.5, 99], [254.5, 58], [229.5, 99], [196.5, 99], [196.5, 58], [171.5, 99]];
-        dc.setColor(_asleep ? Theme.GREY : Theme.WHITE, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(Theme.WHITE, Graphics.COLOR_TRANSPARENT);
         dc.fillPolygon(logoPoints(m, left, top, k));
     }
 
@@ -289,23 +295,21 @@ class BmwMWatchView extends WatchUi.WatchFace {
         var R = r * 0.11;
         var ri = R * 0.72;
 
-        if (!_asleep) {
-            dc.setPenWidth(5);
-            dc.setColor(Theme.BLUE, Graphics.COLOR_TRANSPARENT);
-            dc.drawArc(cx, cy, R + 6, Graphics.ARC_COUNTER_CLOCKWISE, 100, 170);
-            dc.setColor(Theme.NAVY, Graphics.COLOR_TRANSPARENT);
-            dc.drawArc(cx, cy, R + 6, Graphics.ARC_COUNTER_CLOCKWISE, 10, 80);
-            dc.drawArc(cx, cy, R + 6, Graphics.ARC_COUNTER_CLOCKWISE, 280, 350);
-            dc.setColor(Theme.RED, Graphics.COLOR_TRANSPARENT);
-            dc.drawArc(cx, cy, R + 6, Graphics.ARC_COUNTER_CLOCKWISE, 190, 260);
-            dc.setPenWidth(1);
-        }
+        dc.setPenWidth(5);
+        dc.setColor(Theme.BLUE, Graphics.COLOR_TRANSPARENT);
+        dc.drawArc(cx, cy, R + 6, Graphics.ARC_COUNTER_CLOCKWISE, 100, 170);
+        dc.setColor(Theme.NAVY, Graphics.COLOR_TRANSPARENT);
+        dc.drawArc(cx, cy, R + 6, Graphics.ARC_COUNTER_CLOCKWISE, 10, 80);
+        dc.drawArc(cx, cy, R + 6, Graphics.ARC_COUNTER_CLOCKWISE, 280, 350);
+        dc.setColor(Theme.RED, Graphics.COLOR_TRANSPARENT);
+        dc.drawArc(cx, cy, R + 6, Graphics.ARC_COUNTER_CLOCKWISE, 190, 260);
+        dc.setPenWidth(1);
 
         dc.setColor(Theme.BLACK, Graphics.COLOR_TRANSPARENT);
         dc.fillCircle(cx, cy, R);
         dc.setColor(Theme.WHITE, Graphics.COLOR_TRANSPARENT);
         dc.fillCircle(cx, cy, ri);
-        dc.setColor(_asleep ? Theme.GREY : Theme.BLUE, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(Theme.BLUE, Graphics.COLOR_TRANSPARENT);
         fillSector(dc, cx, cy, ri, 90, 180);
         fillSector(dc, cx, cy, ri, 270, 360);
     }
@@ -335,7 +339,7 @@ class BmwMWatchView extends WatchUi.WatchFace {
         var fillW = (Theme.BATT_W - 2 * Theme.BATT_PAD) * pct / 100.0;
         if (fillW > 0) {
             var low = Stats.isLowBattery(pct.toNumber());
-            dc.setColor(_asleep ? Theme.GREY : (low ? Theme.RED : Theme.WHITE), Graphics.COLOR_TRANSPARENT);
+            dc.setColor(low ? Theme.RED : Theme.WHITE, Graphics.COLOR_TRANSPARENT);
             dc.fillRectangle(left + Theme.BATT_PAD, top + Theme.BATT_PAD, fillW, Theme.BATT_H - 2 * Theme.BATT_PAD);
         }
     }
@@ -349,7 +353,7 @@ class BmwMWatchView extends WatchUi.WatchFace {
         dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
         dc.drawText(x, top + hl / 2, Fonts.label, label,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-        dc.setColor(_asleep ? Theme.GREY : Theme.WHITE, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(Theme.WHITE, Graphics.COLOR_TRANSPARENT);
         dc.drawText(x, top + hl + hv / 2, Fonts.value, value,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
     }
@@ -364,17 +368,15 @@ class BmwMWatchView extends WatchUi.WatchFace {
         drawHand(dc, cx, cy, hourDeg, r * 0.56, r * 0.07, r * 0.1, Theme.WHITE, Theme.BLUE);
         drawHand(dc, cx, cy, minDeg, r * 0.88, r * 0.05, r * 0.12, Theme.WHITE, Theme.BLUE);
 
-        if (!_asleep) {
-            var a = rad(t.sec * 6.0);
-            var tail = r * 0.18;
-            var len = r * 0.94;
-            dc.setPenWidth(3);
-            dc.setColor(Theme.RED, Graphics.COLOR_TRANSPARENT);
-            dc.drawLine(
-                cx - Math.sin(a) * tail, cy + Math.cos(a) * tail,
-                cx + Math.sin(a) * len, cy - Math.cos(a) * len);
-            dc.setPenWidth(1);
-        }
+        var a = rad(t.sec * 6.0);
+        var tail = r * 0.18;
+        var len = r * 0.94;
+        dc.setPenWidth(3);
+        dc.setColor(Theme.RED, Graphics.COLOR_TRANSPARENT);
+        dc.drawLine(
+            cx - Math.sin(a) * tail, cy + Math.cos(a) * tail,
+            cx + Math.sin(a) * len, cy - Math.cos(a) * len);
+        dc.setPenWidth(1);
 
         drawRoundel(dc, cx, cy, r);
     }
@@ -386,7 +388,7 @@ class BmwMWatchView extends WatchUi.WatchFace {
         var a = rad(deg);
         dc.setColor(body, Graphics.COLOR_TRANSPARENT);
         dc.fillPolygon(handPoints(cx, cy, a, len, wid / 2, tail));
-        dc.setColor(_asleep ? Theme.BLACK : lume, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(lume, Graphics.COLOR_TRANSPARENT);
         dc.fillPolygon(handPoints(cx, cy, a, len * 0.92, wid / 5, -len * 0.18));
     }
 

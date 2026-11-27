@@ -21,8 +21,8 @@ simulator screenshots. They are generated from `source/Theme.mc` by
 
 ## Features
 
-- Analog chronograph dial with a white-sword hand set, a red second hand
-  (hidden in low-power mode) and a roundel at the hand pivot.
+- Analog chronograph dial with a white-sword hand set, a red second hand and a roundel at the hand
+  pivot. There is no always-on look: in low-power mode the face draws nothing, so the screen looks off.
 - M badge at 12 o'clock, centred between the roundel and the 12 o'clock tick, drawn from the flat M logo's geometry.
 - Three activity rings inside the lower dial, in the badge colours:
   steps (blue), weekly active minutes (navy) and body battery (red).
@@ -212,11 +212,11 @@ Compiled and run on a Venu X1 and in the Windows simulator; the unit tests pass.
   `ERROR` and the message for 10 seconds (and prints it to the console) instead of crashing back to
   the default face. The watch's own crash log is `GARMIN/APPS/LOGS/CIQ_LOG.YML` (`.BAK` is the older
   one); it only records errors the watch reports, so a hard freeze may leave nothing.
-- Sleep style: in low-power mode the face draws grey with no second hand. On the watch it was seen
-  stuck in that style on an awake screen (no crash log was written, so it was not a crash): the
-  screen had timed out with a card up and `onExitSleep` apparently never arrived. The `_asleep` flag
-  now also clears on a touch, and when updates arrive about once a second (`wakeIfAwake` in
-  `BmwMWatchView.mc`). If the face is ever grey while awake, that is where to look.
+- Low-power mode: the face draws a black screen. An earlier always-on style (grey, no second hand)
+  looked bad, and on the watch it got stuck on an awake screen: the screen had timed out with a card
+  up and `onExitSleep` apparently never arrived (no crash log was written, so it was not a crash).
+  The `_asleep` flag now also clears on a touch, and when updates arrive about once a second
+  (`wakeIfAwake` in `BmwMWatchView.mc`). If the screen is ever black while awake, look there.
 - Check on the watch that the Units setting appears in Garmin Connect and that changing it
   redraws the face (`onSettingsChanged`).
 - Layout clearances (date and battery against the ticks, the ring band against the ticks) were
