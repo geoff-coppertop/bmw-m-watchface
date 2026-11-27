@@ -63,6 +63,7 @@ module Theme {
     const CARD_PAD = 24;          // side padding for rows
     const CARD_LINE_GAP = 6;      // between the lines of a card (the lines stack from their font heights)
     const CARD_HEART_S = 22;      // the heart on the heart rate card: its width, about the line height
+    const CARD_ICON_GAP = 10;     // between a card's icon (battery, heart) and its big number
     const CARD_ROW_PITCH = 36;    // the Activity card's rows
     const CARD_SWATCH_H = 22;     // the slanted M stripe, in a ring's colour, before each Activity row
     const CARD_SWATCH_GAP = 8;    // between the stripe and the label

@@ -34,10 +34,11 @@ class Cards {
             return;
         }
 
-        // A card is an optional small line, one big line, and up to two small lines under it,
-        // stacked from the real font heights and centred in the card.
+        // A card is an optional small line, one big line, and up to three small lines under it,
+        // stacked from the real font heights and centred in the card. The battery and heart rate
+        // cards put their icon beside the big number.
         var above = "";
-        var icon = false;                                // the battery icon in the small line's place
+        var icon = false;                                // the battery icon beside the number
         var heart = false;                               // or the heart, on the heart rate card
         var big = "--";
         var below = [] as Array<String>;
@@ -58,50 +59,62 @@ class Cards {
                 big = tempNum(cond.temperature).toString() + tempUnit();
                 var line = conditionText(cond.condition);
                 if (cond.feelsLikeTemperature != null) {
-                    line += (line.length() > 0 ? " · " : "") + "feels " + tempNum(cond.feelsLikeTemperature).toString() + "°";
+                    line += (line.length() > 0 ? " · " : "") + "feels " + tempNum(cond.feelsLikeTemperature).toString() + tempUnit();
                 }
                 below.add(line);
-                var hi = (cond.highTemperature != null) ? tempNum(cond.highTemperature).toString() + "°" : "--";
-                var lo = (cond.lowTemperature != null) ? tempNum(cond.lowTemperature).toString() + "°" : "--";
+                var hi = (cond.highTemperature != null) ? tempNum(cond.highTemperature).toString() + tempUnit() : "--";
+                var lo = (cond.lowTemperature != null) ? tempNum(cond.lowTemperature).toString() + tempUnit() : "--";
                 below.add("High " + hi + " · Low " + lo);
             } else {
                 below.add("No weather data");
             }
 
         } else {
-            // :hr, the roundel: a heart in the small line's place, the number says bpm
+            // :hr, the roundel: a heart beside the number, and every figure has its unit
             heart = true;
             var act = Activity.getActivityInfo();
             if (act != null && act.currentHeartRate != null) { big = act.currentHeartRate.toString() + " bpm"; }
             var prof = UserProfile.getProfile();
-            // breathing rate, in breaths per minute; some watches do not offer it, and some readings
-            // are not measured, so it may be "--"
+            // breathing rate, in breaths per minute (brpm); some watches do not offer it, and some
+            // readings are not measured, so it may be "--". Stress is a 0 to 100 score.
             var ai = ActivityMonitor.getInfo();
             var rr = (ai has :respirationRate) ? ai.respirationRate : null;
-            below.add("Resting " + ((prof != null && prof.restingHeartRate != null) ? prof.restingHeartRate.toString() : "--")
-                + " · Breath " + (rr == null ? "--" : rr.toString()));
+            var stress = ai.stressScore;
+            below.add("Resting " + ((prof != null && prof.restingHeartRate != null) ? prof.restingHeartRate.toString() : "--") + " bpm");
+            below.add("Breath " + (rr == null ? "--" : rr.toString()) + " brpm");
+            below.add("Stress " + (stress == null ? "--" : stress.toString()) + " / 100");
         }
 
         var j = Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER;
         var hl = dc.getFontHeight(Fonts.label);
         var ht = dc.getFontHeight(Fonts.title);
         var gap = Theme.CARD_LINE_GAP;
-        var hasAbove = icon || heart || above.length() > 0;
+        var hasAbove = above.length() > 0;
         var total = ht + below.size() * (hl + gap) + (hasAbove ? hl + gap : 0);
         var y = top + (ch - total) / 2;
-        if (icon) {
-            BatteryIcon.draw(dc, cx - BatteryIcon.width() / 2, y + hl / 2, System.getSystemStats().battery, Theme.RED);
-            y += hl + gap;
-        } else if (heart) {
-            drawHeart(dc, cx, y + hl / 2, Theme.CARD_HEART_S);
-            y += hl + gap;
-        } else if (above.length() > 0) {
+        if (hasAbove) {
             dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
             dc.drawText(cx, y + hl / 2, Fonts.label, above, j);
             y += hl + gap;
         }
-        dc.setColor(Theme.WHITE, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, y + ht / 2, Fonts.title, big, j);
+        var by = y + ht / 2;                             // the big line's centre
+        if (icon || heart) {
+            // the icon sits left of the number, the pair centred together
+            var iw = icon ? BatteryIcon.width() : Theme.CARD_HEART_S;
+            var tw = dc.getTextWidthInPixels(big, Fonts.title);
+            var x0 = cx - (iw + Theme.CARD_ICON_GAP + tw) / 2;
+            if (icon) {
+                BatteryIcon.draw(dc, x0, by, System.getSystemStats().battery, Theme.RED);
+            } else {
+                drawHeart(dc, x0 + iw / 2, by, Theme.CARD_HEART_S);
+            }
+            dc.setColor(Theme.WHITE, Graphics.COLOR_TRANSPARENT);
+            dc.drawText(x0 + iw + Theme.CARD_ICON_GAP, by, Fonts.title, big,
+                Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
+        } else {
+            dc.setColor(Theme.WHITE, Graphics.COLOR_TRANSPARENT);
+            dc.drawText(cx, by, Fonts.title, big, j);
+        }
         y += ht;
         dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
         for (var i = 0; i < below.size(); i++) {
