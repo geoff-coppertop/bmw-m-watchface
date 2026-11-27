@@ -4,4 +4,5 @@
     <string id="UnitsAuto">Follow watch</string>
     <string id="UnitsMetric">Metric (°C)</string>
     <string id="UnitsImperial">Imperial (°F)</string>
+    <string id="AlwaysOnTitle">Always-On Display is on (dimmed dial)</string>
 </strings>

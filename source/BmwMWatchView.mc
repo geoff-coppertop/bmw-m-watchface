@@ -101,6 +101,9 @@ class BmwMWatchView extends WatchUi.WatchFace {
     // first frame after waking is not held up by a read. In the low-power draw this does nothing
     // slow: the snapshot is only loaded if it never was, and without the history read.
     private function refreshData() as Void {
+        if (blackFrame()) {
+            return;                           // nothing is drawn, so nothing to read
+        }
         _snap.refresh(!_low);
         if (_card != null) {
             _content = _cards.build(_card);   // rebuilt each update, so live values (heart rate) move
@@ -134,7 +137,18 @@ class BmwMWatchView extends WatchUi.WatchFace {
         }
     }
 
+    // True for the watch's low-power frame when the wearer has not said Always-On Display is on: the
+    // frame is black, so the screen looks off at once and the draw costs nothing.
+    private function blackFrame() as Boolean {
+        return _low && !Prefs.alwaysOn();
+    }
+
     private function drawFace(dc as Dc) as Void {
+        if (blackFrame()) {
+            dc.setColor(Theme.BLACK, Theme.BLACK);
+            dc.clear();
+            return;
+        }
         var w = dc.getWidth();
         var h = dc.getHeight();
         var cx = w / 2;

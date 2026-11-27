@@ -239,19 +239,20 @@ Compiled and run on a Venu X1 and in the Windows simulator; the unit tests pass.
   `ERROR` and the message for 10 seconds (and prints it to the console) instead of crashing back to
   the default face. The watch's own crash log is `GARMIN/APPS/LOGS/CIQ_LOG.YML` (`.BAK` is the older
   one); it only records errors the watch reports, so a hard freeze may leave nothing.
-- Low power: whether the face is being drawn in the watch's low-power (always-on) mode is asked of
-  the watch at each draw (`System.getDisplayMode`), not remembered from `onEnterSleep` /
-  `onExitSleep`. In that draw the colours are dimmed to 60% (`Theme.LOW_POWER_PCT`; never grey, so
-  the ring fills still read against their empty tracks), the second hand is dropped, and a touch is
-  left to the watch so it can wake the screen. With Always-On Display off the watch turns the screen
-  off and never asks for that draw, so the dimmed look only appears when always-on is active. An
-  earlier version kept a sleep flag set by `onEnterSleep` and cleared by `onExitSleep`; the exit call
-  was missed once and the face stuck dim on an awake screen. Always-on draws are limited by Garmin
-  to about 10% of the pixels lit each minute, so watch for the watch blanking or dimming the face
-  if it exceeds that.
-  The low-power draw also does no slow work: it skips the body battery history read and uses the last
-  known value (`Vitals.bodyBattery(false)`), because the watch gives that draw very little time, and
-  a draw that runs over can be cut off and leave the screen stuck on a half-drawn frame.
+- Low power: whether this draw is the watch's low-power one is asked of the watch at each draw
+  (`System.getDisplayMode`), not remembered from `onEnterSleep` / `onExitSleep` (a remembered flag
+  stuck once, leaving the face dim on an awake screen). Connect IQ gives no way to ask whether
+  Always-On Display is on, and the watch asks for a low-power frame either way as it goes to sleep, so
+  there is a setting, **Always-On Display is on** (`AlwaysOn`, default off), read through `Prefs`.
+  - Off (default): the low-power frame is black. The screen looks off at once, the draw is free, and
+    nothing is read. Use this when Always-On Display is off. A frozen full-colour face for a moment
+    before the screen went off was seen with the dimmed frame; this is the test of whether that
+    pause is the face's own draw (the watch slows the processor as it sleeps) or the watch itself.
+  - On: the dimmed dial (colours at 60%, `Theme.LOW_POWER_PCT`, never grey, no second hand), with no
+    slow reads, and touches left to the watch so it can wake the screen. Garmin limits an always-on
+    frame to about 10% of the pixels lit, so watch for the watch dimming or blanking it.
+  If the setting does not show up in Garmin Connect for a sideloaded face, change the default in
+  `resources/properties/properties.xml` and rebuild.
 - Check on the watch that the Units setting appears in Garmin Connect and that changing it
   redraws the face (`onSettingsChanged`).
 - Layout clearances (date and battery against the ticks, the ring band against the ticks) were

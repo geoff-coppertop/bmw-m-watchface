@@ -1,4 +1,7 @@
 <properties>
     <!-- 0 = follow the watch, 1 = metric, 2 = imperial -->
     <property id="Units" type="number">0</property>
+    <!-- false: the watch's low-power frame is black (the screen looks off at once). true: a dimmed
+         dial, for a watch with Always-On Display on. Connect IQ cannot tell a face which it is. -->
+    <property id="AlwaysOn" type="boolean">false</property>
 </properties>

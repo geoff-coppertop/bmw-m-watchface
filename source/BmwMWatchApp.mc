@@ -8,8 +8,9 @@ class BmwMWatchApp extends Application.AppBase {
         AppBase.initialize();
     }
 
-    // The Units setting was changed in Garmin Connect: redraw with the new units.
+    // A setting was changed in Garmin Connect: re-read the one the drawing uses, and redraw.
     function onSettingsChanged() as Void {
+        Prefs.reload();
         WatchUi.requestUpdate();
     }
 
