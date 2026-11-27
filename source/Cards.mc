@@ -19,7 +19,7 @@ class Cards {
         var w = dc.getWidth();
         var cx = w / 2;
         var rows = (kind == :activity);
-        var ch = rows ? Theme.CARD_H_ROWS : Theme.CARD_H;
+        var ch = rows ? Theme.CARD_H_ROWS : (kind == :weather ? Theme.CARD_H_TWO : Theme.CARD_H);
         var left = cx - Theme.CARD_W / 2;
         var top = dc.getHeight() / 2 - ch / 2;
 
@@ -33,6 +33,7 @@ class Cards {
         var title = "";
         var big = "--";
         var detail = "";
+        var detail2 = "";
         var j = Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER;
 
         if (kind == :battery) {
@@ -56,6 +57,9 @@ class Cards {
                 if (cond.feelsLikeTemperature != null) {
                     detail += (detail.length() > 0 ? " · " : "") + "feels " + tempNum(cond.feelsLikeTemperature).toString() + "°";
                 }
+                var hi = (cond.highTemperature != null) ? tempNum(cond.highTemperature).toString() + "°" : "--";
+                var lo = (cond.lowTemperature != null) ? tempNum(cond.lowTemperature).toString() + "°" : "--";
+                detail2 = "High " + hi + " · Low " + lo;
             } else {
                 detail = "No weather data";
             }
@@ -79,7 +83,7 @@ class Cards {
             var actTxt = (wk == null) ? "--" : wk.total.toString()
                 + ((info2.activeMinutesWeekGoal != null) ? " / " + info2.activeMinutesWeekGoal.toString() : "") + " min";
             var bb = bodyBatteryNow();
-            var names = ["Steps", "Active (week)", "Body battery"];
+            var names = ["Steps", "Active", "Body battery"];
             var vals = [stepsTxt, actTxt, bb == null ? "--" : bb.toString()];
             for (var i = 0; i < 3; i++) {
                 var y = top + Theme.CARD_ROW_Y + i * Theme.CARD_ROW_PITCH;
@@ -99,6 +103,9 @@ class Cards {
             dc.drawText(cx, top + Theme.CARD_BIG_Y, Fonts.title, big, j);
             dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
             dc.drawText(cx, top + Theme.CARD_DETAIL_Y, Fonts.label, detail, j);
+            if (detail2.length() > 0) {
+                dc.drawText(cx, top + Theme.CARD_DETAIL_Y + Theme.CARD_DETAIL2_PITCH, Fonts.label, detail2, j);
+            }
         }
     }
 

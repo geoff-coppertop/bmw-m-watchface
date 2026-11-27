@@ -59,8 +59,9 @@ TICK_MAJOR, TICK_MINOR = num("TICK_MAJOR"), num("TICK_MINOR")
 BATT_W, BATT_H, BATT_R, BATT_TERM_W, BATT_TERM_H, BATT_PAD = (num("BATT_W"), num("BATT_H"), num("BATT_R"),
                                                                 num("BATT_TERM_W"), num("BATT_TERM_H"),
                                                                 num("BATT_PAD"))
-CARD_W, CARD_H, CARD_H_ROWS, CARD_R, CARD_PAD = (num("CARD_W"), num("CARD_H"), num("CARD_H_ROWS"), num("CARD_R"),
-                                                  num("CARD_PAD"))
+CARD_W, CARD_H, CARD_H_ROWS, CARD_H_TWO, CARD_R, CARD_PAD = (num("CARD_W"), num("CARD_H"), num("CARD_H_ROWS"),
+                                                              num("CARD_H_TWO"), num("CARD_R"), num("CARD_PAD"))
+CARD_DETAIL2_PITCH = num("CARD_DETAIL2_PITCH")
 CARD_TITLE_Y, CARD_BIG_Y, CARD_DETAIL_Y, CARD_ROW_Y, CARD_ROW_PITCH = (num("CARD_TITLE_Y"), num("CARD_BIG_Y"),
                                                                         num("CARD_DETAIL_Y"), num("CARD_ROW_Y"),
                                                                         num("CARD_ROW_PITCH"))
@@ -190,7 +191,7 @@ def draw_battery_icon(s, x, y, pct):
 def draw_card(s, kind):
     """Mirror of Cards.drawCard(): a quick card over the dial, with example values."""
     rows = kind == "activity"
-    ch = CARD_H_ROWS if rows else CARD_H
+    ch = CARD_H_ROWS if rows else (CARD_H_TWO if kind == "weather" else CARD_H)
     left, top = CX - CARD_W / 2, CY - ch / 2
     s.add('<rect x="%.1f" y="%.1f" width="%d" height="%d" rx="%d" fill="%s" stroke="%s" stroke-width="2"/>'
           % (left, top, CARD_W, ch, CARD_R, BLACK, GREY))
@@ -203,13 +204,15 @@ def draw_card(s, kind):
     }[kind]
     s.text(CX, top + CARD_TITLE_Y, title, "label", GREY)
     if rows:
-        for i, (n, v) in enumerate([("Steps", "6214 / 10000"), ("Active (week)", "68 / 150 min"), ("Body battery", "78")]):
+        for i, (n, v) in enumerate([("Steps", "6214 / 10000"), ("Active", "68 / 150 min"), ("Body battery", "78")]):
             y = top + CARD_ROW_Y + i * CARD_ROW_PITCH
             s.text(left + CARD_PAD, y, n, "label", GREY, "start")
             s.text(left + CARD_W - CARD_PAD, y, v, "value", WHITE, "end")
     else:
         s.text(CX, top + CARD_BIG_Y, big, "title", WHITE)
         s.text(CX, top + CARD_DETAIL_Y, detail, "label", GREY)
+        if kind == "weather":
+            s.text(CX, top + CARD_DETAIL_Y + CARD_DETAIL2_PITCH, "High 20&#176; &#183; Low 9&#176;", "label", GREY)
 
 
 def dial_into(s, ox, oy, zones=False, card=None):
