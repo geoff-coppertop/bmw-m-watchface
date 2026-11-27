@@ -10,8 +10,8 @@ import Toybox.Weather;
 
 // The quick card shown over the dial when a zone is touched: a little more detail than the face
 // shows. Every card is the same size. Weather (reached by touching the date) leads with the full
-// day and date; battery has its title; heart rate and activity have none (the number says bpm, and
-// the activity rows carry their ring's colour). It is not a page: it disappears by itself after a
+// day and date; battery and heart rate have an icon there; activity has none (its rows carry their
+// ring's colour). It is not a page: it disappears by itself after a
 // few seconds, or when you touch elsewhere. The weather card is the only place the temperature
 // appears.
 class Cards {
@@ -38,6 +38,7 @@ class Cards {
         // stacked from the real font heights and centred in the card.
         var above = "";
         var icon = false;                                // the battery icon in the small line's place
+        var heart = false;                               // or the heart, on the heart rate card
         var big = "--";
         var below = [] as Array<String>;
 
@@ -68,7 +69,8 @@ class Cards {
             }
 
         } else {
-            // :hr, the roundel: no title, the number says bpm
+            // :hr, the roundel: a heart in the small line's place, the number says bpm
+            heart = true;
             var act = Activity.getActivityInfo();
             if (act != null && act.currentHeartRate != null) { big = act.currentHeartRate.toString() + " bpm"; }
             var prof = UserProfile.getProfile();
@@ -81,11 +83,14 @@ class Cards {
         var hl = dc.getFontHeight(Fonts.label);
         var ht = dc.getFontHeight(Fonts.title);
         var gap = Theme.CARD_LINE_GAP;
-        var hasAbove = icon || above.length() > 0;
+        var hasAbove = icon || heart || above.length() > 0;
         var total = ht + below.size() * (hl + gap) + (hasAbove ? hl + gap : 0);
         var y = top + (ch - total) / 2;
         if (icon) {
             BatteryIcon.draw(dc, cx - BatteryIcon.width() / 2, y + hl / 2, System.getSystemStats().battery, Theme.RED);
+            y += hl + gap;
+        } else if (heart) {
+            drawHeart(dc, cx, y + hl / 2, Theme.CARD_HEART_S);
             y += hl + gap;
         } else if (above.length() > 0) {
             dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
@@ -101,6 +106,15 @@ class Cards {
             dc.drawText(cx, y + hl / 2, Fonts.label, below[i], j);
             y += hl;
         }
+    }
+
+    // A filled heart in red, centred on (x, y), s pixels wide.
+    private function drawHeart(dc as Dc, x as Numeric, y as Numeric, s as Numeric) as Void {
+        var cy = y - s * 0.06;                           // its shape runs from -0.43 s to +0.55 s: centre it
+        dc.setColor(Theme.RED, Graphics.COLOR_TRANSPARENT);
+        dc.fillCircle(x - s * 0.25, cy - s * 0.15, s * 0.28);
+        dc.fillCircle(x + s * 0.25, cy - s * 0.15, s * 0.28);
+        dc.fillPolygon([[x - s * 0.51, cy - s * 0.02], [x + s * 0.51, cy - s * 0.02], [x, cy + s * 0.55]]);
     }
 
     // The three activity figures, one row each, centred in the card. Each row wears the colour of

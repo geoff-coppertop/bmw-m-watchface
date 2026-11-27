@@ -60,7 +60,7 @@ BATT_W, BATT_H, BATT_R, BATT_TERM_W, BATT_TERM_H, BATT_PAD = (num("BATT_W"), num
                                                                 num("BATT_TERM_W"), num("BATT_TERM_H"),
                                                                 num("BATT_PAD"))
 CARD_W, CARD_H, CARD_R, CARD_PAD = num("CARD_W"), num("CARD_H"), num("CARD_R"), num("CARD_PAD")
-CARD_LINE_GAP, CARD_ROW_PITCH = num("CARD_LINE_GAP"), num("CARD_ROW_PITCH")
+CARD_LINE_GAP, CARD_ROW_PITCH, CARD_HEART_S = num("CARD_LINE_GAP"), num("CARD_ROW_PITCH"), num("CARD_HEART_S")
 CARD_SWATCH_H, CARD_SWATCH_GAP = num("CARD_SWATCH_H"), num("CARD_SWATCH_GAP")
 WINDOW_DATE_DX = num("WINDOW_DATE_DX")
 TOUCH_R, TOUCH_ARC_ANGLE = num("TOUCH_R"), num("TOUCH_ARC_ANGLE")
@@ -205,13 +205,19 @@ def draw_card(s, kind):
         "battery": ("@battery", "82%", ["6.3 days left"]),
         "weather": ("Wed, 25 Nov, 2026", "18&#176;C",
                     ["Partly cloudy &#183; feels 16&#176;", "High 20&#176; &#183; Low 9&#176;"]),
-        "hr": ("", "72 bpm", ["Resting 52 &#183; Stress 34"]),
+        "hr": ("@heart", "72 bpm", ["Resting 52 &#183; Stress 34"]),
     }[kind]
     hl, ht = FONT_PX["label"], FONT_PX["title"]           # line heights: the font sizes (getFontHeight)
     total = ht + len(below) * (hl + CARD_LINE_GAP) + (hl + CARD_LINE_GAP if above else 0)
     y = top + (ch - total) / 2
     if above == "@battery":                               # the dial's battery icon in the small line's place
         draw_battery_icon(s, CX - (BATT_W + BATT_TERM_W) / 2 + BATT_W / 2, y + hl / 2, 82)
+        y += hl + CARD_LINE_GAP
+    elif above == "@heart":                               # Cards.drawHeart(): a red heart in the small line's place
+        hs, hy = CARD_HEART_S, y + hl / 2 - CARD_HEART_S * 0.06
+        s.circle(CX - hs * .25, hy - hs * .15, hs * .28, RED)
+        s.circle(CX + hs * .25, hy - hs * .15, hs * .28, RED)
+        s.poly([(CX - hs * .51, hy - hs * .02), (CX + hs * .51, hy - hs * .02), (CX, hy + hs * .55)], RED)
         y += hl + CARD_LINE_GAP
     elif above:
         s.text(CX, y + hl / 2, above, "label", GREY)
