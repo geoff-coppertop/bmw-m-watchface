@@ -327,26 +327,12 @@ class BmwMWatchView extends WatchUi.WatchFace {
         dc.fillPolygon(pts);
     }
 
-    // The watch battery as a simple icon that empties as the battery drains: a grey outline
-    // and terminal, a white fill (red below 20%). The exact figure is on the quick card.
+    // The watch battery icon at 9 o'clock, centred on x (see BatteryIcon). The exact figure is on
+    // the quick card.
     private function drawBatteryIcon(dc as Dc, x as Numeric, y as Numeric) as Void {
-        var pct = System.getSystemStats().battery;
-        var left = x - Theme.BATT_W / 2;
-        var top = y - Theme.BATT_H / 2;
-        dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
-        dc.setPenWidth(2);
-        dc.drawRoundedRectangle(left, top, Theme.BATT_W, Theme.BATT_H, Theme.BATT_R);
-        dc.setPenWidth(1);
-        dc.fillRectangle(left + Theme.BATT_W, y - Theme.BATT_TERM_H / 2, Theme.BATT_TERM_W, Theme.BATT_TERM_H);
-        var fillW = (Theme.BATT_W - 2 * Theme.BATT_PAD) * pct / 100.0;
-        if (fillW > 0) {
-            var low = Stats.isLowBattery(pct.toNumber());
-            dc.setColor(low ? tone(Theme.RED) : Theme.WHITE, Graphics.COLOR_TRANSPARENT);
-            dc.fillRectangle(left + Theme.BATT_PAD, top + Theme.BATT_PAD, fillW, Theme.BATT_H - 2 * Theme.BATT_PAD);
-        }
+        BatteryIcon.draw(dc, x - Theme.BATT_W / 2, y, System.getSystemStats().battery, tone(Theme.RED));
     }
 
-    // The date window at 3 o'clock: a small grey weekday over a white day number.
     private function drawWindow(dc as Dc, x as Numeric, y as Numeric, label as String, value as String) as Void {
         // The two lines are stacked from their real heights and centred on y.
         var hl = dc.getFontHeight(Fonts.label);

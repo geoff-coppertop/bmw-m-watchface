@@ -33,10 +33,10 @@ simulator screenshots. They are generated from `source/Theme.mc` by
 - Quick cards. Hold the date, battery, roundel or rings and a card appears over the dial. Every
   card is the same size, with its content centred. The date shows the weather: the full day and
   date, the temperature, conditions and feels-like, and the day's high and low. The battery shows
-  its percentage and days left. The roundel shows heart rate (with resting rate and stress), and the
+  its percentage and days left, with the dial's battery icon in place of a title. The roundel shows heart rate (with resting rate and stress), and the
   rings show steps, active minutes and body battery, each row marked with a slanted M stripe in its
-  ring's colour. Only the battery and weather cards have a small line above the number; heart rate
-  and activity have no title. Touch anywhere to dismiss a card; it also goes after four seconds. The
+  ring's colour. Only the weather card has a small line above the number (the date); the others have no
+  title. Touch anywhere to dismiss a card; it also goes after four seconds. The
   temperature is not on the dial: the date is the way to the weather.
 
 **Why a hold, and why no pages.** Garmin's `WatchFaceDelegate` documents only `onPress` (touch and
@@ -81,6 +81,7 @@ source/
   Geometry.mc           ring sizes and touch hit-testing (pure, tested)
   Logo.mc               the M badge's stripe geometry (pure, tested)
   Stats.mc              battery threshold and number formatting (pure, tested)
+  BatteryIcon.mc        the battery icon, drawn on the dial and on the battery card
   Units.mc              the temperature unit setting (pure, tested)
   Vitals.mc             body battery: newest sample with data, last reading kept in storage
   tests/                unit tests, run with ./tools/test.sh

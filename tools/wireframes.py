@@ -202,7 +202,7 @@ def draw_card(s, kind):
             s.text(left + CARD_W - CARD_PAD, y, v, "value", WHITE, "end")
         return
     above, big, below = {
-        "battery": ("WATCH BATTERY", "82%", ["6.3 days left"]),
+        "battery": ("@battery", "82%", ["6.3 days left"]),
         "weather": ("Wednesday 25 November", "18&#176;C",
                     ["Partly cloudy &#183; feels 16&#176;", "High 20&#176; &#183; Low 9&#176;"]),
         "hr": ("", "72 bpm", ["Resting 52 &#183; Stress 34"]),
@@ -210,7 +210,10 @@ def draw_card(s, kind):
     hl, ht = FONT_PX["label"], FONT_PX["title"]           # line heights: the font sizes (getFontHeight)
     total = ht + len(below) * (hl + CARD_LINE_GAP) + (hl + CARD_LINE_GAP if above else 0)
     y = top + (ch - total) / 2
-    if above:
+    if above == "@battery":                               # the dial's battery icon in the small line's place
+        draw_battery_icon(s, CX - (BATT_W + BATT_TERM_W) / 2 + BATT_W / 2, y + hl / 2, 82)
+        y += hl + CARD_LINE_GAP
+    elif above:
         s.text(CX, y + hl / 2, above, "label", GREY)
         y += hl + CARD_LINE_GAP
     s.text(CX, y + ht / 2, big, "title", WHITE)

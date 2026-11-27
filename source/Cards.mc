@@ -37,12 +37,13 @@ class Cards {
         // A card is an optional small line, one big line, and up to two small lines under it,
         // stacked from the real font heights and centred in the card.
         var above = "";
+        var icon = false;                                // the battery icon in the small line's place
         var big = "--";
         var below = [] as Array<String>;
 
         if (kind == :battery) {
             var st = System.getSystemStats();
-            above = "WATCH BATTERY";
+            icon = true;                                 // the dial's battery icon says what this is
             big = st.battery.toNumber().toString() + "%";
             below.add(Stats.daysText(st.batteryInDays) + " left" + (st.charging ? " · Charging" : ""));
 
@@ -79,9 +80,13 @@ class Cards {
         var hl = dc.getFontHeight(Fonts.label);
         var ht = dc.getFontHeight(Fonts.title);
         var gap = Theme.CARD_LINE_GAP;
-        var total = ht + below.size() * (hl + gap) + (above.length() > 0 ? hl + gap : 0);
+        var hasAbove = icon || above.length() > 0;
+        var total = ht + below.size() * (hl + gap) + (hasAbove ? hl + gap : 0);
         var y = top + (ch - total) / 2;
-        if (above.length() > 0) {
+        if (icon) {
+            BatteryIcon.draw(dc, cx - BatteryIcon.width() / 2, y + hl / 2, System.getSystemStats().battery, Theme.RED);
+            y += hl + gap;
+        } else if (above.length() > 0) {
             dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
             dc.drawText(cx, y + hl / 2, Fonts.label, above, j);
             y += hl + gap;
