@@ -80,9 +80,10 @@ class BmwMWatchView extends WatchUi.WatchFace {
     // In low-power mode the face keeps its colours but has no second hand, so it must leave that
     // state when the screen really wakes. onExitSleep is not guaranteed to arrive (it did not when
     // the screen timed out with a card up, which left the face stuck without a second hand on an
-    // awake screen), so the flag also clears itself from evidence that the screen is awake: a
-    // touch, or updates arriving about once a second (in low-power mode the watch updates only once
-    // a minute).
+    // awake screen), so the flag also clears itself from evidence that the screen is awake: updates
+    // arriving about once a second (in low-power mode the watch updates only once a minute). A
+    // touch must not clear it, nor be handled while it is set: the watch needs that touch to wake
+    // the screen.
     private function wakeIfAwake() as Void {
         var now = System.getTimer();
         if (_asleep && now - _sleepAt > 4000 && now - _lastUpdate < 4000) {
@@ -161,6 +162,9 @@ class BmwMWatchView extends WatchUi.WatchFace {
     // has no tap), and the simulator sends nothing else, so a hold is what works; a device that
     // also sends a tap gets the same behaviour. Returns true if the touch was used.
     function handleTouch(x as Number, y as Number) as Boolean {
+        if (_asleep) {
+            return false;       // low-power mode: leave the touch to the watch, so it can wake the screen
+        }
         try {
             return touch(x, y);
         } catch (ex) {
@@ -179,7 +183,6 @@ class BmwMWatchView extends WatchUi.WatchFace {
             return true;
         }
         _lastTouch = now;
-        _asleep = false;                      // a touch means the screen is awake
 
         if (_card != null) {
             closeCard();

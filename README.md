@@ -218,9 +218,11 @@ Compiled and run on a Venu X1 and in the Windows simulator; the unit tests pass.
   second hand is dropped. Grey was tried first and looked bad, and it made the ring fills
   meaningless. On the watch the face once got stuck in the low-power look on an awake screen: the
   screen had timed out with a card up and `onExitSleep` apparently never arrived (no crash log was
-  written, so it was not a crash). The `_asleep` flag now also clears on a touch, and when updates
-  arrive about once a second (`wakeIfAwake` in `BmwMWatchView.mc`). If the dial is dim while the
-  screen is awake, look there.
+  written, so it was not a crash). The `_asleep` flag now also clears when updates arrive about once
+  a second (`wakeIfAwake` in `BmwMWatchView.mc`). Touches are ignored (not consumed) while it is
+  set, so the watch can use them to wake the screen; an earlier version handled them, and the
+  screen could not be woken from the dim state. If the dial is dim while the screen is awake, look
+  there.
 - Check on the watch that the Units setting appears in Garmin Connect and that changing it
   redraws the face (`onSettingsChanged`).
 - Layout clearances (date and battery against the ticks, the ring band against the ticks) were
