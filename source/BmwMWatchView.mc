@@ -16,6 +16,7 @@ class BmwMWatchView extends WatchUi.WatchFace {
     private var _errorUntil as Number = 0;            // System.getTimer() until which it is shown
 
     private var _cards as Cards = new Cards();
+    private var _low as Boolean = false;              // this draw is the watch's low-power (always-on) draw
     private var _card as Symbol or Null = null;       // the quick card showing, if any
     private var _cardAt as Number = 0;                // System.getTimer() when the card went up
     private var _lastTouch as Number = -1000;        // System.getTimer() of the last counted touch
@@ -39,9 +40,20 @@ class BmwMWatchView extends WatchUi.WatchFace {
             + " screen=" + dc.getWidth() + "x" + dc.getHeight());
     }
 
-    // The face has no low-power look of its own: with Always-On Display off the watch simply turns
-    // the screen off, so the face always draws the same full dial. (An earlier dimmed, no-second-hand
-    // style could get stuck on an awake screen.) The only thing done on dimming is to drop a card.
+    // Whether the face is drawn in low power is asked of the watch at each draw (System.getDisplayMode),
+    // not remembered from onEnterSleep / onExitSleep: those calls can be missed, which once left the
+    // face stuck dim on an awake screen. With Always-On Display off the watch turns the screen off
+    // and never asks for a low-power draw, so the dimmed look only ever appears when always-on is
+    // active. These two just drop a card when the watch dims.
+    private function lowPowerMode() as Boolean {
+        return (System has :getDisplayMode) && System.getDisplayMode() == System.DISPLAY_MODE_LOW_POWER;
+    }
+
+    // A colour as drawn now: in the low-power draw the same colour, dimmed (see Theme.lowPower).
+    private function tone(color as Number) as Number {
+        return _low ? Theme.lowPower(color) : color;
+    }
+
     function onEnterSleep() as Void {
         _card = null;
     }
@@ -104,6 +116,10 @@ class BmwMWatchView extends WatchUi.WatchFace {
         _w = w;
         _h = h;
         _r = r;
+        _low = lowPowerMode();
+        if (_low) {
+            _card = null;                     // no card in the always-on look
+        }
 
         // A watch face may not use Timer (Garmin refuses it: "Symbol 'start' not available to
         // 'Watch Face'"), so the card expires here instead. The watch redraws every second while
@@ -138,6 +154,9 @@ class BmwMWatchView extends WatchUi.WatchFace {
     // has no tap), and the simulator sends nothing else, so a hold is what works; a device that
     // also sends a tap gets the same behaviour. Returns true if the touch was used.
     function handleTouch(x as Number, y as Number) as Boolean {
+        if (lowPowerMode()) {
+            return false;       // always-on look: leave the touch to the watch, so it can wake the screen
+        }
         try {
             return touch(x, y);
         } catch (ex) {
@@ -224,7 +243,7 @@ class BmwMWatchView extends WatchUi.WatchFace {
         dc.drawArc(cx, cy, R, Graphics.ARC_COUNTER_CLOCKWISE, 240, 300);
         if (frac > 1.0) { frac = 1.0; }
         if (frac > 0.01) {
-            dc.setColor(color, Graphics.COLOR_TRANSPARENT);
+            dc.setColor(tone(color), Graphics.COLOR_TRANSPARENT);
             dc.drawArc(cx, cy, R, Graphics.ARC_COUNTER_CLOCKWISE, 240, 240 + 60 * frac);
         }
         dc.setPenWidth(1);
@@ -245,7 +264,7 @@ class BmwMWatchView extends WatchUi.WatchFace {
 
         var colors = [Theme.BLUE, Theme.NAVY, Theme.RED];
         for (var i = 0; i < 3; i++) {
-            dc.setColor(colors[i], Graphics.COLOR_TRANSPARENT);
+            dc.setColor(tone(colors[i]), Graphics.COLOR_TRANSPARENT);
             dc.fillPolygon(Logo.stripePoints(i, left, top, k));     // shared with the page header
         }
 
@@ -271,12 +290,12 @@ class BmwMWatchView extends WatchUi.WatchFace {
         var ri = R * 0.72;
 
         dc.setPenWidth(5);
-        dc.setColor(Theme.BLUE, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(tone(Theme.BLUE), Graphics.COLOR_TRANSPARENT);
         dc.drawArc(cx, cy, R + 6, Graphics.ARC_COUNTER_CLOCKWISE, 100, 170);
-        dc.setColor(Theme.NAVY, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(tone(Theme.NAVY), Graphics.COLOR_TRANSPARENT);
         dc.drawArc(cx, cy, R + 6, Graphics.ARC_COUNTER_CLOCKWISE, 10, 80);
         dc.drawArc(cx, cy, R + 6, Graphics.ARC_COUNTER_CLOCKWISE, 280, 350);
-        dc.setColor(Theme.RED, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(tone(Theme.RED), Graphics.COLOR_TRANSPARENT);
         dc.drawArc(cx, cy, R + 6, Graphics.ARC_COUNTER_CLOCKWISE, 190, 260);
         dc.setPenWidth(1);
 
@@ -284,7 +303,7 @@ class BmwMWatchView extends WatchUi.WatchFace {
         dc.fillCircle(cx, cy, R);
         dc.setColor(Theme.WHITE, Graphics.COLOR_TRANSPARENT);
         dc.fillCircle(cx, cy, ri);
-        dc.setColor(Theme.BLUE, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(tone(Theme.BLUE), Graphics.COLOR_TRANSPARENT);
         fillSector(dc, cx, cy, ri, 90, 180);
         fillSector(dc, cx, cy, ri, 270, 360);
     }
@@ -303,7 +322,7 @@ class BmwMWatchView extends WatchUi.WatchFace {
     // The watch battery icon at 9 o'clock, centred on x (see BatteryIcon). The exact figure is on
     // the quick card.
     private function drawBatteryIcon(dc as Dc, x as Numeric, y as Numeric) as Void {
-        BatteryIcon.draw(dc, x - Theme.BATT_W / 2, y, System.getSystemStats().battery);
+        BatteryIcon.draw(dc, x - Theme.BATT_W / 2, y, System.getSystemStats().battery, tone(Theme.RED));
     }
 
     private function drawWindow(dc as Dc, x as Numeric, y as Numeric, label as String, value as String) as Void {
@@ -326,18 +345,20 @@ class BmwMWatchView extends WatchUi.WatchFace {
         var hourDeg = ((t.hour % 12) + t.min / 60.0) * 30.0;
         var minDeg = (t.min + t.sec / 60.0) * 6.0;
 
-        drawHand(dc, cx, cy, hourDeg, r * 0.56, r * 0.07, r * 0.1, Theme.WHITE, Theme.BLUE);
-        drawHand(dc, cx, cy, minDeg, r * 0.88, r * 0.05, r * 0.12, Theme.WHITE, Theme.BLUE);
+        drawHand(dc, cx, cy, hourDeg, r * 0.56, r * 0.07, r * 0.1, Theme.WHITE, tone(Theme.BLUE));
+        drawHand(dc, cx, cy, minDeg, r * 0.88, r * 0.05, r * 0.12, Theme.WHITE, tone(Theme.BLUE));
 
-        var a = rad(t.sec * 6.0);
-        var tail = r * 0.18;
-        var len = r * 0.94;
-        dc.setPenWidth(3);
-        dc.setColor(Theme.RED, Graphics.COLOR_TRANSPARENT);
-        dc.drawLine(
-            cx - Math.sin(a) * tail, cy + Math.cos(a) * tail,
-            cx + Math.sin(a) * len, cy - Math.cos(a) * len);
-        dc.setPenWidth(1);
+        if (!_low) {                          // the second hand is the only thing the low-power draw drops
+            var a = rad(t.sec * 6.0);
+            var tail = r * 0.18;
+            var len = r * 0.94;
+            dc.setPenWidth(3);
+            dc.setColor(Theme.RED, Graphics.COLOR_TRANSPARENT);
+            dc.drawLine(
+                cx - Math.sin(a) * tail, cy + Math.cos(a) * tail,
+                cx + Math.sin(a) * len, cy - Math.cos(a) * len);
+            dc.setPenWidth(1);
+        }
 
         drawRoundel(dc, cx, cy, r);
     }
