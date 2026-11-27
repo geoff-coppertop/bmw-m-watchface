@@ -8,24 +8,14 @@ import Toybox.Weather;
 
 // The quick card shown over the dial when a zone is touched. Every card has the same size and the
 // same layout: rows of "label ... value", the label grey on the left and the value white on the
-// right. The activity rows also carry their
-// ring's colour as a slanted M stripe. It is not a page: it disappears by itself after a few
-// seconds, or when you touch elsewhere. The weather card is the only place the temperature appears.
+// right. The activity rows also carry their ring's colour as a slanted M stripe. It is not a page:
+// it disappears by itself after a few seconds, or when you touch elsewhere. The weather card is the
+// only place the temperature appears. Reading the watch (build) is kept apart from painting (draw).
 class Cards {
 
-    function drawCard(dc as Dc, kind as Symbol) as Void {
-        var cx = dc.getWidth() / 2;
-        var ch = Theme.CARD_H;
-        var left = cx - Theme.CARD_W / 2;
-        var top = dc.getHeight() / 2 - ch / 2;
-
-        dc.setColor(Theme.BLACK, Graphics.COLOR_TRANSPARENT);
-        dc.fillRoundedRectangle(left, top, Theme.CARD_W, ch, Theme.CARD_R);
-        dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
-        dc.setPenWidth(2);
-        dc.drawRoundedRectangle(left, top, Theme.CARD_W, ch, Theme.CARD_R);
-        dc.setPenWidth(1);
-
+    // Read everything the card for this zone shows from the watch, once, into a CardContent. This is
+    // the only place card data is fetched; draw() only paints it.
+    function build(kind as Symbol) as CardContent {
         var names = [] as Array<String>;
         var vals = [] as Array<String>;
         var colors = null as Array<Number> or Null;      // a ring colour per row, for the activity card
@@ -93,6 +83,25 @@ class Cards {
             vals.add((bb == null ? "--" : bb.toString()) + " / 100");
             colors = [Theme.metricColor(:steps), Theme.metricColor(:active), Theme.metricColor(:body)] as Array<Number>;
         }
+        return new CardContent(names, vals, colors);
+    }
+
+    function draw(dc as Dc, content as CardContent) as Void {
+        var cx = dc.getWidth() / 2;
+        var ch = Theme.CARD_H;
+        var left = cx - Theme.CARD_W / 2;
+        var top = dc.getHeight() / 2 - ch / 2;
+
+        dc.setColor(Theme.BLACK, Graphics.COLOR_TRANSPARENT);
+        dc.fillRoundedRectangle(left, top, Theme.CARD_W, ch, Theme.CARD_R);
+        dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
+        dc.setPenWidth(2);
+        dc.drawRoundedRectangle(left, top, Theme.CARD_W, ch, Theme.CARD_R);
+        dc.setPenWidth(1);
+
+        var names = content.names;
+        var vals = content.vals;
+        var colors = content.colors;
 
         // Stack the rows from the real font height, centred in the card.
         var hv = dc.getFontHeight(Fonts.value);

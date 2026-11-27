@@ -1,5 +1,3 @@
-import Toybox.ActivityMonitor;
-import Toybox.Activity;
 import Toybox.Graphics;
 import Toybox.Lang;
 import Toybox.Math;
@@ -16,6 +14,8 @@ class BmwMWatchView extends WatchUi.WatchFace {
     private var _errorUntil as Number = 0;            // System.getTimer() until which it is shown
 
     private var _cards as Cards = new Cards();
+    private var _snap as Snapshot = new Snapshot();   // what the dial shows from the watch, refreshed before drawing
+    private var _content as CardContent or Null = null;   // the card showing, as read from the watch
     private var _low as Boolean = false;              // this draw is the watch's low-power (always-on) draw
     private var _card as Symbol or Null = null;       // the quick card showing, if any
     private var _cardAt as Number = 0;                // System.getTimer() when the card went up
@@ -56,6 +56,7 @@ class BmwMWatchView extends WatchUi.WatchFace {
 
     function onEnterSleep() as Void {
         _card = null;
+        _content = null;
     }
 
     function onExitSleep() as Void {
@@ -71,12 +72,30 @@ class BmwMWatchView extends WatchUi.WatchFace {
                 drawError(dc);
                 return;
             }
+            refreshData();                    // the fetching step, kept apart from drawing
             drawFace(dc);
         } catch (ex) {
             _error = errorText(ex);
             _errorUntil = System.getTimer() + 10000;
             System.println("ERROR in onUpdate: " + _error);
             drawError(dc);
+        }
+    }
+
+    // Read the watch before anything is drawn: the low-power mode, the card's expiry and its content,
+    // and the dial's snapshot. drawFace then only paints what was read here.
+    private function refreshData() as Void {
+        _low = lowPowerMode();
+        // A watch face may not use Timer (Garmin refuses it: "Symbol 'start' not available to
+        // 'Watch Face'"), so the card expires here instead. The watch redraws every second while the
+        // screen is awake, and there is no card in the always-on look.
+        if (_low || (_card != null && System.getTimer() - _cardAt >= Theme.CARD_MS)) {
+            _card = null;
+            _content = null;
+        }
+        _snap.refresh(!_low);             // in the low-power draw: no slow reads
+        if (_card != null) {
+            _content = _cards.build(_card);   // rebuilt each update, so live values (heart rate) move
         }
     }
 
@@ -116,18 +135,6 @@ class BmwMWatchView extends WatchUi.WatchFace {
         _w = w;
         _h = h;
         _r = r;
-        _low = lowPowerMode();
-        if (_low) {
-            _card = null;                     // no card in the always-on look
-        }
-
-        // A watch face may not use Timer (Garmin refuses it: "Symbol 'start' not available to
-        // 'Watch Face'"), so the card expires here instead. The watch redraws every second while
-        // the screen is awake, and onEnterSleep removes the card when it dims.
-        if (_card != null && System.getTimer() - _cardAt >= Theme.CARD_MS) {
-            _card = null;
-        }
-
         dc.setColor(Theme.WHITE, Theme.BLACK);
         dc.clear();
 
@@ -139,8 +146,8 @@ class BmwMWatchView extends WatchUi.WatchFace {
 
         drawHands(dc, cx, cy, r);
 
-        if (_card != null) {
-            _cards.drawCard(dc, _card);       // the quick card over the dial (only a touch makes one)
+        if (_content != null) {
+            _cards.draw(dc, _content);        // the quick card over the dial (only a touch makes one)
         }
     }
 
@@ -191,11 +198,13 @@ class BmwMWatchView extends WatchUi.WatchFace {
     private function showCard(kind as Symbol) as Void {
         _card = kind;
         _cardAt = System.getTimer();
+        _content = _cards.build(kind);    // read the watch now, in the touch, not in the draw
         WatchUi.requestUpdate();
     }
 
     function closeCard() as Void {
         _card = null;
+        _content = null;
         WatchUi.requestUpdate();
     }
 
@@ -213,9 +222,9 @@ class BmwMWatchView extends WatchUi.WatchFace {
         var w = Geometry.ringWidth(r);
         var pitch = w + Theme.GAP;
         var ringR = Geometry.ringOuterR(r);
-        drawRing(dc, cx, cy, ringR,             w, stepsFrac(),   Theme.metricColor(:steps));
-        drawRing(dc, cx, cy, ringR - pitch,     w, activeFrac(),  Theme.metricColor(:active));
-        drawRing(dc, cx, cy, ringR - 2 * pitch, w, bodyBatFrac(), Theme.metricColor(:body));
+        drawRing(dc, cx, cy, ringR,             w, _snap.stepsFrac, Theme.metricColor(:steps));
+        drawRing(dc, cx, cy, ringR - pitch,     w, _snap.activeFrac, Theme.metricColor(:active));
+        drawRing(dc, cx, cy, ringR - 2 * pitch, w, _snap.bodyFrac, Theme.metricColor(:body));
 
         // minute / hour ticks
         for (var i = 0; i < 60; i++) {
@@ -322,7 +331,7 @@ class BmwMWatchView extends WatchUi.WatchFace {
     // The watch battery icon at 9 o'clock, centred on x (see BatteryIcon). The exact figure is on
     // the quick card.
     private function drawBatteryIcon(dc as Dc, x as Numeric, y as Numeric) as Void {
-        BatteryIcon.draw(dc, x - Theme.BATT_W / 2, y, System.getSystemStats().battery, tone(Theme.RED));
+        BatteryIcon.draw(dc, x - Theme.BATT_W / 2, y, _snap.battery, tone(Theme.RED));
     }
 
     private function drawWindow(dc as Dc, x as Numeric, y as Numeric, label as String, value as String) as Void {
@@ -389,22 +398,4 @@ class BmwMWatchView extends WatchUi.WatchFace {
     }
 
     // ---- data -----------------------------------------------------------
-
-    private function stepsFrac() as Float {
-        var info = ActivityMonitor.getInfo();
-        if (info.steps == null || info.stepGoal == null || info.stepGoal == 0) { return 0.0; }
-        return info.steps.toFloat() / info.stepGoal;
-    }
-
-    private function activeFrac() as Float {
-        var info = ActivityMonitor.getInfo();
-        if (info.activeMinutesWeek == null || info.activeMinutesWeekGoal == null
-            || info.activeMinutesWeekGoal == 0) { return 0.0; }
-        return info.activeMinutesWeek.total.toFloat() / info.activeMinutesWeekGoal;
-    }
-
-    private function bodyBatFrac() as Float {
-        var bb = Vitals.bodyBattery(!_low);       // no slow history read in the low-power draw
-        return bb == null ? 0.0 : bb / 100.0;
-    }
 }

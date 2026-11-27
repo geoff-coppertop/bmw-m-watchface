@@ -78,7 +78,9 @@ source/
   BmwMWatchApp.mc       app entry
   BmwMWatchView.mc      dial, rings, hands, roundel, the card's show / expire logic
   BmwMWatchDelegate.mc  forwards touches to the view
-  Cards.mc              the quick card drawn over the dial
+  Cards.mc              the quick card: build() reads the watch, draw() only paints
+  CardContent.mc        what a card shows (labels, values, ring colours)
+  Snapshot.mc           what the dial shows from the watch (ring fractions, battery), refreshed before drawing
   Fonts.mc              the three font roles as vector fonts (falls back to system fonts)
   Theme.mc              colours, spacing, font sizes and touch targets used everywhere
   Geometry.mc           ring sizes and touch hit-testing (pure, tested)
@@ -137,7 +139,7 @@ vary slightly.
 ## Tests
 
 The logic that does not need the watch is split into small modules (`Geometry`, `Logo`, `Stats`,
-`Units`, `Theme`) and covered by Connect IQ unit tests in `source/tests/`: 23 tests for the touch
+`Units`, `Theme`) and covered by Connect IQ unit tests in `source/tests/`: 25 tests for the touch
 hit-testing, the badge geometry, number formatting, the unit conversion and the theme mappings.
 Drawing code and anything that reads live watch data is not tested.
 
@@ -147,6 +149,20 @@ Drawing code and anything that reads live watch data is not tested.
 
 or run **Run unit tests** from VS Code. The tests are `(:test)` functions, which a normal build
 ignores, so they do not affect the watch face.
+
+## How it is organised: reading is kept apart from drawing
+
+Nothing in the drawing code reads the watch. Each `onUpdate` does two steps in order:
+
+1. `refreshData()` reads what is needed: whether this is the low-power draw
+   (`System.getDisplayMode`), the dial's `Snapshot` (steps, active minutes, body battery, battery;
+   at most every 10 s, and in the low-power draw only if nothing has ever been read, with no slow
+   sensor-history read), and the open card's `CardContent` (`Cards.build`, each update while a card
+   is up so the heart rate moves).
+2. `drawFace()` paints from the snapshot and the card content, and from the clock for the hands.
+
+A draw therefore never waits on a sensor, which matters most for the always-on draw: the watch
+gives it very little time, and a draw that runs over can be cut off and leave a half-drawn frame.
 
 ## Design tokens
 
