@@ -203,7 +203,7 @@ def draw_card(s, kind):
         return
     above, big, below = {
         "battery": ("@battery", "82%", ["6.3 days left"]),
-        "weather": ("Wednesday 25 November", "18&#176;C",
+        "weather": ("Wed, 25 Nov, 2026", "18&#176;C",
                     ["Partly cloudy &#183; feels 16&#176;", "High 20&#176; &#183; Low 9&#176;"]),
         "hr": ("", "72 bpm", ["Resting 52 &#183; Stress 34"]),
     }[kind]

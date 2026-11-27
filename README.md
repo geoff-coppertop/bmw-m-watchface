@@ -31,8 +31,8 @@ simulator screenshots. They are generated from `source/Theme.mc` by
   3 o'clock, and the watch battery at 9 o'clock as a simple icon that empties as the battery
   drains (red below 20%). The temperature is not on the dial.
 - Quick cards. Hold the date, battery, roundel or rings and a card appears over the dial. Every
-  card is the same size, with its content centred. The date shows the weather: the full day and
-  date, the temperature, conditions and feels-like, and the day's high and low. The battery shows
+  card is the same size, with its content centred. The date shows the weather: the day and date (`Wed, 25 Sep, 2026`), the
+  temperature, conditions and feels-like, and the day's high and low. The battery shows
   its percentage and days left, with the dial's battery icon in place of a title. The roundel shows heart rate (with resting rate and stress), and the
   rings show steps, active minutes and body battery, each row marked with a slanted M stripe in its
   ring's colour. Only the weather card has a small line above the number (the date); the others have no

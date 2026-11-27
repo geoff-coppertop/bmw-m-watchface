@@ -48,9 +48,10 @@ class Cards {
             below.add(Stats.daysText(st.batteryInDays) + " left" + (st.charging ? " · Charging" : ""));
 
         } else if (kind == :weather) {
-            // the small line is the full day and date: the card is reached through the date
-            var d = Gregorian.info(Time.now(), Time.FORMAT_LONG);
-            above = d.day_of_week.toString() + " " + d.day.toString() + " " + d.month.toString();
+            // the small line is the day and date, like "Wed, 25 Sep, 2026": the card is reached
+            // through the date
+            var d = Gregorian.info(Time.now(), Time.FORMAT_MEDIUM);
+            above = d.day_of_week.toString() + ", " + d.day.toString() + " " + d.month.toString() + ", " + d.year.toString();
             var cond = (Toybox has :Weather) ? Weather.getCurrentConditions() : null;
             if (cond != null && cond.temperature != null) {
                 big = tempNum(cond.temperature).toString() + tempUnit();
