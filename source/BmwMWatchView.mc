@@ -14,6 +14,8 @@ import Toybox.WatchUi;
 class BmwMWatchView extends WatchUi.WatchFace {
 
     private var _asleep as Boolean = false;
+    private var _sleepAt as Number = 0;               // System.getTimer() when onEnterSleep last arrived
+    private var _lastUpdate as Number = -10000;       // System.getTimer() of the last onUpdate
     private var _error as String or Null = null;      // the last error caught while drawing or touching
     private var _errorUntil as Number = 0;            // System.getTimer() until which it is shown
 
@@ -43,6 +45,7 @@ class BmwMWatchView extends WatchUi.WatchFace {
 
     function onEnterSleep() as Void {
         _asleep = true;
+        _sleepAt = System.getTimer();
         _card = null;    // the card goes when the watch dims
     }
 
@@ -55,6 +58,7 @@ class BmwMWatchView extends WatchUi.WatchFace {
     // of a silent crash back to the default face (the watch's crash log is easy to miss). If the
     // face shows "ERROR", the message below it says what failed; send it along.
     function onUpdate(dc as Dc) as Void {
+        wakeIfAwake();
         try {
             if (_error != null && System.getTimer() < _errorUntil) {
                 drawError(dc);
@@ -67,6 +71,19 @@ class BmwMWatchView extends WatchUi.WatchFace {
             System.println("ERROR in onUpdate: " + _error);
             drawError(dc);
         }
+    }
+
+    // The sleep style (grey, no second hand) must only show while the screen really is in low-power
+    // mode, but onExitSleep is not guaranteed to arrive (for example when the screen times out with
+    // a card up), which left the face stuck grey on an awake screen. So the flag also clears itself
+    // from evidence that the screen is awake: a touch, or updates arriving about once a second (in
+    // low-power mode the watch updates only once a minute).
+    private function wakeIfAwake() as Void {
+        var now = System.getTimer();
+        if (_asleep && now - _sleepAt > 4000 && now - _lastUpdate < 4000) {
+            _asleep = false;
+        }
+        _lastUpdate = now;
     }
 
     private function errorText(ex as Lang.Exception) as String {
@@ -124,8 +141,8 @@ class BmwMWatchView extends WatchUi.WatchFace {
 
         drawHands(dc, cx, cy, r);
 
-        if (_card != null && !_asleep) {
-            _cards.drawCard(dc, _card);       // the quick card over the dial
+        if (_card != null) {
+            _cards.drawCard(dc, _card);       // the quick card over the dial (only a touch makes one)
         }
     }
 
@@ -157,6 +174,7 @@ class BmwMWatchView extends WatchUi.WatchFace {
             return true;
         }
         _lastTouch = now;
+        _asleep = false;                      // a touch means the screen is awake
 
         if (_card != null) {
             closeCard();

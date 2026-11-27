@@ -212,6 +212,11 @@ Compiled and run on a Venu X1 and in the Windows simulator; the unit tests pass.
   `ERROR` and the message for 10 seconds (and prints it to the console) instead of crashing back to
   the default face. The watch's own crash log is `GARMIN/APPS/LOGS/CIQ_LOG.YML` (`.BAK` is the older
   one); it only records errors the watch reports, so a hard freeze may leave nothing.
+- Sleep style: in low-power mode the face draws grey with no second hand. On the watch it was seen
+  stuck in that style on an awake screen (no crash log was written, so it was not a crash): the
+  screen had timed out with a card up and `onExitSleep` apparently never arrived. The `_asleep` flag
+  now also clears on a touch, and when updates arrive about once a second (`wakeIfAwake` in
+  `BmwMWatchView.mc`). If the face is ever grey while awake, that is where to look.
 - Check on the watch that the Units setting appears in Garmin Connect and that changing it
   redraws the face (`onSettingsChanged`).
 - Layout clearances (date and battery against the ticks, the ring band against the ticks) were
