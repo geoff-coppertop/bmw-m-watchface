@@ -152,17 +152,20 @@ ignores, so they do not affect the watch face.
 
 ## How it is organised: reading is kept apart from drawing
 
-Nothing in the drawing code reads the watch. Each `onUpdate` does two steps in order:
+Nothing in the drawing code reads the watch. Each `onUpdate` does three steps in order:
 
-1. `refreshData()` reads what is needed: whether this is the low-power draw
-   (`System.getDisplayMode`), the dial's `Snapshot` (steps, active minutes, body battery, battery;
-   at most every 10 s, and in the low-power draw only if nothing has ever been read, with no slow
-   sensor-history read), and the open card's `CardContent` (`Cards.build`, each update while a card
-   is up so the heart rate moves).
-2. `drawFace()` paints from the snapshot and the card content, and from the clock for the hands.
+1. `prepare()`: cheap decisions only, namely whether this is the low-power draw
+   (`System.getDisplayMode`) and whether the card has expired.
+2. `drawFace()`: paints from the `Snapshot` (steps, active minutes, body battery, battery), the open
+   card's `CardContent`, and the clock for the hands, all as held from the previous update. So a
+   frame appears at once, including the first one after waking.
+3. `refreshData()`: reads the watch for the next draw. The snapshot refreshes at most every 10 s, and
+   in the low-power draw only if nothing was ever read, with no slow sensor-history read. The open
+   card's content is rebuilt each update (`Cards.build`), so the heart rate moves.
 
-A draw therefore never waits on a sensor, which matters most for the always-on draw: the watch
-gives it very little time, and a draw that runs over can be cut off and leave a half-drawn frame.
+Values are therefore one frame behind, which is invisible for slow-moving figures. The always-on
+draw is the one the watch gives very little time, and a draw that runs over can be cut off and leave
+a half-drawn frame; it does no fetching beyond the one-time load.
 
 ## Design tokens
 

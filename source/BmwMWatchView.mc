@@ -72,8 +72,9 @@ class BmwMWatchView extends WatchUi.WatchFace {
                 drawError(dc);
                 return;
             }
-            refreshData();                    // the fetching step, kept apart from drawing
-            drawFace(dc);
+            prepare();                        // cheap decisions only, before the draw
+            drawFace(dc);                     // paints from what is already held: paints at once
+            refreshData();                    // then read the watch, for the next draw
         } catch (ex) {
             _error = errorText(ex);
             _errorUntil = System.getTimer() + 10000;
@@ -82,9 +83,9 @@ class BmwMWatchView extends WatchUi.WatchFace {
         }
     }
 
-    // Read the watch before anything is drawn: the low-power mode, the card's expiry and its content,
-    // and the dial's snapshot. drawFace then only paints what was read here.
-    private function refreshData() as Void {
+    // Decisions that need no reading of the watch's data, made before the draw: whether this is the
+    // low-power draw, and whether the card has expired.
+    private function prepare() as Void {
         _low = lowPowerMode();
         // A watch face may not use Timer (Garmin refuses it: "Symbol 'start' not available to
         // 'Watch Face'"), so the card expires here instead. The watch redraws every second while the
@@ -93,7 +94,14 @@ class BmwMWatchView extends WatchUi.WatchFace {
             _card = null;
             _content = null;
         }
-        _snap.refresh(!_low);             // in the low-power draw: no slow reads
+    }
+
+    // Read the watch AFTER the draw, for the next one. The draw has already painted from the values
+    // held from last time, which is invisible for slow-moving figures (steps, battery) and means the
+    // first frame after waking is not held up by a read. In the low-power draw this does nothing
+    // slow: the snapshot is only loaded if it never was, and without the history read.
+    private function refreshData() as Void {
+        _snap.refresh(!_low);
         if (_card != null) {
             _content = _cards.build(_card);   // rebuilt each update, so live values (heart rate) move
         }
