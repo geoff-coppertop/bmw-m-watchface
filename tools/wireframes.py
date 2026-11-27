@@ -60,7 +60,7 @@ BATT_W, BATT_H, BATT_R, BATT_TERM_W, BATT_TERM_H, BATT_PAD = (num("BATT_W"), num
                                                                 num("BATT_TERM_W"), num("BATT_TERM_H"),
                                                                 num("BATT_PAD"))
 CARD_W, CARD_H, CARD_R, CARD_PAD = num("CARD_W"), num("CARD_H"), num("CARD_R"), num("CARD_PAD")
-CARD_LINE_GAP, CARD_ROW_PITCH, CARD_HEART_S = num("CARD_LINE_GAP"), num("CARD_ROW_PITCH"), num("CARD_HEART_S")
+CARD_LINE_GAP, CARD_ROW_PITCH = num("CARD_LINE_GAP"), num("CARD_ROW_PITCH")
 CARD_SWATCH_H, CARD_SWATCH_GAP = num("CARD_SWATCH_H"), num("CARD_SWATCH_GAP")
 WINDOW_DATE_DX = num("WINDOW_DATE_DX")
 TOUCH_R, TOUCH_ARC_ANGLE = num("TOUCH_R"), num("TOUCH_ARC_ANGLE")
@@ -187,16 +187,16 @@ def draw_battery_icon(s, x, y, pct):
 
 def draw_card(s, kind):
     """Mirror of Cards.drawCard(): a quick card over the dial, with example values. Every card is the
-    same size: a header (an icon or the date) over rows of label (grey, left) and value (white, right)."""
+    same size: rows of label (grey, left) and value (white, right), the weather card with the date above."""
     ch = CARD_H
     left, top = CX - CARD_W / 2, CY - ch / 2
     s.add('<rect x="%.1f" y="%.1f" width="%d" height="%d" rx="%d" fill="%s" stroke="%s" stroke-width="2"/>'
           % (left, top, CARD_W, ch, CARD_R, BLACK, GREY))
     header, rows = {
-        "battery": ("@battery", [("Battery", "82%"), ("Time left", "6.3 days")]),
+        "battery": ("", [("Battery", "82%"), ("Time left", "6.3 days")]),
         "weather": ("Wed, 25 Nov, 2026", [("Now", "18&#176;C"), ("Conditions", "Partly cloudy"),
                                            ("Feels like", "16&#176;C"), ("High / low", "20&#176; / 9&#176;C")]),
-        "hr": ("@heart", [("Current HR", "72 bpm"), ("Resting HR", "52 bpm"), ("Breathing", "14 brpm"),
+        "hr": ("", [("Current HR", "72 bpm"), ("Resting HR", "52 bpm"), ("Breathing", "14 brpm"),
                           ("Stress", "34 &#183; low")]),
         "activity": ("", [("Steps", "6214 / 10000"), ("Active", "68 / 150 min"), ("Body battery", "78 / 100")]),
     }[kind]
@@ -204,14 +204,7 @@ def draw_card(s, kind):
     header_h = hl + CARD_LINE_GAP if header else 0
     total = header_h + (len(rows) - 1) * CARD_ROW_PITCH + hv
     y = top + (ch - total) / 2
-    if header == "@battery":
-        draw_battery_icon(s, CX - (BATT_W + BATT_TERM_W) / 2 + BATT_W / 2, y + hl / 2, 82)
-    elif header == "@heart":
-        hs, hy = CARD_HEART_S, y + hl / 2 - CARD_HEART_S * 0.06
-        s.circle(CX - hs * .25, hy - hs * .15, hs * .28, RED)
-        s.circle(CX + hs * .25, hy - hs * .15, hs * .28, RED)
-        s.poly([(CX - hs * .51, hy - hs * .02), (CX + hs * .51, hy - hs * .02), (CX, hy + hs * .55)], RED)
-    elif header:
+    if header:                                            # only the weather card: the date
         s.text(CX, y + hl / 2, header, "label", GREY)
     y += header_h
     for i, (n, v) in enumerate(rows):

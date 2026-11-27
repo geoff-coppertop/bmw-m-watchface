@@ -9,16 +9,11 @@ import Toybox.UserProfile;
 import Toybox.Weather;
 
 // The quick card shown over the dial when a zone is touched. Every card has the same size and the
-// same layout: a small header (an icon, or the date for the weather) over rows of "label ... value",
-// the label grey on the left and the value white on the right. The activity rows also carry their
+// same layout: rows of "label ... value", the label grey on the left and the value white on the
+// right (the weather card has the date above its rows). The activity rows also carry their
 // ring's colour as a slanted M stripe. It is not a page: it disappears by itself after a few
 // seconds, or when you touch elsewhere. The weather card is the only place the temperature appears.
 class Cards {
-
-    const HEADER_NONE = 0;
-    const HEADER_TEXT = 1;
-    const HEADER_BATTERY = 2;
-    const HEADER_HEART = 3;
 
     function drawCard(dc as Dc, kind as Symbol) as Void {
         var cx = dc.getWidth() / 2;
@@ -33,15 +28,13 @@ class Cards {
         dc.drawRoundedRectangle(left, top, Theme.CARD_W, ch, Theme.CARD_R);
         dc.setPenWidth(1);
 
-        var header = HEADER_NONE;
-        var headerText = "";
+        var headerText = "";                              // only the weather card has one: the date
         var names = [] as Array<String>;
         var vals = [] as Array<String>;
         var colors = null as Array<Number> or Null;      // a ring colour per row, for the activity card
 
         if (kind == :battery) {
             var st = System.getSystemStats();
-            header = HEADER_BATTERY;
             names.add("Battery");
             vals.add(st.battery.toNumber().toString() + "%");
             names.add("Time left");
@@ -55,7 +48,6 @@ class Cards {
             // the header is the day and date, like "Wed, 25 Sep, 2026": the card is reached through
             // the date
             var d = Gregorian.info(Time.now(), Time.FORMAT_MEDIUM);
-            header = HEADER_TEXT;
             headerText = d.day_of_week.toString() + ", " + d.day.toString() + " " + d.month.toString() + ", " + d.year.toString();
             var cond = (Toybox has :Weather) ? Weather.getCurrentConditions() : null;
             if (cond != null && cond.temperature != null) {
@@ -75,7 +67,6 @@ class Cards {
             }
 
         } else if (kind == :hr) {
-            header = HEADER_HEART;
             var act = Activity.getActivityInfo();
             var prof = UserProfile.getProfile();
             // breathing rate, in breaths per minute (brpm); some watches do not offer it, and some
@@ -115,18 +106,14 @@ class Cards {
         var gap = Theme.CARD_LINE_GAP;
         var pitch = Theme.CARD_ROW_PITCH;
         var rows = names.size();
-        var headerH = (header != HEADER_NONE) ? hl + gap : 0;
+        var headerH = (headerText.length() > 0) ? hl + gap : 0;
         var total = headerH + (rows - 1) * pitch + hv;
         var y = top + (ch - total) / 2;
 
-        if (header == HEADER_TEXT) {
+        if (headerText.length() > 0) {
             dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
             dc.drawText(cx, y + hl / 2, Fonts.label, headerText,
                 Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-        } else if (header == HEADER_BATTERY) {
-            BatteryIcon.draw(dc, cx - BatteryIcon.width() / 2, y + hl / 2, System.getSystemStats().battery, Theme.RED);
-        } else if (header == HEADER_HEART) {
-            drawHeart(dc, cx, y + hl / 2, Theme.CARD_HEART_S);
         }
         y += headerH;
 
@@ -147,15 +134,6 @@ class Cards {
             dc.drawText(left + Theme.CARD_W - Theme.CARD_PAD, ry, Fonts.value, vals[i],
                 Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER);
         }
-    }
-
-    // A filled heart in red, centred on (x, y), s pixels wide.
-    private function drawHeart(dc as Dc, x as Numeric, y as Numeric, s as Numeric) as Void {
-        var cy = y - s * 0.06;                           // its shape runs from -0.43 s to +0.55 s: centre it
-        dc.setColor(Theme.RED, Graphics.COLOR_TRANSPARENT);
-        dc.fillCircle(x - s * 0.25, cy - s * 0.15, s * 0.28);
-        dc.fillCircle(x + s * 0.25, cy - s * 0.15, s * 0.28);
-        dc.fillPolygon([[x - s * 0.51, cy - s * 0.02], [x + s * 0.51, cy - s * 0.02], [x, cy + s * 0.55]]);
     }
 
     private function conditionText(c as Number or Null) as String {

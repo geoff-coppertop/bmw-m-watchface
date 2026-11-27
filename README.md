@@ -31,9 +31,8 @@ simulator screenshots. They are generated from `source/Theme.mc` by
   3 o'clock, and the watch battery at 9 o'clock as a simple icon that empties as the battery
   drains (red below 20%). The temperature is not on the dial.
 - Quick cards. Hold the date, battery, roundel or rings and a card appears over the dial. Every
-  card has the same size and layout: a small header (the dial's battery icon, a red heart, or for
-  the weather the day and date) over rows of grey label on the left and white value on the right.
-  Every value has its unit.
+  card has the same size and layout: rows of grey label on the left and white value on the right,
+  every value with its unit (the weather card has the day and date above its rows).
   - Date: `Now`, `Conditions`, `Feels like`, `High / low` (the weather, under `Wed, 25 Sep, 2026`).
   - Battery: `Battery` (%) and `Time left` (days), plus `Status: Charging` when charging.
   - Roundel: `Current HR` and `Resting HR` (bpm), `Breathing` (brpm) and `Stress` (a 0 to 100 score
@@ -86,7 +85,7 @@ source/
   Geometry.mc           ring sizes and touch hit-testing (pure, tested)
   Logo.mc               the M badge's stripe geometry (pure, tested)
   Stats.mc              battery threshold and number formatting (pure, tested)
-  BatteryIcon.mc        the battery icon, drawn on the dial and on the battery card
+  BatteryIcon.mc        the battery icon at 9 o'clock
   Units.mc              the temperature unit setting (pure, tested)
   Vitals.mc             body battery: newest sample with data, last reading kept in storage
   tests/                unit tests, run with ./tools/test.sh
