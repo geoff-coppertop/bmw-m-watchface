@@ -68,6 +68,9 @@ module Theme {
     const CARD_DETAIL2_PITCH = 28; // the second detail line, below the first
     const CARD_ROW_Y = 62;
     const CARD_ROW_PITCH = 36;
+    const CARD_SWATCH_W = 6;      // the bar in a ring's colour before each Activity row
+    const CARD_SWATCH_H = 22;
+    const CARD_SWATCH_GAP = 10;   // between the bar and the label
     const CARD_MS = 4000;         // how long a card stays up
 
     // ---- touch targets on the dial (Geometry.hitTest and the touch-targets wireframe) --

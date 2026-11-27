@@ -62,6 +62,7 @@ BATT_W, BATT_H, BATT_R, BATT_TERM_W, BATT_TERM_H, BATT_PAD = (num("BATT_W"), num
 CARD_W, CARD_H, CARD_H_ROWS, CARD_H_TWO, CARD_R, CARD_PAD = (num("CARD_W"), num("CARD_H"), num("CARD_H_ROWS"),
                                                               num("CARD_H_TWO"), num("CARD_R"), num("CARD_PAD"))
 CARD_DETAIL2_PITCH = num("CARD_DETAIL2_PITCH")
+CARD_SWATCH_W, CARD_SWATCH_H, CARD_SWATCH_GAP = num("CARD_SWATCH_W"), num("CARD_SWATCH_H"), num("CARD_SWATCH_GAP")
 CARD_TITLE_Y, CARD_BIG_Y, CARD_DETAIL_Y, CARD_ROW_Y, CARD_ROW_PITCH = (num("CARD_TITLE_Y"), num("CARD_BIG_Y"),
                                                                         num("CARD_DETAIL_Y"), num("CARD_ROW_Y"),
                                                                         num("CARD_ROW_PITCH"))
@@ -206,7 +207,10 @@ def draw_card(s, kind):
     if rows:
         for i, (n, v) in enumerate([("Steps", "6214 / 10000"), ("Active", "68 / 150 min"), ("Body battery", "78")]):
             y = top + CARD_ROW_Y + i * CARD_ROW_PITCH
-            s.text(left + CARD_PAD, y, n, "label", GREY, "start")
+            s.add('<rect x="%.1f" y="%.1f" width="%d" height="%d" rx="%d" fill="%s"/>'
+                  % (left + CARD_PAD, y - CARD_SWATCH_H / 2, CARD_SWATCH_W, CARD_SWATCH_H, CARD_SWATCH_W // 2,
+                     [BLUE, NAVY, RED][i]))                       # each row wears its ring's colour
+            s.text(left + CARD_PAD + CARD_SWATCH_W + CARD_SWATCH_GAP, y, n, "label", GREY, "start")
             s.text(left + CARD_W - CARD_PAD, y, v, "value", WHITE, "end")
     else:
         s.text(CX, top + CARD_BIG_Y, big, "title", WHITE)

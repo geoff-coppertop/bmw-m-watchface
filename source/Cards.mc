@@ -85,10 +85,15 @@ class Cards {
             var bb = bodyBatteryNow();
             var names = ["Steps", "Active", "Body battery"];
             var vals = [stepsTxt, actTxt, bb == null ? "--" : bb.toString()];
+            // each row wears the colour of its ring on the dial
+            var colors = [Theme.metricColor(:steps), Theme.metricColor(:active), Theme.metricColor(:body)];
             for (var i = 0; i < 3; i++) {
                 var y = top + Theme.CARD_ROW_Y + i * Theme.CARD_ROW_PITCH;
+                dc.setColor(colors[i], Graphics.COLOR_TRANSPARENT);
+                dc.fillRoundedRectangle(left + Theme.CARD_PAD, y - Theme.CARD_SWATCH_H / 2,
+                    Theme.CARD_SWATCH_W, Theme.CARD_SWATCH_H, Theme.CARD_SWATCH_W / 2);
                 dc.setColor(Theme.GREY, Graphics.COLOR_TRANSPARENT);
-                dc.drawText(left + Theme.CARD_PAD, y, Fonts.label, names[i],
+                dc.drawText(left + Theme.CARD_PAD + Theme.CARD_SWATCH_W + Theme.CARD_SWATCH_GAP, y, Fonts.label, names[i],
                     Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
                 dc.setColor(Theme.WHITE, Graphics.COLOR_TRANSPARENT);
                 dc.drawText(left + Theme.CARD_W - Theme.CARD_PAD, y, Fonts.value, vals[i],
